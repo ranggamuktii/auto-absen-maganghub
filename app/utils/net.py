@@ -6,7 +6,7 @@ import time
 import requests
 
 from app.utils.log import log
-from app.utils.telegram import log_notify
+from app.utils.whatsapp import log_notify
 
 MAX_ATTEMPTS = 3
 RETRY_DELAY = 60  # seconds

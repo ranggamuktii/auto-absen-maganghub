@@ -9,7 +9,7 @@ from app.commands import cmd_absen, cmd_doctor, cmd_dry_run, cmd_remind, cmd_sta
 from app.models.attendance import AttendanceService
 from app.utils.log import log
 from app.utils.net import net_msg, with_retry
-from app.utils.telegram import log_notify
+from app.utils.whatsapp import log_notify
 
 
 def main():

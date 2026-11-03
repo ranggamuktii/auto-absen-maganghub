@@ -18,8 +18,12 @@ class Settings(BaseSettings):
     activity_log: str = ""
     lesson_learned: str = ""
     obstacles: str = ""
-    telegram_bot_token: str = ""
-    telegram_chat_id: str = ""
+
+    # Twilio WhatsApp
+    twilio_account_sid: str = ""
+    twilio_auth_token: str = ""
+    twilio_whatsapp_from: str = "+14155238886"
+    whatsapp_to: str = ""
 
     api_base: str = "https://monev-api.maganghub.kemnaker.go.id/api/v1"
     auth_base: str = "https://account.kemnaker.go.id"

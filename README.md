@@ -22,7 +22,7 @@ Kalau program ini membantu Anda, pertimbangkan memberi ⭐ pada repositori ini.
     - [Task Scheduler (Windows)](#task-scheduler-windows)
     - [Cron / Systemd Timer (Linux/VPS)](#cron--systemd-timer-linuxvps)
     - [GitHub Actions](#github-actions)
-  - [Notifikasi Telegram](#notifikasi-telegram)
+  - [Notifikasi WhatsApp (Twilio)](#notifikasi-whatsapp-twilio)
   - [Informasi Proyek](#informasi-proyek)
     - [Struktur Proyek](#struktur-proyek)
     - [Keamanan](#keamanan)
@@ -411,16 +411,12 @@ Empat hal yang perlu Anda ketahui:
 - Jam eksekusi dikunci di baris cron berkas workflow. `CLOCK_IN_TIME` dan `REMINDER_TIMES` tidak berpengaruh pada jadwal GitHub Actions. Ubah baris cron untuk mengganti jam.
 - Pada hari libur (`HARI_LIBUR`) maupun libur nasional, program berhenti sendiri tanpa mengirim absen. Pengingat juga dilewati. Program tidak mengirim notifikasi pada hari itu.
 
-## Notifikasi Telegram
+## Notifikasi WhatsApp (Twilio)
 
-Program mengirim pesan Telegram setiap kali absen berhasil atau gagal. Program juga mengirim pengingat bila hari ini belum absen pada jam-jam di `REMINDER_TIMES`. Notifikasi tidak aktif bila `TELEGRAM_BOT_TOKEN` atau `TELEGRAM_CHAT_ID` kosong.
+Program mengirim pesan WhatsApp setiap kali absen berhasil atau gagal, serta mengirim pengingat bila hari ini belum absen pada jam-jam di `REMINDER_TIMES`. Notifikasi menggunakan layanan resmi **Twilio WhatsApp Business API**.
 
-Cara mendapatkan keduanya:
-
-1. Chat `@BotFather` di Telegram, kirim `/newbot`, lalu ikuti balasannya. BotFather memberi token bot.
-2. Kirim satu pesan apa pun ke bot yang baru dibuat.
-3. Buka `https://api.telegram.org/bot<TOKEN_KAMU>/getUpdates` di peramban. Cari `"chat":{"id":...}` pada JSON yang tampil. Angka itu adalah chat ID.
-4. Isi kedua variabel di `.env` (jadwal lokal) atau di GitHub Secrets (GitHub Actions).
+Panduan lengkap setup akun Twilio, aktivasi WhatsApp Sandbox, hingga konfigurasi variabel tersedia di berkas terpisah:
+👉 **[Lihat Panduan Setup Twilio (TWILIO_SETUP.md)](TWILIO_SETUP.md)**.
 
 ## Informasi Proyek
 

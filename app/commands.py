@@ -9,7 +9,7 @@ from app.models.attendance import AttendanceService
 from app.models.holiday import Holiday, HolidayService
 from app.utils.log import log
 from app.utils.net import network_guard, with_retry
-from app.utils.telegram import log_notify, notify
+from app.utils.whatsapp import log_notify, notify
 from app.utils.time import date_str, now_wib, today_str
 
 HARI = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"]
@@ -123,6 +123,14 @@ def cmd_absen(svc: AttendanceService) -> int:
     if reason:
         log(f"[SKIP] {reason}. Absen dilewati.")
         return 0
+    if hasattr(svc, "get_log"):
+        try:
+            entry = svc.get_log(today_str())
+            if entry:
+                log_notify(f"[OK] Sudah absen hari ini ({today_str()}). Absen otomatis dilewati.")
+                return 0
+        except Exception as e:
+            log(f"[WARN] Gagal membaca log absen hari ini, tetap mencoba absen: {e}")
     try:
         with_retry("Absen", lambda: svc.clock_in(today_str()))
     except Exception as e:
@@ -137,7 +145,7 @@ def cmd_absen(svc: AttendanceService) -> int:
 
 @network_guard
 def cmd_remind(svc: AttendanceService) -> int:
-    """Send a Telegram reminder if today's attendance is still missing.
+    """Send a WhatsApp reminder if today's attendance is still missing.
 
     Returns 0 on success, 1 on failure.
     """
@@ -242,11 +250,11 @@ def cmd_doctor() -> int:
         except Exception as e:
             log(f"[WARN] Daftar libur tidak terbaca, absen tetap berjalan: {e}")
 
-    if settings.telegram_bot_token and settings.telegram_chat_id:
-        notify("Notifikasi Telegram aktif. (Pesan tes dari doctor.)")
-        log("[OK] Pesan tes terkirim, cek HP Anda.")
+    if settings.twilio_account_sid and settings.twilio_auth_token and settings.whatsapp_to:
+        notify("Notifikasi WhatsApp aktif. (Pesan tes dari doctor.)")
+        log("[OK] Pesan tes WhatsApp terkirim, cek WhatsApp Anda.")
     else:
-        log("[SKIP] Notifikasi Telegram belum dikonfigurasi.")
+        log("[SKIP] Notifikasi WhatsApp Twilio belum dikonfigurasi.")
 
     if os.name == "nt":
         try:

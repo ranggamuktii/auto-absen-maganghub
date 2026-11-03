@@ -471,10 +471,36 @@ def test_cmd_absen_proceeds_on_workday(monkeypatch, capsys):
             return None
 
     monkeypatch.setattr(commands, "holiday_service", lambda: NoHolidayToday())
-    monkeypatch.setattr(commands.settings, "telegram_bot_token", "")
-    monkeypatch.setattr(commands.settings, "telegram_chat_id", "")
+    monkeypatch.setattr(commands.settings, "twilio_account_sid", "")
+    monkeypatch.setattr(commands.settings, "whatsapp_to", "")
     assert commands.cmd_absen(StubService()) == 0
     assert sent == [date_str(0)]
+
+
+def test_cmd_absen_skips_when_already_clocked_in(monkeypatch, capsys):
+    _fill_env(monkeypatch)
+    monkeypatch.setattr(commands.settings, "hari_libur", "")
+    sent = []
+    notified = []
+
+    class StubService:
+        def get_log(self, date):
+            return DailyLog({"id": 1, "date": date})
+
+        def clock_in(self, date):
+            sent.append(date)
+            return {"ok": True}
+
+    class NoHolidayToday:
+        def find(self, date):
+            return None
+
+    monkeypatch.setattr(commands, "holiday_service", lambda: NoHolidayToday())
+    monkeypatch.setattr(commands, "log_notify", notified.append)
+    assert commands.cmd_absen(StubService()) == 0
+    assert sent == []
+    assert len(notified) == 1
+    assert "Sudah absen hari ini" in notified[0]
 
 
 def test_invalid_reminder_times_default(monkeypatch):
@@ -563,3 +589,35 @@ def test_status_today_explains_holiday(monkeypatch, capsys):
     monkeypatch.setattr(commands, "holiday_service", lambda: HolidayToday())
     assert cmd_status(FakeService({})) == 0
     assert "hari libur: Kelahiran Yesus Kristus" in capsys.readouterr().out
+
+
+def test_send_whatsapp_skips_when_empty(monkeypatch):
+    import app.utils.whatsapp as wamod
+    calls = []
+    monkeypatch.setattr(wamod.requests, "post", lambda *a, **kw: calls.append(1))
+    monkeypatch.setattr(wamod.settings, "twilio_account_sid", "")
+    monkeypatch.setattr(wamod.settings, "twilio_auth_token", "")
+    monkeypatch.setattr(wamod.settings, "whatsapp_to", "")
+    wamod.send_whatsapp("Tes")
+    assert calls == []
+
+
+def test_send_whatsapp_posts_when_configured(monkeypatch):
+    import app.utils.whatsapp as wamod
+    calls = []
+
+    class FakeResponse:
+        status_code = 201
+
+    monkeypatch.setattr(wamod.requests, "post", lambda url, data=None, **kw: calls.append((url, data)) or FakeResponse())
+    monkeypatch.setattr(wamod.settings, "twilio_account_sid", "AC123")
+    monkeypatch.setattr(wamod.settings, "twilio_auth_token", "secret")
+    monkeypatch.setattr(wamod.settings, "twilio_whatsapp_from", "+14155238886")
+    monkeypatch.setattr(wamod.settings, "whatsapp_to", "+628123456789")
+
+    wamod.send_whatsapp("Tes Pesan")
+    assert len(calls) == 1
+    assert "AC123" in calls[0][0]
+    assert calls[0][1]["From"] == "whatsapp:+14155238886"
+    assert calls[0][1]["To"] == "whatsapp:+628123456789"
+    assert calls[0][1]["Body"] == "Tes Pesan"
