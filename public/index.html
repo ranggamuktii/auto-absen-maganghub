@@ -10,576 +10,194 @@
     <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #EDF0EE;
-            --surface: #FFFFFF;
-            --field: #F6F8F7;
-            --ink: #16201C;
-            --muted: #5C6963;
-            --line: #D9DFDC;
-            --ok: #0B6E5A;
-            --warn: #B45309;
-            --err: #B42318;
-            --term: #121A16;
-            --term-ink: #CFE0D6;
+            --bg: #EDF0EE; --surface: #FFFFFF; --field: #F6F8F7; --ink: #16201C; --muted: #5C6963; --line: #D9DFDC;
+            --ok: #0B6E5A; --warn: #B45309; --err: #B42318; --term: #121A16; --term-ink: #CFE0D6;
             --sans: 'Schibsted Grotesk', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
             --mono: 'JetBrains Mono', Consolas, 'Courier New', monospace;
         }
-
         @media (prefers-color-scheme: dark) {
             :root {
-                --bg: #0D1210;
-                --surface: #151C19;
-                --field: #101613;
-                --ink: #E9F0EC;
-                --muted: #92A199;
-                --line: #26312C;
-                --ok: #4FD1AE;
-                --warn: #F2B35E;
-                --err: #F97066;
-                --term: #080C0A;
+                --bg: #0D1210; --surface: #151C19; --field: #101613; --ink: #E9F0EC; --muted: #92A199; --line: #26312C;
+                --ok: #4FD1AE; --warn: #F2B35E; --err: #F97066; --term: #080C0A;
             }
         }
-
-        *,
-        *::before,
-        *::after {
-            box-sizing: border-box;
-        }
-
-        html {
-            -webkit-text-size-adjust: 100%;
-        }
-
-        body {
-            margin: 0;
-            background: var(--bg);
-            color: var(--ink);
-            font: 400 15px/1.55 var(--sans);
-        }
-
-        .wrap {
-            max-width: 880px;
-            margin: 0 auto;
-            padding: 28px 20px 64px;
-        }
-
-        :focus-visible {
-            outline: 2px solid var(--ink);
-            outline-offset: 2px;
-        }
+        *, *::before, *::after { box-sizing: border-box; }
+        [hidden] { display: none !important; }
+        html { -webkit-text-size-adjust: 100%; }
+        body { margin: 0; background: var(--bg); color: var(--ink); font: 400 15px/1.55 var(--sans); }
+        .wrap { max-width: 880px; margin: 0 auto; padding: 28px 20px 64px; }
+        :focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+        .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
         /* Top bar */
-        .top {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            margin-bottom: 48px;
-        }
-
-        .brand {
-            font-weight: 600;
-            letter-spacing: -.01em;
-        }
-
-        .brand span {
-            color: var(--muted);
-            font-weight: 400;
-        }
-
-        .top-right {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        .chip {
-            font-size: 13px;
-            color: var(--muted);
-            border: 1px solid var(--line);
-            border-radius: 999px;
-            padding: 5px 12px;
-            background: var(--surface);
-        }
-
-        .chip-db {
-            font-size: 12px;
-            padding: 4px 10px;
-            border-radius: 999px;
-            border: 1px solid var(--line);
-            background: var(--surface);
-            color: var(--muted);
-        }
-
-        .chip-db[data-s="ok"] {
-            color: var(--ok);
-            border-color: var(--ok);
-        }
+        .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 56px; flex-wrap: wrap; }
+        .top-r { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .brand { font-weight: 600; letter-spacing: -.01em; }
+        .brand span { color: var(--muted); font-weight: 400; }
+        .chip { font: inherit; font-size: 13px; color: var(--muted); background: transparent; border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        button.chip { cursor: pointer; }
+        .chip[data-s="ok"] { color: var(--ok); border-color: var(--ok); }
 
         /* Hero */
-        .hero {
-            margin-bottom: 48px;
-        }
-
-        .date {
-            margin: 0 0 10px;
-            font-size: 14px;
-            color: var(--muted);
-        }
-
-        .hero h1 {
-            margin: 0 0 12px;
-            font-size: 34px;
-            line-height: 1.15;
-            letter-spacing: -.02em;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            flex-wrap: wrap;
-        }
-
-        .dot {
-            display: inline-block;
-            width: 13px;
-            height: 13px;
-            border-radius: 50%;
-            background: var(--muted);
-            flex-shrink: 0;
-        }
-
-        .dot[data-s="ok"] {
-            background: var(--ok);
-        }
-
-        .dot[data-s="warn"] {
-            background: var(--warn);
-        }
-
-        .dot[data-s="err"] {
-            background: var(--err);
-        }
-
-        .detail {
-            margin: 0 0 28px;
-            font-size: 16px;
-            color: var(--muted);
-            max-width: 640px;
-        }
-
-        .meta {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 20px;
-            padding: 20px 0;
-            margin: 0 0 32px;
-            border-top: 1px solid var(--line);
-            border-bottom: 1px solid var(--line);
-        }
-
-        .meta dt {
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: .06em;
-            color: var(--muted);
-            margin-bottom: 4px;
-        }
-
-        .meta dd {
-            margin: 0;
-            font-size: 16px;
-            font-weight: 500;
-        }
-
-        .actions {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
+        .hero { margin-bottom: 56px; }
+        .date { margin: 0 0 14px; color: var(--muted); }
+        .hero h1 { display: flex; align-items: center; gap: 14px; margin: 0; font-size: clamp(2rem, 6vw, 3.4rem); line-height: 1.05; font-weight: 600; letter-spacing: -.035em; }
+        .dot { flex: none; width: .36em; height: .36em; border-radius: 50%; background: var(--muted); }
+        .dot[data-s="ok"] { background: var(--ok); }
+        .dot[data-s="warn"] { background: var(--warn); }
+        .dot[data-s="err"] { background: var(--err); }
+        .detail { margin: 12px 0 0; min-height: 1.55em; color: var(--muted); max-width: 60ch; }
+        .meta { display: flex; flex-wrap: wrap; gap: 8px 36px; margin: 28px 0; }
+        .meta div { min-width: 0; }
+        .meta dt { font-size: 13px; color: var(--muted); }
+        .meta dd { margin: 0; font-weight: 500; }
+        .actions { display: flex; flex-wrap: wrap; gap: 10px; }
 
         /* Buttons */
-        .btn {
-            appearance: none;
-            border: 1px solid transparent;
-            font: 500 14px/1 var(--sans);
-            padding: 11px 18px;
-            border-radius: 8px;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            background: transparent;
-            color: var(--ink);
-            text-decoration: none;
-            transition: opacity .15s ease, border-color .15s ease;
+        .btn { font: inherit; font-weight: 600; font-size: 14px; border-radius: 10px; padding: 11px 18px; border: 1px solid transparent; cursor: pointer; transition: opacity .15s, border-color .15s; }
+        .btn:disabled { opacity: .45; cursor: not-allowed; }
+        .btn-primary { background: var(--ink); color: var(--surface); }
+        .btn-primary:not(:disabled):hover { opacity: .88; }
+        .btn-lg { padding: 14px 24px; font-size: 15px; }
+        .btn-sm { padding: 7px 14px; font-size: 13px; }
+        .btn-ghost { background: transparent; color: var(--ink); border-color: var(--line); }
+        .btn-ghost:not(:disabled):hover { border-color: var(--ink); }
+
+        /* Sections */
+        .section { margin-top: 48px; }
+        .section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+        .section-head h2 { margin: 0; font-size: 19px; font-weight: 600; letter-spacing: -.02em; }
+        .hint { font-size: 13px; color: var(--muted); }
+        .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 24px; }
+        .field { margin-bottom: 18px; }
+        .field:last-child { margin-bottom: 0; }
+        .field label { display: block; font-weight: 500; margin-bottom: 6px; }
+        .inp { width: 100%; font: inherit; color: var(--ink); background: var(--field); border: 1px solid var(--line); border-radius: 10px; padding: 11px 13px; }
+        .inp:focus { outline: none; border-color: var(--ink); }
+        textarea.inp { resize: vertical; min-height: 84px; line-height: 1.6; }
+        .mono { font-family: var(--mono); font-size: 13.5px; }
+        .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+        .row { display: flex; gap: 10px; }
+        .row .inp { flex: 1; min-width: 0; }
+        .divider { height: 1px; background: var(--line); margin: 22px 0; border: 0; }
+
+        /* Pencarian lokasi */
+        .loc-list { list-style: none; margin: 12px 0 0; padding: 0; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+        .loc-list li { display: grid; gap: 2px; padding: 11px 14px; cursor: pointer; border-top: 1px solid var(--line); }
+        .loc-list li:first-child { border-top: 0; }
+        .loc-list li span { font-size: 13px; color: var(--muted); }
+        .loc-list li:hover, .loc-list li[aria-selected=true] { background: var(--field); }
+        .loc-list li[aria-selected=true] { box-shadow: inset 3px 0 0 var(--ink); }
+        .loc-msg { margin: 10px 0 0; }
+        .loc-tools { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 10px; }
+
+        /* Switch */
+        .switch { position: relative; display: flex; align-items: flex-start; gap: 14px; cursor: pointer; }
+        .switch input { position: absolute; opacity: 0; }
+        .track { flex: none; width: 42px; height: 24px; margin-top: 2px; border-radius: 999px; background: var(--line); position: relative; transition: background .15s; }
+        .track::after { content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: var(--surface); transition: transform .15s; }
+        .switch input:checked + .track { background: var(--ink); }
+        .switch input:checked + .track::after { transform: translateX(18px); }
+        .switch input:focus-visible + .track { outline: 2px solid var(--ink); outline-offset: 2px; }
+        .switch strong { display: block; font-weight: 500; }
+        .check { display: flex; align-items: flex-start; gap: 10px; cursor: pointer; }
+        .check input { width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--ink); }
+
+        /* Save bar */
+        .savebar { position: sticky; bottom: 16px; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 24px; padding: 12px 12px 12px 20px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+
+        /* Login */
+        .login { max-width: 440px; margin: 0 auto; padding-top: 10vh; }
+        .login h1 { margin: 28px 0 8px; font-size: 2.25rem; font-weight: 600; letter-spacing: -.035em; line-height: 1.1; }
+        .login .panel { margin-top: 24px; }
+        .pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+        .pill { font: inherit; font-size: 12.5px; padding: 4px 10px; background: var(--field); border: 1px solid var(--line); border-radius: 8px; cursor: pointer; color: var(--muted); }
+        .pill:hover { color: var(--ink); border-color: var(--ink); }
+        .pw { position: relative; }
+        .pw .inp { padding-right: 84px; }
+        .pw button { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: 0; color: var(--muted); font: inherit; font-size: 13px; cursor: pointer; padding: 6px; }
+        .pw button:hover { color: var(--ink); }
+        .err { min-height: 1.55em; margin: 0 0 12px; color: var(--err); font-size: 14px; }
+
+        /* Console */
+        .term { margin: 0; background: var(--term); color: var(--term-ink); font: 400 12.5px/1.65 var(--mono); border-radius: 16px; padding: 18px 20px; max-height: 340px; overflow: auto; white-space: pre-wrap; word-break: break-word; }
+
+        /* Dialog + toast */
+        dialog { width: min(560px, calc(100% - 32px)); border: 1px solid var(--line); border-radius: 16px; padding: 0; background: var(--surface); color: var(--ink); }
+        dialog::backdrop { background: rgba(10, 16, 13, .55); }
+        dialog header { padding: 18px 20px 6px; font-weight: 600; font-size: 17px; }
+        dialog .dlg-body { margin: 0; padding: 0 20px 6px; color: var(--muted); }
+        dialog .term { border-radius: 0; max-height: 50vh; margin-top: 10px; }
+        dialog footer { display: flex; justify-content: flex-end; gap: 10px; padding: 14px 20px; }
+        dialog form { margin: 0; }
+        .toast { position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 20px); opacity: 0; pointer-events: none; background: var(--ink); color: var(--surface); padding: 11px 18px; border-radius: 10px; font-weight: 500; font-size: 14px; transition: opacity .2s, transform .2s; max-width: calc(100% - 32px); z-index: 99; }
+        .toast.show { opacity: 1; transform: translate(-50%, 0); }
+        .toast[data-t="err"] { background: var(--err); color: #fff; }
+
+        @media (max-width: 640px) {
+            .top { margin-bottom: 40px; }
+            .grid2 { grid-template-columns: 1fr; gap: 18px; }
+            .row { flex-direction: column; }
+            .actions .btn-lg { width: 100%; }
+            .savebar { flex-direction: column; align-items: stretch; padding: 14px; gap: 10px; }
+            .savebar .hint { text-align: center; }
         }
-
-        .btn:hover:not(:disabled) {
-            opacity: .85;
-        }
-
-        .btn:disabled {
-            opacity: .45;
-            cursor: not-allowed;
-        }
-
-        .btn-primary {
-            background: var(--ink);
-            color: var(--bg);
-        }
-
-        .btn-ghost {
-            border-color: var(--line);
-            background: var(--surface);
-        }
-
-        .btn-ghost:hover:not(:disabled) {
-            border-color: var(--ink);
-        }
-
-        .btn-lg {
-            padding: 14px 24px;
-            font-size: 15px;
-            font-weight: 600;
-        }
-
-        /* Section */
-        .section {
-            margin-bottom: 48px;
-        }
-
-        .section-head {
-            display: flex;
-            align-items: baseline;
-            justify-content: space-between;
-            gap: 12px;
-            margin-bottom: 16px;
-        }
-
-        .section-head h2 {
-            margin: 0;
-            font-size: 20px;
-            font-weight: 600;
-            letter-spacing: -.01em;
-        }
-
-        .hint {
-            font-size: 13px;
-            color: var(--muted);
-        }
-
-        /* Panel Form */
-        .panel {
-            background: var(--surface);
-            border: 1px solid var(--line);
-            border-radius: 12px;
-            padding: 24px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .grid-2 {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-        }
-
-        .field {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .field label {
-            font-size: 13px;
-            font-weight: 500;
-        }
-
-        .field textarea,
-        .field input[type="text"],
-        .field input[type="password"],
-        .field input[type="number"],
-        .field input[type="time"] {
-            appearance: none;
-            background: var(--field);
-            border: 1px solid var(--line);
-            border-radius: 8px;
-            padding: 10px 14px;
-            color: var(--ink);
-            font: 400 14px/1.55 var(--sans);
-            width: 100%;
-        }
-
-        .field textarea:focus,
-        .field input:focus {
-            border-color: var(--ink);
-            background: var(--surface);
-            outline: none;
-        }
-
-        .field textarea {
-            resize: vertical;
-            min-height: 84px;
-        }
-
-        .input-wrap {
-            position: relative;
-            display: flex;
-            align-items: center;
-        }
-
-        .input-wrap input {
-            padding-right: 76px !important;
-        }
-
-        .toggle-pwd {
-            position: absolute;
-            right: 10px;
-            background: none;
-            border: none;
-            color: var(--muted);
-            font-size: 12px;
-            cursor: pointer;
-            padding: 4px 6px;
-        }
-
-        .toggle-pwd:hover {
-            color: var(--ink);
-        }
-
-        .check-group {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            cursor: pointer;
-            user-select: none;
-            font-size: 14px;
-        }
-
-        .check-group input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            accent-color: var(--ink);
-            cursor: pointer;
-        }
-
-        .foot {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 16px;
-            padding-top: 14px;
-            border-top: 1px solid var(--line);
-            flex-wrap: wrap;
-        }
-
-        /* Terminal Console */
-        .term {
-            margin: 0;
-            background: var(--term);
-            color: var(--term-ink);
-            font: 400 13px/1.65 var(--mono);
-            padding: 18px 20px;
-            border-radius: 12px;
-            border: 1px solid var(--line);
-            overflow-x: auto;
-            white-space: pre-wrap;
-            word-break: break-word;
-            max-height: 380px;
-        }
-
-        /* Dialog */
-        dialog {
-            border: 1px solid var(--line);
-            border-radius: 12px;
-            background: var(--surface);
-            color: var(--ink);
-            max-width: 640px;
-            width: 90%;
-            padding: 24px;
-        }
-
-        dialog::backdrop {
-            background: rgba(0, 0, 0, .5);
-        }
-
-        dialog header {
-            font-weight: 600;
-            font-size: 18px;
-            margin-bottom: 16px;
-        }
-
-        dialog footer {
-            margin-top: 20px;
-            display: flex;
-            justify-content: flex-end;
-        }
-
-        /* Toast */
-        .toast {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            background: var(--ink);
-            color: var(--bg);
-            padding: 12px 20px;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 500;
-            opacity: 0;
-            pointer-events: none;
-            transform: translateY(8px);
-            transition: opacity .2s, transform .2s;
-            z-index: 99;
-        }
-
-        .toast.show {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        .toast[data-t="err"] {
-            background: var(--err);
-            color: #fff;
-        }
-
-        /* Login Card */
-        .login-box {
-            max-width: 440px;
-            margin: 40px auto 0;
-        }
-
-        .login-header {
-            text-align: center;
-            margin-bottom: 32px;
-        }
-
-        .login-header h1 {
-            font-size: 26px;
-            font-weight: 700;
-            margin: 0 0 8px;
-            letter-spacing: -.02em;
-        }
-
-        .login-header p {
-            margin: 0;
-            color: var(--muted);
-            font-size: 14px;
-        }
-
-        .suggestion-pills {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            margin-top: 8px;
-        }
-
-        .pill {
-            font-size: 12px;
-            padding: 4px 10px;
-            background: var(--field);
-            border: 1px solid var(--line);
-            border-radius: 6px;
-            cursor: pointer;
-            color: var(--muted);
-        }
-
-        .pill:hover {
-            color: var(--ink);
-            border-color: var(--ink);
-        }
-
-        .hidden {
-            display: none !important;
-        }
-
-        @media (max-width:680px) {
-            .grid-2 {
-                grid-template-columns: 1fr;
-            }
-
-            .top {
-                margin-bottom: 36px;
-            }
-
-            .foot {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .actions .btn-lg {
-                width: 100%;
-            }
-        }
+        @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
     </style>
 </head>
 
 <body>
     <main class="wrap">
 
-        <!-- VIEW 1: LOGIN SCREEN -->
-        <div id="view-login" class="login-box">
-            <div class="login-header">
-                <div class="brand mb-2">Auto Absen <span>MagangHub</span></div>
-                <h1>Masuk Akun Kemnaker</h1>
-                <p>Gunakan akun SIAPkerja Anda untuk mengakses panel dan presensi.</p>
-            </div>
+        <!-- LOGIN -->
+        <div id="view-login" class="login" hidden>
+            <div class="brand">Auto Absen <span>MagangHub</span></div>
+            <h1>Masuk akun Kemnaker</h1>
+            <p class="detail">Gunakan akun SIAPkerja Anda untuk mengakses panel dan presensi.</p>
 
             <form class="panel" id="form-login" autocomplete="on">
                 <div class="field">
-                    <label for="login_username">Email / Username Kemnaker</label>
-                    <input type="text" id="login_username" name="username" placeholder="nama@email.com" required autocomplete="username" list="user-suggestions">
-                    <datalist id="user-suggestions"></datalist>
-                    <div class="suggestion-pills" id="pill-container"></div>
+                    <label for="login_username">Email atau username</label>
+                    <input class="inp" type="text" id="login_username" name="username" placeholder="nama@email.com" required autocomplete="username" autocapitalize="off" spellcheck="false">
+                    <div class="pills" id="pill-container"></div>
                 </div>
-
                 <div class="field">
-                    <label for="login_password">Password</label>
-                    <div class="input-wrap">
-                        <input type="password" id="login_password" name="password" placeholder="Password akun Kemnaker" required autocomplete="current-password">
-                        <button type="button" class="toggle-pwd" id="btn-toggle-pwd">Lihat</button>
+                    <label for="login_password">Kata sandi</label>
+                    <div class="pw">
+                        <input class="inp" type="password" id="login_password" name="password" required autocomplete="current-password">
+                        <button type="button" id="btn-toggle-pwd" aria-pressed="false">Lihat</button>
                     </div>
                 </div>
-
-                <label class="check-group">
-                    <input type="checkbox" id="remember_me" checked>
-                    <span>Ingat akun saya di perangkat ini</span>
+                <label class="check field">
+                    <input type="checkbox" id="remember_me">
+                    <span>Ingat akun di perangkat ini
+                        <span class="hint" style="display:block">Kata sandi disimpan di browser. Jangan aktifkan di perangkat bersama.</span>
+                    </span>
                 </label>
-
-                <button type="submit" class="btn btn-primary btn-lg" id="btn-login-submit" style="width:100%">Masuk ke Panel</button>
+                <p class="err" id="login-err" role="alert"></p>
+                <button type="submit" class="btn btn-primary btn-lg" id="btn-login-submit" style="width:100%">Masuk</button>
             </form>
         </div>
 
-        <!-- VIEW 2: DASHBOARD SCREEN -->
-        <div id="view-dashboard" class="hidden">
+        <!-- DASHBOARD -->
+        <div id="view-dashboard" hidden>
             <header class="top">
                 <div class="brand">Auto Absen <span>MagangHub</span></div>
-                <div class="top-right">
-                    <div class="chip-db" id="chip-db" title="Status koneksi Neon Database">● Database Memuat…</div>
-                    <div class="chip" id="chip-user">user@kemnaker</div>
-                    <button type="button" class="btn btn-ghost" id="btn-logout" style="padding:6px 14px; font-size:13px">Keluar</button>
+                <div class="top-r">
+                    <button type="button" class="chip" id="chip-db" title="Status koneksi database">Database: memeriksa…</button>
+                    <span class="chip" id="chip-user">—</span>
+                    <button type="button" class="btn btn-ghost btn-sm" id="btn-logout">Keluar</button>
                 </div>
             </header>
 
             <section class="hero" aria-live="polite">
-                <p class="date" id="val-date">Memuat tanggal…</p>
+                <p class="date" id="val-date"></p>
                 <h1><i class="dot" id="dot" data-s=""></i><span id="hero-title">Memeriksa status…</span></h1>
                 <p class="detail" id="hero-detail"></p>
-
                 <dl class="meta">
-                    <div>
-                        <dt>Lokasi Presensi</dt>
-                        <dd id="val-location">Karawang</dd>
-                    </div>
-                    <div>
-                        <dt>Cron Otomatis</dt>
-                        <dd id="val-auto-status">Aktif (17:00 WIB)</dd>
-                    </div>
+                    <div><dt>Lokasi presensi</dt><dd id="val-location">—</dd></div>
+                    <div><dt>Absen otomatis</dt><dd id="val-auto-status">—</dd></div>
                 </dl>
-
                 <div class="actions">
                     <button type="button" class="btn btn-primary btn-lg" id="btn-run-absen">Absen sekarang</button>
                     <button type="button" class="btn btn-ghost btn-lg" id="btn-dry-run">Simulasi</button>
@@ -587,73 +205,110 @@
                 </div>
             </section>
 
-            <!-- SECTION PENGATURAN & CATATAN HARIAN -->
-            <section class="section">
-                <div class="section-head">
-                    <h2>Pengaturan & Catatan Harian</h2>
-                    <span class="hint">Tersimpan otomatis ke database Neon</span>
-                </div>
-                <form class="panel" id="form-settings">
-                    <!-- Lokasi & Koordinat GPS -->
-                    <div class="grid-2">
+            <form id="form-settings" novalidate>
+                <section class="section">
+                    <div class="section-head">
+                        <h2>Lokasi presensi</h2>
+                        <span class="hint">Koordinat di bawah inilah yang dikirim saat absen</span>
+                    </div>
+                    <div class="panel">
                         <div class="field">
-                            <label for="input_location">Nama Lokasi / Kantor</label>
-                            <input type="text" id="input_location" name="location" placeholder="contoh: Karawang, PT ABC">
+                            <label for="loc-q">Cari lokasi</label>
+                            <div class="row">
+                                <input class="inp" type="search" id="loc-q" placeholder="Nama tempat atau alamat, misalnya Karawang Barat" autocomplete="off" maxlength="120">
+                                <button type="button" class="btn btn-ghost" id="btn-loc-search">Cari</button>
+                            </div>
+                            <ul class="loc-list" id="loc-list" role="listbox" aria-label="Hasil pencarian lokasi" hidden></ul>
+                            <div class="loc-tools">
+                                <span class="hint" id="loc-msg" aria-live="polite">Tekan Enter atau Cari, lalu pilih hasil yang sesuai.</span>
+                                <button type="button" class="btn btn-ghost btn-sm" id="btn-get-gps">Gunakan lokasi saya</button>
+                            </div>
                         </div>
+                        <hr class="divider">
                         <div class="field">
-                            <label style="display:flex; justify-content:space-between; align-items:center">
-                                <span>Koordinat GPS (Lat, Long)</span>
-                                <button type="button" class="btn btn-ghost" id="btn-get-gps" style="padding:2px 8px; font-size:12px">📍 Deteksi GPS</button>
-                            </label>
-                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px">
-                                <input type="text" id="input_latitude" name="latitude" placeholder="Latitude (-6.370891)">
-                                <input type="text" id="input_longitude" name="longitude" placeholder="Longitude (107.272352)">
+                            <label for="input_location">Nama lokasi</label>
+                            <input class="inp" type="text" id="input_location" name="location" placeholder="Contoh: Karawang" maxlength="120">
+                        </div>
+                        <div class="grid2">
+                            <div class="field">
+                                <label for="input_latitude">Latitude</label>
+                                <input class="inp mono" type="text" inputmode="decimal" id="input_latitude" name="latitude" placeholder="-6.370891">
+                            </div>
+                            <div class="field">
+                                <label for="input_longitude">Longitude</label>
+                                <input class="inp mono" type="text" inputmode="decimal" id="input_longitude" name="longitude" placeholder="107.272352">
                             </div>
                         </div>
                     </div>
+                </section>
 
-                    <!-- Catatan Harian -->
-                    <div class="field">
-                        <label for="activity_log">Aktivitas hari ini</label>
-                        <textarea id="activity_log" name="activity_log" rows="3" placeholder="Apa yang kamu kerjakan hari ini?"></textarea>
+                <section class="section">
+                    <div class="section-head">
+                        <h2>Catatan harian</h2>
+                        <span class="hint">Dikirim bersama presensi</span>
                     </div>
-                    <div class="field">
-                        <label for="lesson_learned">Yang dipelajari</label>
-                        <textarea id="lesson_learned" name="lesson_learned" rows="2" placeholder="Hal baru yang kamu pelajari"></textarea>
+                    <div class="panel">
+                        <div class="field">
+                            <label for="activity_log">Aktivitas hari ini</label>
+                            <textarea class="inp" id="activity_log" name="activity_log" rows="3" placeholder="Apa yang kamu kerjakan hari ini?"></textarea>
+                        </div>
+                        <div class="field">
+                            <label for="lesson_learned">Yang dipelajari</label>
+                            <textarea class="inp" id="lesson_learned" name="lesson_learned" rows="2" placeholder="Hal baru yang kamu pelajari"></textarea>
+                        </div>
+                        <div class="field">
+                            <label for="obstacles">Kendala</label>
+                            <textarea class="inp" id="obstacles" name="obstacles" rows="2" placeholder="Hambatan yang kamu temui"></textarea>
+                        </div>
                     </div>
-                    <div class="field">
-                        <label for="obstacles">Kendala</label>
-                        <textarea id="obstacles" name="obstacles" rows="2" placeholder="Hambatan yang kamu temui"></textarea>
-                    </div>
+                </section>
 
-                    <!-- Toggle Auto Absen & Simpan -->
-                    <div class="foot">
-                        <label class="check-group">
+                <section class="section">
+                    <div class="section-head"><h2>Absen otomatis</h2></div>
+                    <div class="panel">
+                        <label class="switch">
                             <input type="checkbox" id="check_auto_absen" checked>
-                            <span><strong>Aktifkan Auto-Absen Otomatis</strong> (Cron Vercel setiap jam 17:00 WIB / 5 Sore)</span>
+                            <span class="track" aria-hidden="true"></span>
+                            <span>
+                                <strong>Kirim presensi otomatis setiap hari</strong>
+                                <span class="hint">Dijalankan Vercel Cron pukul 17:00 WIB.</span>
+                            </span>
                         </label>
-                        <button type="submit" class="btn btn-primary" id="btn-save-settings">Simpan Pengaturan</button>
                     </div>
-                </form>
-            </section>
+                </section>
+
+                <div class="savebar">
+                    <span class="hint" id="save-state">Semua perubahan tersimpan</span>
+                    <button type="submit" class="btn btn-primary" id="btn-save-settings" disabled>Simpan pengaturan</button>
+                </div>
+            </form>
 
             <section class="section">
                 <div class="section-head">
-                    <h2>Riwayat & Log Eksekusi</h2>
-                    <button type="button" class="btn btn-ghost" id="btn-refresh-logs" style="padding:7px 14px">Muat ulang</button>
+                    <h2>Riwayat dan log eksekusi</h2>
+                    <button type="button" class="btn btn-ghost btn-sm" id="btn-refresh-logs">Muat ulang</button>
                 </div>
                 <pre class="term" id="log-console" tabindex="0">Memuat log…</pre>
-                <p class="hint" style="margin:10px 0 0">Respons log terbaru dari serverless API</p>
+                <p class="hint" style="margin:10px 0 0">Respons terbaru dari API</p>
             </section>
         </div>
-
     </main>
 
-    <!-- Dialog Simulasi -->
     <dialog id="modalDryRun">
-        <header>Hasil Simulasi Payload Absen</header>
+        <header>Hasil simulasi payload absen</header>
         <pre class="term" id="dry-run-content"></pre>
         <footer><button type="button" class="btn btn-ghost" id="btn-close-dry">Tutup</button></footer>
+    </dialog>
+
+    <dialog id="dlgConfirm">
+        <form method="dialog">
+            <header id="c-title"></header>
+            <p class="dlg-body" id="c-body"></p>
+            <footer>
+                <button type="submit" value="cancel" class="btn btn-ghost">Batal</button>
+                <button type="submit" value="ok" class="btn btn-primary" id="c-ok">Lanjutkan</button>
+            </footer>
+        </form>
     </dialog>
 
     <div class="toast" id="toast" role="status"></div>
@@ -663,35 +318,34 @@
             const $ = s => document.querySelector(s);
             const AUTH_KEY = 'maganghub_auth_session';
             const SUGGEST_KEY = 'maganghub_user_suggestions';
+            const CRON_TIME = '17:00';
+            const DEFAULT_LOC = { location: 'Karawang', latitude: -6.370891, longitude: 107.272352 };
 
-            // State aktif
             let activeAuth = null;
+            let saved = null; // snapshot form terakhir yang tersimpan (null = belum dimuat)
 
-            // Header auth otomatis jika sedang login
-            function authHeaders() {
+            // ---------- Util ----------
+            const authHeaders = () => {
                 const h = { 'Content-Type': 'application/json' };
                 if (activeAuth && activeAuth.username) {
                     h['X-Auth-Username'] = activeAuth.username;
                     h['X-Auth-Password'] = activeAuth.password;
                 }
                 return h;
-            }
-
-            const api = (endpoint, opt = {}) => {
-                const options = Object.assign({}, opt);
-                options.headers = Object.assign({}, authHeaders(), options.headers || {});
-                return fetch('/api/' + endpoint, options).then(r => {
-                    if (!r.ok) return r.json().then(d => Promise.reject(d)).catch(() => Promise.reject(new Error(r.status)));
-                    return r.json();
-                });
             };
 
-            // Format tanggal Indonesia
+            // Error membawa pesan & output dari server agar tampil ke pengguna
+            const api = (endpoint, opt = {}) =>
+                fetch('/api/' + endpoint, { ...opt, headers: { ...authHeaders(), ...(opt.headers || {}) } }).then(async r => {
+                    let d = null;
+                    try { d = await r.json(); } catch (e) { /* bukan JSON */ }
+                    if (r.status === 401) { expireSession(); throw Object.assign(new Error('Sesi berakhir'), { code: 401 }); }
+                    if (!r.ok) throw Object.assign(new Error((d && d.message) || 'Server error (' + r.status + ')'), { output: d && d.output });
+                    return d;
+                });
+
             $('#val-date').textContent = new Intl.DateTimeFormat('id-ID', {
-                weekday: 'long',
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric'
+                weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
             }).format(new Date());
 
             let toastTimer;
@@ -701,16 +355,12 @@
                 t.dataset.t = type || '';
                 t.classList.add('show');
                 clearTimeout(toastTimer);
-                toastTimer = setTimeout(() => t.classList.remove('show'), 3200);
+                toastTimer = setTimeout(() => t.classList.remove('show'), 3400);
             }
 
             function busy(btn, on, label) {
-                if (on) {
-                    btn.dataset.label = btn.textContent;
-                    btn.textContent = label;
-                } else {
-                    btn.textContent = btn.dataset.label;
-                }
+                if (on) { btn.dataset.label = btn.textContent; btn.textContent = label; }
+                else { btn.textContent = btn.dataset.label; }
                 btn.disabled = on;
             }
 
@@ -720,313 +370,369 @@
                 $('#hero-detail').textContent = detail || '';
             }
 
-            function getFormData() {
-                return {
-                    location: $('#input_location').value.trim() || 'Karawang',
-                    latitude: parseFloat($('#input_latitude').value) || -6.370891,
-                    longitude: parseFloat($('#input_longitude').value) || 107.272352,
-                    activity_log: $('#activity_log').value.trim(),
-                    lesson_learned: $('#lesson_learned').value.trim(),
-                    obstacles: $('#obstacles').value.trim(),
-                    auto_absen: $('#check_auto_absen').checked
-                };
+            const autoLabel = on => on ? 'Aktif, ' + CRON_TIME + ' WIB' : 'Nonaktif';
+
+            // Dialog konfirmasi generik
+            const dlgC = $('#dlgConfirm');
+            const ask = ({ title, body, ok }) => new Promise(resolve => {
+                $('#c-title').textContent = title;
+                $('#c-body').textContent = body;
+                $('#c-ok').textContent = ok;
+                dlgC.returnValue = '';
+                dlgC.addEventListener('close', () => resolve(dlgC.returnValue === 'ok'), { once: true });
+                dlgC.showModal();
+            });
+
+            // ---------- Form: baca, validasi, lacak perubahan ----------
+            const raw = () => ({
+                location: $('#input_location').value.trim(),
+                latitude: $('#input_latitude').value.trim().replace(',', '.'),
+                longitude: $('#input_longitude').value.trim().replace(',', '.'),
+                activity_log: $('#activity_log').value.trim(),
+                lesson_learned: $('#lesson_learned').value.trim(),
+                obstacles: $('#obstacles').value.trim(),
+                auto_absen: $('#check_auto_absen').checked
+            });
+            const isDirty = () => saved !== null && JSON.stringify(raw()) !== saved;
+
+            function syncDirty() {
+                const d = isDirty();
+                $('#btn-save-settings').disabled = !d;
+                $('#save-state').textContent = d ? 'Ada perubahan yang belum disimpan' : 'Semua perubahan tersimpan';
             }
 
-            // Suggestions
+            // Mengembalikan data siap kirim, atau null jika tidak valid (tanpa menebak koordinat)
+            function getFormData() {
+                const r = raw(), lat = Number(r.latitude), lng = Number(r.longitude);
+                let err = '';
+                if (!r.location) err = 'Isi nama lokasi presensi.';
+                else if (r.latitude === '' || r.longitude === '' || !isFinite(lat) || !isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180)
+                    err = 'Koordinat tidak valid. Latitude -90 sampai 90, longitude -180 sampai 180.';
+                if (err) { toast(err, 'err'); return null; }
+                return { ...r, latitude: lat, longitude: lng };
+            }
+
+            function fillForm(v) {
+                $('#input_location').value = v.location;
+                $('#input_latitude').value = v.latitude;
+                $('#input_longitude').value = v.longitude;
+                $('#activity_log').value = v.activity_log;
+                $('#lesson_learned').value = v.lesson_learned;
+                $('#obstacles').value = v.obstacles;
+                $('#check_auto_absen').checked = v.auto_absen;
+                saved = JSON.stringify(raw());
+                syncDirty();
+            }
+
+            $('#form-settings').addEventListener('input', syncDirty);
+            $('#form-settings').addEventListener('change', syncDirty);
+
+            // ---------- Akun & sesi ----------
             function loadSuggestions() {
+                const box = $('#pill-container');
+                box.innerHTML = '';
                 try {
-                    const list = JSON.parse(localStorage.getItem(SUGGEST_KEY) || '[]');
-                    const dl = $('#user-suggestions');
-                    const pillBox = $('#pill-container');
-                    dl.innerHTML = '';
-                    pillBox.innerHTML = '';
-
-                    list.forEach(u => {
-                        const opt = document.createElement('option');
-                        opt.value = u;
-                        dl.appendChild(opt);
-
-                        const p = document.createElement('span');
+                    JSON.parse(localStorage.getItem(SUGGEST_KEY) || '[]').forEach(u => {
+                        const p = document.createElement('button');
+                        p.type = 'button';
                         p.className = 'pill';
                         p.textContent = u;
-                        p.addEventListener('click', () => {
-                            $('#login_username').value = u;
-                            $('#login_password').focus();
-                        });
-                        pillBox.appendChild(p);
+                        p.addEventListener('click', () => { $('#login_username').value = u; $('#login_password').focus(); });
+                        box.appendChild(p);
                     });
-                } catch(e) {}
+                } catch (e) { /* abaikan */ }
             }
 
             function saveSuggestion(username) {
                 try {
-                    let list = JSON.parse(localStorage.getItem(SUGGEST_KEY) || '[]');
-                    if (!list.includes(username)) {
-                        list.unshift(username);
-                        list = list.slice(0, 5);
-                        localStorage.setItem(SUGGEST_KEY, JSON.stringify(list));
-                    }
-                } catch(e) {}
+                    let list = JSON.parse(localStorage.getItem(SUGGEST_KEY) || '[]').filter(u => u !== username);
+                    list.unshift(username);
+                    localStorage.setItem(SUGGEST_KEY, JSON.stringify(list.slice(0, 5)));
+                } catch (e) { /* abaikan */ }
             }
 
-            // Toggle Password
-            $('#btn-toggle-pwd').addEventListener('click', () => {
-                const pwd = $('#login_password');
-                const btn = $('#btn-toggle-pwd');
-                if (pwd.type === 'password') {
-                    pwd.type = 'text';
-                    btn.textContent = 'Sembunyikan';
-                } else {
-                    pwd.type = 'password';
-                    btn.textContent = 'Lihat';
-                }
+            $('#btn-toggle-pwd').addEventListener('click', e => {
+                const pwd = $('#login_password'), show = pwd.type === 'password';
+                pwd.type = show ? 'text' : 'password';
+                e.currentTarget.textContent = show ? 'Sembunyikan' : 'Lihat';
+                e.currentTarget.setAttribute('aria-pressed', show);
             });
 
-            // Tampilkan View
             function showDashboard(user) {
-                $('#view-login').classList.add('hidden');
-                $('#view-dashboard').classList.remove('hidden');
+                $('#view-login').hidden = true;
+                $('#view-dashboard').hidden = false;
                 $('#chip-user').textContent = user.username;
+                $('#chip-user').title = user.username;
                 checkStatus();
             }
 
-            function showLogin() {
-                $('#view-dashboard').classList.add('hidden');
-                $('#view-login').classList.remove('hidden');
+            function showLogin(message) {
+                $('#view-dashboard').hidden = true;
+                $('#view-login').hidden = false;
+                $('#login-err').textContent = message || '';
+                $('#login_password').value = '';
                 loadSuggestions();
                 $('#login_username').focus();
             }
 
-            // Cek Status Presensi
-            function checkStatus() {
-                return api('status').then(res => {
-                    if (res.need_login) {
-                        showLogin();
-                        return;
-                    }
-
-                    // Update DB badge
-                    const dbBadge = $('#chip-db');
-                    if (res.db_connected) {
-                        dbBadge.textContent = '● Neon DB Terhubung';
-                        dbBadge.dataset.s = 'ok';
-                        dbBadge.title = res.db_message || 'Terhubung ke Neon Postgres';
-                    } else {
-                        dbBadge.textContent = '○ Neon DB Belum Terhubung';
-                        dbBadge.dataset.s = '';
-                        dbBadge.title = res.db_message || 'Variabel database belum terdeteksi di Vercel.';
-                    }
-
-                    const line = (res.output || '').split('\n').find(l => l.includes('Status:')) || '';
-                    if (res.is_attended) {
-                        setHero('ok', 'Sudah absen hari ini', line.trim());
-                    } else {
-                        setHero('warn', 'Belum absen hari ini', 'Absen otomatis berjalan via Vercel Cron pukul 17:00 WIB (5 sore), atau kirim langsung sekarang.');
-                    }
-
-                    // Isi form dari preferensi database / env
-                    const pref = res.preferences || {};
-                    const env = res.env || {};
-
-                    const loc = pref.user_location || env.location || 'Karawang';
-                    const lat = pref.user_latitude !== undefined ? pref.user_latitude : (env.latitude || -6.370891);
-                    const lon = pref.user_longitude !== undefined ? pref.user_longitude : (env.longitude || 107.272352);
-                    const act = pref.user_activity_log || env.activity_log || '';
-                    const les = pref.user_lesson_learned || env.lesson_learned || '';
-                    const obs = pref.user_obstacles || env.obstacles || '';
-                    const auto = pref.user_auto_absen !== undefined ? pref.user_auto_absen : (env.auto_absen !== false);
-
-                    $('#val-location').textContent = loc;
-                    $('#val-auto-status').textContent = auto ? 'Aktif (17:00 WIB)' : 'Nonaktif';
-
-                    $('#input_location').value = loc;
-                    $('#input_latitude').value = lat;
-                    $('#input_longitude').value = lon;
-                    $('#activity_log').value = act;
-                    $('#lesson_learned').value = les;
-                    $('#obstacles').value = obs;
-                    $('#check_auto_absen').checked = auto;
-
-                    if (res.output) {
-                        $('#log-console').textContent = res.output;
-                    }
-                }).catch((err) => {
-                    const msg = (err && err.output) ? err.output : (err.message || 'Gagal terhubung ke API Vercel.');
-                    setHero('err', 'Status tidak terbaca', msg);
-                    $('#log-console').textContent = msg;
-                });
+            // Bersihkan sesi dan data di layar (penting di perangkat bersama)
+            function clearSession() {
+                activeAuth = null;
+                localStorage.removeItem(AUTH_KEY);
+                sessionStorage.removeItem(AUTH_KEY);
+                $('#form-settings').reset();
+                saved = null;
+                $('#log-console').textContent = 'Memuat log…';
+                $('#loc-list').hidden = true;
+                setHero('', 'Memeriksa status…', '');
             }
 
-            // Submit Login
+            function expireSession() {
+                clearSession();
+                showLogin('Sesi berakhir. Silakan masuk kembali.');
+            }
+
             $('#form-login').addEventListener('submit', e => {
                 e.preventDefault();
-                const btn = $('#btn-login-submit');
+                const btn = $('#btn-login-submit'), err = $('#login-err');
                 const username = $('#login_username').value.trim();
                 const password = $('#login_password').value.trim();
-                const remember = $('#remember_me').checked;
-
                 if (!username || !password) return;
-
-                busy(btn, true, 'Memverifikasi ke Kemnaker…');
+                err.textContent = '';
+                busy(btn, true, 'Memverifikasi…');
 
                 fetch('/api/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username, password })
                 }).then(r => r.json()).then(res => {
-                    if (res.status) {
-                        toast(res.message);
-                        activeAuth = { username, password };
-                        saveSuggestion(username);
-
-                        if (remember) {
-                            localStorage.setItem(AUTH_KEY, JSON.stringify(activeAuth));
-                        } else {
-                            sessionStorage.setItem(AUTH_KEY, JSON.stringify(activeAuth));
-                            localStorage.removeItem(AUTH_KEY);
-                        }
-                        showDashboard({ username });
-                    } else {
-                        toast(res.message || 'Login gagal.', 'err');
-                    }
-                }).catch(err => {
-                    toast('Gagal terhubung ke server login: ' + err.message, 'err');
-                }).finally(() => {
-                    busy(btn, false);
-                });
+                    if (!res.status) { err.textContent = res.message || 'Login gagal. Periksa email dan kata sandi.'; return; }
+                    activeAuth = { username, password };
+                    saveSuggestion(username);
+                    if ($('#remember_me').checked) localStorage.setItem(AUTH_KEY, JSON.stringify(activeAuth));
+                    else { sessionStorage.setItem(AUTH_KEY, JSON.stringify(activeAuth)); localStorage.removeItem(AUTH_KEY); }
+                    showDashboard({ username });
+                }).catch(() => {
+                    err.textContent = 'Tidak bisa terhubung ke server login. Coba lagi.';
+                }).finally(() => busy(btn, false));
             });
 
-            // Logout
-            $('#btn-logout').addEventListener('click', () => {
-                activeAuth = null;
-                localStorage.removeItem(AUTH_KEY);
-                sessionStorage.removeItem(AUTH_KEY);
-                toast('Berhasil keluar.');
+            $('#btn-logout').addEventListener('click', async () => {
+                if (isDirty() && !(await ask({
+                    title: 'Keluar tanpa menyimpan?',
+                    body: 'Ada perubahan pengaturan yang belum disimpan dan akan hilang.',
+                    ok: 'Keluar'
+                }))) return;
+                clearSession();
                 showLogin();
+                toast('Anda sudah keluar.');
             });
 
-            // Refresh Status
+            // ---------- Status & log ----------
+            function checkStatus(keepLog) {
+                return api('status').then(res => {
+                    if (res.need_login) { expireSession(); return; }
+
+                    const db = $('#chip-db');
+                    db.dataset.s = res.db_connected ? 'ok' : '';
+                    db.textContent = res.db_connected ? 'Database terhubung' : 'Database belum terhubung';
+                    db.title = res.db_message || (res.db_connected ? 'Terhubung ke Neon Postgres' : 'Variabel database belum terdeteksi di Vercel.');
+
+                    const line = (res.output || '').split('\n').find(l => l.includes('Status:')) || '';
+                    if (res.is_attended) setHero('ok', 'Sudah absen hari ini', line.trim());
+                    else setHero('warn', 'Belum absen hari ini', 'Absen otomatis berjalan pukul ' + CRON_TIME + ' WIB, atau kirim sekarang.');
+
+                    const pref = res.preferences || {}, env = res.env || {};
+                    const pick = (a, b, c) => a !== undefined && a !== null ? a : (b !== undefined && b !== null && b !== '' ? b : c);
+                    const v = {
+                        location: pref.user_location || env.location || DEFAULT_LOC.location,
+                        latitude: pick(pref.user_latitude, env.latitude, DEFAULT_LOC.latitude),
+                        longitude: pick(pref.user_longitude, env.longitude, DEFAULT_LOC.longitude),
+                        activity_log: pref.user_activity_log || env.activity_log || '',
+                        lesson_learned: pref.user_lesson_learned || env.lesson_learned || '',
+                        obstacles: pref.user_obstacles || env.obstacles || '',
+                        auto_absen: pick(pref.user_auto_absen, env.auto_absen, true) !== false
+                    };
+                    $('#val-location').textContent = v.location;
+                    $('#val-auto-status').textContent = autoLabel(v.auto_absen);
+                    // Jangan timpa isian yang sedang diedit
+                    if (saved === null || !isDirty()) fillForm(v);
+
+                    if (res.output && !keepLog) $('#log-console').textContent = res.output;
+                }).catch(err => {
+                    if (err.code === 401) return;
+                    const msg = err.output || err.message || 'Gagal terhubung ke API.';
+                    setHero('err', 'Status tidak terbaca', msg);
+                    if (!keepLog) $('#log-console').textContent = msg;
+                });
+            }
+
             $('#btn-refresh-status').addEventListener('click', e => {
                 const b = e.currentTarget;
                 busy(b, true, 'Memeriksa…');
-                checkStatus().finally(() => {
-                    busy(b, false);
-                    toast('Status diperbarui');
-                });
+                checkStatus().finally(() => { busy(b, false); toast('Status diperbarui'); });
             });
-
-            // Refresh Logs
             $('#btn-refresh-logs').addEventListener('click', e => {
                 const b = e.currentTarget;
                 busy(b, true, 'Memuat…');
                 checkStatus().finally(() => busy(b, false));
             });
+            $('#chip-db').addEventListener('click', e => toast(e.currentTarget.title, e.currentTarget.dataset.s === 'ok' ? '' : 'err'));
 
-            // Deteksi GPS
+            // ---------- Lokasi: pencarian (OpenStreetMap Nominatim) & GPS ----------
+            // Pencarian hanya saat Enter/Cari, bukan per ketikan, sesuai kebijakan Nominatim.
+            const NOM = 'https://nominatim.openstreetmap.org/';
+            const locList = $('#loc-list');
+            const locMsg = t => { $('#loc-msg').textContent = t; };
+
+            function applyLocation(name, lat, lng) {
+                $('#input_location').value = name;
+                $('#input_latitude').value = (+lat).toFixed(6);
+                $('#input_longitude').value = (+lng).toFixed(6);
+                syncDirty();
+            }
+
+            function renderResults(items) {
+                locList.innerHTML = '';
+                items.forEach(r => {
+                    const title = r.name || r.display_name.split(',')[0];
+                    const li = document.createElement('li');
+                    li.setAttribute('role', 'option');
+                    li.setAttribute('aria-selected', 'false');
+                    li.tabIndex = 0;
+                    const strong = document.createElement('strong');
+                    strong.textContent = title;
+                    const sub = document.createElement('span');
+                    sub.textContent = r.display_name;
+                    li.append(strong, sub);
+                    const pick = () => {
+                        locList.querySelectorAll('li').forEach(x => x.setAttribute('aria-selected', 'false'));
+                        li.setAttribute('aria-selected', 'true');
+                        applyLocation(title, r.lat, r.lon);
+                        locMsg('Dipilih: ' + title + '. Jangan lupa simpan pengaturan.');
+                    };
+                    li.addEventListener('click', pick);
+                    li.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(); } });
+                    locList.append(li);
+                });
+                locList.hidden = !items.length;
+            }
+
+            async function searchLocation() {
+                const q = $('#loc-q').value.trim();
+                if (q.length < 3) { locMsg('Ketik minimal 3 huruf untuk mencari.'); return; }
+                const btn = $('#btn-loc-search');
+                busy(btn, true, 'Mencari…');
+                try {
+                    const r = await fetch(NOM + 'search?' + new URLSearchParams({
+                        q, format: 'jsonv2', limit: '6', countrycodes: 'id', 'accept-language': 'id'
+                    }));
+                    if (!r.ok) throw new Error(r.status);
+                    const items = await r.json();
+                    renderResults(items);
+                    locMsg(items.length ? items.length + ' hasil ditemukan. Pilih yang sesuai.' : 'Tidak ada hasil. Coba nama kota atau kecamatan.');
+                } catch (e) {
+                    renderResults([]);
+                    locMsg('Pencarian gagal. Periksa koneksi internet lalu coba lagi.');
+                } finally { busy(btn, false); }
+            }
+            $('#btn-loc-search').addEventListener('click', searchLocation);
+            // Enter di kolom cari hanya mencari, tidak menyimpan form
+            $('#loc-q').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); searchLocation(); } });
+
+            const GPS_ERR = {
+                1: 'Izin lokasi ditolak. Aktifkan izin lokasi untuk situs ini di browser.',
+                2: 'Posisi tidak tersedia. Coba lagi di area dengan sinyal lebih baik.',
+                3: 'Waktu pencarian GPS habis. Coba lagi.'
+            };
+
             $('#btn-get-gps').addEventListener('click', () => {
-                if (!navigator.geolocation) {
-                    toast('Browser tidak mendukung geolokasi GPS.', 'err');
-                    return;
-                }
+                if (!navigator.geolocation) { toast('Browser tidak mendukung geolokasi.', 'err'); return; }
                 const b = $('#btn-get-gps');
-                busy(b, true, 'Mencari…');
-                navigator.geolocation.getCurrentPosition(
-                    pos => {
-                        busy(b, false);
-                        $('#input_latitude').value = pos.coords.latitude.toFixed(6);
-                        $('#input_longitude').value = pos.coords.longitude.toFixed(6);
-                        toast('Koordinat GPS berhasil diperoleh!');
-                    },
-                    err => {
-                        busy(b, false);
-                        toast('Gagal mendeteksi GPS: ' + err.message, 'err');
-                    },
-                    { enableHighAccuracy: true, timeout: 8000 }
-                );
+                busy(b, true, 'Mencari posisi…');
+                navigator.geolocation.getCurrentPosition(async pos => {
+                    const { latitude: lat, longitude: lng } = pos.coords;
+                    let name = $('#input_location').value.trim();
+                    try { // nama tempat opsional; koordinat tetap dipakai jika gagal
+                        const r = await fetch(NOM + 'reverse?' + new URLSearchParams({ lat, lon: lng, format: 'jsonv2', zoom: '16', 'accept-language': 'id' }));
+                        if (r.ok) {
+                            const d = await r.json(), a = d.address || {};
+                            name = d.name || a.village || a.suburb || a.city_district || a.city || a.county || (d.display_name || '').split(',')[0] || name;
+                        }
+                    } catch (e) { /* abaikan */ }
+                    applyLocation(name || 'Lokasi saya', lat, lng);
+                    locMsg('Posisi terdeteksi (akurasi sekitar ' + Math.round(pos.coords.accuracy) + ' m). Jangan lupa simpan pengaturan.');
+                    busy(b, false);
+                }, err => {
+                    busy(b, false);
+                    toast(GPS_ERR[err.code] || 'Gagal mendeteksi lokasi.', 'err');
+                }, { enableHighAccuracy: true, timeout: 10000 });
             });
 
-            // Simpan Pengaturan
+            // ---------- Simpan pengaturan ----------
             $('#form-settings').addEventListener('submit', e => {
                 e.preventDefault();
+                const data = getFormData();
+                if (!data) return;
                 const b = $('#btn-save-settings');
                 busy(b, true, 'Menyimpan…');
-                const data = getFormData();
-
-                api('save_settings', {
-                    method: 'POST',
-                    body: JSON.stringify(data)
-                }).then(res => {
-                    toast(res.message || 'Pengaturan berhasil disimpan!');
+                api('save_settings', { method: 'POST', body: JSON.stringify(data) }).then(res => {
+                    saved = JSON.stringify(raw());
                     $('#val-location').textContent = data.location;
-                    $('#val-auto-status').textContent = data.auto_absen ? 'Aktif (08:00 WIB)' : 'Nonaktif';
+                    $('#val-auto-status').textContent = autoLabel(data.auto_absen);
+                    toast((res && res.message) || 'Pengaturan tersimpan.');
                 }).catch(err => {
-                    toast('Gagal menyimpan: ' + (err.message || 'Error server'), 'err');
-                }).finally(() => {
-                    busy(b, false);
-                });
+                    if (err.code !== 401) toast('Gagal menyimpan: ' + err.message, 'err');
+                }).finally(() => { busy(b, false); syncDirty(); });
             });
 
-            // Absen Sekarang (Manual Trigger)
-            $('#btn-run-absen').addEventListener('click', e => {
-                if (!confirm('Kirim presensi sekarang dengan data saat ini?')) return;
+            // ---------- Absen manual & simulasi ----------
+            $('#btn-run-absen').addEventListener('click', async e => {
+                const data = getFormData();
+                if (!data) return;
+                const ok = await ask({
+                    title: 'Kirim presensi sekarang?',
+                    body: 'Lokasi: ' + data.location + ' (' + data.latitude + ', ' + data.longitude + '). Data pada form saat ini yang akan dikirim.',
+                    ok: 'Kirim presensi'
+                });
+                if (!ok) return;
                 const b = e.currentTarget;
                 busy(b, true, 'Mengirim…');
-                const data = getFormData();
-
-                api('trigger', {
-                    method: 'POST',
-                    body: JSON.stringify(data)
-                }).then(res => {
-                    toast(res.message || 'Absen berhasil diproses!');
+                api('trigger', { method: 'POST', body: JSON.stringify(data) }).then(res => {
+                    toast(res.message || 'Absen berhasil diproses.');
                     if (res.output) $('#log-console').textContent = res.output;
                 }).catch(err => {
+                    if (err.code === 401) return;
                     toast(err.message || 'Gagal menjalankan presensi.', 'err');
                     if (err.output) $('#log-console').textContent = err.output;
-                }).finally(() => {
-                    busy(b, false);
-                    checkStatus();
-                });
+                }).finally(() => { busy(b, false); checkStatus(true); });
             });
 
-            // DB Status Click
-            $('#chip-db').addEventListener('click', () => {
-                const msg = $('#chip-db').title;
-                if (msg) toast(msg, $('#chip-db').dataset.s === 'ok' ? '' : 'warn');
-            });
-
-            // Simulasi (Dry Run)
             const dlg = $('#modalDryRun');
             $('#btn-dry-run').addEventListener('click', e => {
+                const data = getFormData();
+                if (!data) return;
                 const b = e.currentTarget;
                 busy(b, true, 'Menyiapkan…');
-                const data = getFormData();
-
-                api('dry_run', {
-                    method: 'POST',
-                    body: JSON.stringify(data)
-                }).then(res => {
+                api('dry_run', { method: 'POST', body: JSON.stringify(data) }).then(res => {
                     $('#dry-run-content').textContent = res.output || 'Tidak ada data.';
                     dlg.showModal();
-                }).catch(() => toast('Gagal mengambil data simulasi.', 'err'))
-                .finally(() => busy(b, false));
+                }).catch(err => {
+                    if (err.code !== 401) toast('Gagal mengambil data simulasi: ' + err.message, 'err');
+                }).finally(() => busy(b, false));
             });
             $('#btn-close-dry').addEventListener('click', () => dlg.close());
-            dlg.addEventListener('click', e => {
-                if (e.target === dlg) dlg.close();
-            });
+            [dlg, dlgC].forEach(d => d.addEventListener('click', e => { if (e.target === d) d.close(); }));
 
-            // Inisialisasi Auth pada load awal
+            // Peringatan jika menutup tab dengan perubahan belum tersimpan
+            window.addEventListener('beforeunload', e => { if (isDirty()) { e.preventDefault(); e.returnValue = ''; } });
+
+            // ---------- Inisialisasi ----------
             try {
-                const saved = localStorage.getItem(AUTH_KEY) || sessionStorage.getItem(AUTH_KEY);
-                if (saved) {
-                    activeAuth = JSON.parse(saved);
-                    showDashboard({ username: activeAuth.username });
-                } else {
-                    showLogin();
-                }
-            } catch(e) {
-                showLogin();
-            }
+                const s = localStorage.getItem(AUTH_KEY) || sessionStorage.getItem(AUTH_KEY);
+                if (s) { activeAuth = JSON.parse(s); showDashboard({ username: activeAuth.username }); }
+                else showLogin();
+            } catch (e) { showLogin(); }
         })();
     </script>
 </body>

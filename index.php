@@ -3,40 +3,49 @@
 /**
  * Auto Absen MagangHub - Local Control Dashboard
  * Minimalis, solid color, tanpa gradasi. Vanilla JS (tanpa jQuery/Bootstrap).
+ *
+ * Opsional: isi DASHBOARD_PASSWORD di .env untuk mengaktifkan login/logout dashboard.
+ * Kosongkan (atau hapus) untuk menonaktifkan login.
  */
+
+session_set_cookie_params(['httponly' => true, 'samesite' => 'Lax']);
+session_start();
 
 $envFile = __DIR__ . '/.env';
 $logFile = __DIR__ . '/absen.log';
 $pyBinary = __DIR__ . '/.venv/Scripts/python.exe';
 $mainScript = __DIR__ . '/main.py';
 
-// Baca field tertentu dari .env tanpa mengekspos kredensial
-function getSafeEnvData($filePath)
+// Baca seluruh pasangan KEY=VALUE dari .env
+function readEnv($filePath)
 {
-    $data = [
-        'clock_in_time'  => '15:00',
-        'location'       => 'Karawang',
-        'activity_log'   => '',
-        'lesson_learned' => '',
-        'obstacles'      => '',
-    ];
-    if (!file_exists($filePath)) return $data;
-    $map = [
-        'CLOCK_IN_TIME' => 'clock_in_time', 'LOCATION' => 'location',
-        'ACTIVITY_LOG' => 'activity_log', 'LESSON_LEARNED' => 'lesson_learned',
-        'OBSTACLES' => 'obstacles',
-    ];
+    $out = [];
+    if (!file_exists($filePath)) return $out;
     foreach (file($filePath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
         $line = trim($line);
         if (strpos($line, '#') === 0 || strpos($line, '=') === false) continue;
         list($key, $val) = explode('=', $line, 2);
-        $key = trim($key);
-        if (isset($map[$key])) $data[$map[$key]] = trim($val, " \t\n\r\0\x0B\"'");
+        $out[trim($key)] = trim($val, " \t\n\r\0\x0B\"'");
     }
-    return $data;
+    return $out;
 }
 
-// Simpan catatan harian ke .env secara aman
+// Hanya field aman yang dikirim ke browser (kredensial tidak ikut)
+function getSafeEnvData($filePath)
+{
+    $e = readEnv($filePath);
+    return [
+        'clock_in_time'  => $e['CLOCK_IN_TIME'] ?? '15:00',
+        'location'       => $e['LOCATION'] ?? 'Karawang',
+        'latitude'       => $e['LATITUDE'] ?? '',
+        'longitude'      => $e['LONGITUDE'] ?? '',
+        'activity_log'   => $e['ACTIVITY_LOG'] ?? '',
+        'lesson_learned' => $e['LESSON_LEARNED'] ?? '',
+        'obstacles'      => $e['OBSTACLES'] ?? '',
+    ];
+}
+
+// Simpan nilai ke .env secara aman
 function updateSafeEnvData($filePath, $updates)
 {
     if (!file_exists($filePath)) return false;
@@ -56,10 +65,39 @@ function updateSafeEnvData($filePath, $updates)
     return file_put_contents($filePath, $content) !== false;
 }
 
+$dashPass = readEnv($envFile)['DASHBOARD_PASSWORD'] ?? '';
+$authOn = $dashPass !== '';
+$authed = !$authOn || !empty($_SESSION['auth']);
+
 // API Handler (AJAX)
 if (isset($_GET['api'])) {
     header('Content-Type: application/json; charset=utf-8');
     $action = $_GET['api'] ?? '';
+
+    if ($action === 'login') {
+        $ok = $authOn && hash_equals($dashPass, (string)($_POST['password'] ?? ''));
+        if ($ok) {
+            session_regenerate_id(true);
+            $_SESSION['auth'] = true;
+        } else {
+            sleep(1); // perlambat tebak-tebakan kata sandi
+        }
+        echo json_encode(['status' => $ok, 'message' => $ok ? '' : 'Kata sandi salah.']);
+        exit;
+    }
+
+    if ($action === 'logout' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $_SESSION = [];
+        session_destroy();
+        echo json_encode(['status' => true]);
+        exit;
+    }
+
+    if (!$authed) {
+        http_response_code(401);
+        echo json_encode(['status' => false, 'message' => 'Sesi berakhir. Silakan masuk kembali.']);
+        exit;
+    }
 
     if ($action === 'status') {
         $env = getSafeEnvData($envFile);
@@ -103,6 +141,26 @@ if (isset($_GET['api'])) {
         exit;
     }
 
+    if ($action === 'save_location') {
+        $name = trim(preg_replace('/\s+/', ' ', $_POST['location'] ?? ''));
+        $lat = $_POST['latitude'] ?? '';
+        $lng = $_POST['longitude'] ?? '';
+        $valid = $name !== '' && mb_strlen($name) <= 120
+            && is_numeric($lat) && is_numeric($lng)
+            && abs((float)$lat) <= 90 && abs((float)$lng) <= 180;
+        $ok = $valid && updateSafeEnvData($envFile, [
+            'LOCATION'  => $name,
+            'LATITUDE'  => (string)(float)$lat,
+            'LONGITUDE' => (string)(float)$lng,
+        ]);
+        echo json_encode([
+            'status'  => $ok,
+            'message' => $ok ? 'Lokasi absen diperbarui.' : ($valid ? 'Gagal menyimpan ke .env' : 'Data lokasi tidak valid.'),
+            'env'     => getSafeEnvData($envFile),
+        ]);
+        exit;
+    }
+
     if ($action === 'get_logs') {
         $lines = [];
         if (file_exists($logFile)) {
@@ -118,6 +176,8 @@ if (isset($_GET['api'])) {
 
 $env = getSafeEnvData($envFile);
 $h = fn ($s) => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
+$locNow = $env['location'] . ($env['latitude'] !== '' && $env['longitude'] !== ''
+    ? ' (' . number_format((float)$env['latitude'], 4) . ', ' . number_format((float)$env['longitude'], 4) . ')' : '');
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -167,6 +227,10 @@ $h = fn ($s) => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
             box-sizing: border-box;
         }
 
+        [hidden] {
+            display: none !important;
+        }
+
         html {
             -webkit-text-size-adjust: 100%;
         }
@@ -189,6 +253,15 @@ $h = fn ($s) => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
             outline-offset: 2px;
         }
 
+        .sr {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+            clip: rect(0 0 0 0);
+            white-space: nowrap;
+        }
+
         /* Top bar */
         .top {
             display: flex;
@@ -196,6 +269,12 @@ $h = fn ($s) => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
             justify-content: space-between;
             gap: 12px;
             margin-bottom: 56px;
+        }
+
+        .top-r {
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .brand {
@@ -322,6 +401,11 @@ $h = fn ($s) => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
             font-size: 15px;
         }
 
+        .btn-sm {
+            padding: 7px 14px;
+            font-size: 13px;
+        }
+
         .btn-ghost {
             background: transparent;
             color: var(--ink);
@@ -375,7 +459,7 @@ $h = fn ($s) => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
         }
 
         textarea,
-        input[type=time] {
+        input:not([type=checkbox]) {
             width: 100%;
             font: inherit;
             color: var(--ink);
@@ -397,12 +481,6 @@ $h = fn ($s) => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
             border-color: var(--ink);
         }
 
-        .grid2 {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 18px;
-        }
-
         .foot {
             display: flex;
             align-items: flex-end;
@@ -414,6 +492,87 @@ $h = fn ($s) => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
         .foot .field {
             margin: 0;
             width: 170px;
+        }
+
+        .foot-r {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 16px;
+        }
+
+        /* Pencarian lokasi */
+        .loc-search {
+            display: flex;
+            gap: 10px;
+        }
+
+        .loc-search input {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .loc-list {
+            list-style: none;
+            margin: 14px 0 0;
+            padding: 0;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .loc-list li {
+            display: grid;
+            gap: 2px;
+            padding: 11px 14px;
+            cursor: pointer;
+            border-top: 1px solid var(--line);
+        }
+
+        .loc-list li:first-child {
+            border-top: 0;
+        }
+
+        .loc-list li span {
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .loc-list li:hover,
+        .loc-list li[aria-selected=true] {
+            background: var(--field);
+        }
+
+        .loc-list li[aria-selected=true] {
+            box-shadow: inset 3px 0 0 var(--ink);
+        }
+
+        .loc-msg {
+            margin: 12px 0 0;
+        }
+
+        /* Login */
+        .login {
+            max-width: 440px;
+            padding-top: 14vh;
+        }
+
+        .login h1 {
+            margin: 28px 0 8px;
+            font-size: 2.25rem;
+            font-weight: 600;
+            letter-spacing: -.035em;
+            line-height: 1.1;
+        }
+
+        .login .panel {
+            margin-top: 24px;
+        }
+
+        .err {
+            min-height: 1.55em;
+            margin: 0 0 10px;
+            color: var(--err);
+            font-size: 14px;
         }
 
         /* Console */
@@ -445,11 +604,14 @@ $h = fn ($s) => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
         }
 
         dialog header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
             padding: 16px 20px;
             font-weight: 600;
+        }
+
+        dialog .dlg-body {
+            margin: 0;
+            padding: 0 20px 4px;
+            color: var(--muted);
         }
 
         dialog .term {
@@ -458,8 +620,14 @@ $h = fn ($s) => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
         }
 
         dialog footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
             padding: 14px 20px;
-            text-align: right;
+        }
+
+        dialog form {
+            margin: 0;
         }
 
         .toast {
@@ -494,9 +662,12 @@ $h = fn ($s) => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
                 margin-bottom: 40px;
             }
 
-            .grid2 {
-                grid-template-columns: 1fr;
-                gap: 0;
+            .chip {
+                display: none;
+            }
+
+            .loc-search {
+                flex-direction: column;
             }
 
             .foot {
@@ -522,234 +693,454 @@ $h = fn ($s) => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
 </head>
 
 <body>
-    <main class="wrap">
-
-        <header class="top">
+    <?php if (!$authed) : ?>
+        <main class="wrap login">
             <div class="brand">Auto Absen <span>MagangHub</span></div>
-            <div class="chip" id="chip-time">Otomatis pukul <?= $h($env['clock_in_time']) ?> WIB</div>
-        </header>
-
-        <section class="hero" aria-live="polite">
-            <p class="date" id="val-date"><?= date('d F Y') ?></p>
-            <h1><i class="dot" id="dot" data-s=""></i><span id="hero-title">Memeriksa status…</span></h1>
-            <p class="detail" id="hero-detail"></p>
-
-            <dl class="meta">
-                <div>
-                    <dt>Lokasi</dt>
-                    <dd id="val-location"><?= $h($env['location']) ?></dd>
-                </div>
-                <div>
-                    <dt>Absen otomatis</dt>
-                    <dd id="val-time"><?= $h($env['clock_in_time']) ?> WIB</dd>
-                </div>
-            </dl>
-
-            <div class="actions">
-                <button type="button" class="btn btn-primary btn-lg" id="btn-run-absen">Absen sekarang</button>
-                <button type="button" class="btn btn-ghost btn-lg" id="btn-dry-run">Simulasi</button>
-                <button type="button" class="btn btn-ghost btn-lg" id="btn-refresh-status">Perbarui status</button>
-            </div>
-        </section>
-
-        <section class="section">
-            <div class="section-head">
-                <h2>Catatan harian</h2>
-                <span class="hint">Disimpan ke .env, dipakai saat absen berjalan</span>
-            </div>
-            <form class="panel" id="form-activity">
+            <h1>Masuk ke dashboard</h1>
+            <p class="detail">Masukkan kata sandi dashboard untuk mengelola presensi.</p>
+            <form class="panel" id="form-login">
                 <div class="field">
-                    <label for="activity_log">Aktivitas hari ini</label>
-                    <textarea id="activity_log" name="activity_log" rows="4" placeholder="Apa yang kamu kerjakan hari ini?"><?= $h($env['activity_log']) ?></textarea>
+                    <label for="pw">Kata sandi</label>
+                    <input type="password" id="pw" name="password" autocomplete="current-password" required autofocus>
                 </div>
-                <div class="field">
-                    <label for="lesson_learned">Yang dipelajari</label>
-                    <textarea id="lesson_learned" name="lesson_learned" rows="3" placeholder="Hal baru yang kamu pelajari"><?= $h($env['lesson_learned']) ?></textarea>
-                </div>
-                <div class="field">
-                    <label for="obstacles">Kendala</label>
-                    <textarea id="obstacles" name="obstacles" rows="3" placeholder="Hambatan yang kamu temui"><?= $h($env['obstacles']) ?></textarea>
-                </div>
-                <div class="foot">
-                    <div class="field">
-                        <label for="clock_in_time">Jam absen otomatis</label>
-                        <input type="time" id="clock_in_time" name="clock_in_time" value="<?= $h($env['clock_in_time']) ?>">
-                    </div>
-                    <button type="submit" class="btn btn-primary" id="btn-save-log" disabled>Simpan catatan</button>
-                </div>
+                <p class="err" id="login-err" role="alert"></p>
+                <button type="submit" class="btn btn-primary btn-lg" id="btn-login" style="width:100%">Masuk</button>
             </form>
-        </section>
-
-        <section class="section">
-            <div class="section-head">
-                <h2>Riwayat eksekusi</h2>
-                <button type="button" class="btn btn-ghost" id="btn-refresh-logs" style="padding:7px 14px">Muat ulang</button>
-            </div>
-            <pre class="term" id="log-console" tabindex="0">Memuat log…</pre>
-            <p class="hint" style="margin:10px 0 0">25 baris terakhir dari absen.log</p>
-        </section>
-    </main>
-
-    <dialog id="modalDryRun">
-        <header>Hasil simulasi absen</header>
-        <pre class="term" id="dry-run-content"></pre>
-        <footer><button type="button" class="btn btn-ghost" id="btn-close-dry">Tutup</button></footer>
-    </dialog>
-
-    <div class="toast" id="toast" role="status"></div>
-
-    <script>
-        (() => {
-            const $ = s => document.querySelector(s);
-            const api = (a, opt) => fetch('index.php?api=' + a, opt).then(r => {
-                if (!r.ok) throw new Error(r.status);
-                return r.json();
-            });
-
-            // Tanggal dalam bahasa Indonesia
-            $('#val-date').textContent = new Intl.DateTimeFormat('id-ID', {
-                weekday: 'long',
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric'
-            }).format(new Date());
-
-            // Toast
-            let toastTimer;
-
-            function toast(msg, type) {
-                const t = $('#toast');
-                t.textContent = msg;
-                t.dataset.t = type || '';
-                t.classList.add('show');
-                clearTimeout(toastTimer);
-                toastTimer = setTimeout(() => t.classList.remove('show'), 3200);
-            }
-
-            // Tombol sibuk / normal
-            function busy(btn, on, label) {
-                if (on) {
-                    btn.dataset.label = btn.textContent;
-                    btn.textContent = label;
-                } else {
-                    btn.textContent = btn.dataset.label;
-                }
-                btn.disabled = on;
-            }
-
-            function setHero(state, title, detail) {
-                $('#dot').dataset.s = state;
-                $('#hero-title').textContent = title;
-                $('#hero-detail').textContent = detail || '';
-            }
-
-            function checkStatus() {
-                return api('status').then(res => {
-                    if (!res.status) throw new Error('status');
-                    const line = (res.output || '').split('\n').find(l => l.includes('Status:')) || '';
-                    if (res.is_attended) setHero('ok', 'Sudah absen hari ini', line.trim());
-                    else setHero('warn', 'Belum absen hari ini', 'Absen otomatis berjalan pukul ' + (res.env.clock_in_time || '15:00') + ' WIB, atau kirim sekarang.');
-                    if (res.env) {
-                        if (res.env.location) $('#val-location').textContent = res.env.location;
-                        if (res.env.clock_in_time) {
-                            $('#val-time').textContent = res.env.clock_in_time + ' WIB';
-                            $('#chip-time').textContent = 'Otomatis pukul ' + res.env.clock_in_time + ' WIB';
-                        }
-                    }
-                }).catch(() => setHero('err', 'Status tidak terbaca', 'Tidak bisa menjalankan main.py. Periksa path Python dan server lokal.'));
-            }
-
-            function fetchLogs() {
-                return api('get_logs').then(res => {
-                    const el = $('#log-console');
-                    el.textContent = res.logs || 'Belum ada log.';
-                    el.scrollTop = el.scrollHeight;
-                }).catch(() => {
-                    $('#log-console').textContent = 'Log tidak bisa dimuat.';
-                });
-            }
-
-            checkStatus();
-            fetchLogs();
-
-            $('#btn-refresh-status').addEventListener('click', e => {
-                const b = e.currentTarget;
-                busy(b, true, 'Memeriksa…');
-                checkStatus().finally(() => {
-                    busy(b, false);
-                    toast('Status diperbarui');
-                });
-            });
-            $('#btn-refresh-logs').addEventListener('click', e => {
-                const b = e.currentTarget;
-                busy(b, true, 'Memuat…');
-                fetchLogs().finally(() => busy(b, false));
-            });
-
-            // Catatan: tombol simpan aktif hanya jika ada perubahan
-            const form = $('#form-activity'),
-                saveBtn = $('#btn-save-log');
-            const snapshot = () => new URLSearchParams(new FormData(form)).toString();
-            let saved = snapshot();
-            form.addEventListener('input', () => {
-                saveBtn.disabled = snapshot() === saved;
-            });
-
-            form.addEventListener('submit', e => {
+        </main>
+        <script>
+            document.getElementById('form-login').addEventListener('submit', e => {
                 e.preventDefault();
-                busy(saveBtn, true, 'Menyimpan…');
-                api('save_log', {
+                const btn = document.getElementById('btn-login'),
+                    err = document.getElementById('login-err');
+                btn.disabled = true;
+                btn.textContent = 'Memeriksa…';
+                err.textContent = '';
+                fetch('index.php?api=login', {
                         method: 'POST',
-                        body: new FormData(form)
+                        body: new FormData(e.target)
                     })
+                    .then(r => r.json())
                     .then(res => {
-                        toast(res.message, res.status ? '' : 'err');
-                        if (res.status) {
-                            saved = snapshot();
-                            checkStatus();
-                        }
+                        if (res.status) return location.reload();
+                        err.textContent = res.message || 'Gagal masuk.';
+                        document.getElementById('pw').select();
                     })
-                    .catch(() => toast('Koneksi ke server gagal.', 'err'))
+                    .catch(() => {
+                        err.textContent = 'Tidak bisa terhubung ke server lokal.';
+                    })
                     .finally(() => {
-                        busy(saveBtn, false);
-                        saveBtn.disabled = snapshot() === saved;
+                        btn.disabled = false;
+                        btn.textContent = 'Masuk';
                     });
             });
+        </script>
+    <?php else : ?>
+        <main class="wrap">
 
-            // Absen manual
-            $('#btn-run-absen').addEventListener('click', e => {
-                if (!confirm('Kirim presensi sekarang?')) return;
-                const b = e.currentTarget;
-                busy(b, true, 'Mengirim…');
-                api('absen')
-                    .then(res => toast(res.message, res.status ? '' : 'err'))
-                    .catch(() => toast('Gagal menjalankan skrip.', 'err'))
-                    .finally(() => {
+            <header class="top">
+                <div class="brand">Auto Absen <span>MagangHub</span></div>
+                <div class="top-r">
+                    <div class="chip" id="chip-time">Otomatis pukul <?= $h($env['clock_in_time']) ?> WIB</div>
+                    <?php if ($authOn) : ?>
+                        <button type="button" class="btn btn-ghost btn-sm" id="btn-logout">Keluar</button>
+                    <?php endif; ?>
+                </div>
+            </header>
+
+            <section class="hero" aria-live="polite">
+                <p class="date" id="val-date"><?= date('d F Y') ?></p>
+                <h1><i class="dot" id="dot" data-s=""></i><span id="hero-title">Memeriksa status…</span></h1>
+                <p class="detail" id="hero-detail"></p>
+
+                <dl class="meta">
+                    <div>
+                        <dt>Lokasi</dt>
+                        <dd id="val-location"><?= $h($env['location']) ?></dd>
+                    </div>
+                    <div>
+                        <dt>Absen otomatis</dt>
+                        <dd id="val-time"><?= $h($env['clock_in_time']) ?> WIB</dd>
+                    </div>
+                </dl>
+
+                <div class="actions">
+                    <button type="button" class="btn btn-primary btn-lg" id="btn-run-absen">Absen sekarang</button>
+                    <button type="button" class="btn btn-ghost btn-lg" id="btn-dry-run">Simulasi</button>
+                    <button type="button" class="btn btn-ghost btn-lg" id="btn-refresh-status">Perbarui status</button>
+                </div>
+            </section>
+
+            <section class="section">
+                <div class="section-head">
+                    <h2>Lokasi absen</h2>
+                    <span class="hint" id="loc-current">Saat ini: <?= $h($locNow) ?></span>
+                </div>
+                <div class="panel">
+                    <form class="loc-search" id="form-loc" role="search">
+                        <label for="loc-q" class="sr">Cari lokasi</label>
+                        <input type="search" id="loc-q" placeholder="Nama tempat atau alamat, misalnya Karawang Barat" autocomplete="off" maxlength="120">
+                        <button type="submit" class="btn btn-ghost" id="btn-loc-search">Cari</button>
+                    </form>
+                    <ul class="loc-list" id="loc-list" role="listbox" aria-label="Hasil pencarian lokasi" hidden></ul>
+                    <p class="hint loc-msg" id="loc-msg" aria-live="polite">Tekan Enter atau Cari, lalu pilih hasil yang sesuai.</p>
+                    <div class="foot-r">
+                        <button type="button" class="btn btn-primary" id="btn-loc-save" disabled>Gunakan lokasi ini</button>
+                    </div>
+                </div>
+            </section>
+
+            <section class="section">
+                <div class="section-head">
+                    <h2>Catatan harian</h2>
+                    <span class="hint">Disimpan ke .env, dipakai saat absen berjalan</span>
+                </div>
+                <form class="panel" id="form-activity">
+                    <div class="field">
+                        <label for="activity_log">Aktivitas hari ini</label>
+                        <textarea id="activity_log" name="activity_log" rows="4" placeholder="Apa yang kamu kerjakan hari ini?"><?= $h($env['activity_log']) ?></textarea>
+                    </div>
+                    <div class="field">
+                        <label for="lesson_learned">Yang dipelajari</label>
+                        <textarea id="lesson_learned" name="lesson_learned" rows="3" placeholder="Hal baru yang kamu pelajari"><?= $h($env['lesson_learned']) ?></textarea>
+                    </div>
+                    <div class="field">
+                        <label for="obstacles">Kendala</label>
+                        <textarea id="obstacles" name="obstacles" rows="3" placeholder="Hambatan yang kamu temui"><?= $h($env['obstacles']) ?></textarea>
+                    </div>
+                    <div class="foot">
+                        <div class="field">
+                            <label for="clock_in_time">Jam absen otomatis</label>
+                            <input type="time" id="clock_in_time" name="clock_in_time" value="<?= $h($env['clock_in_time']) ?>">
+                        </div>
+                        <button type="submit" class="btn btn-primary" id="btn-save-log" disabled>Simpan catatan</button>
+                    </div>
+                </form>
+            </section>
+
+            <section class="section">
+                <div class="section-head">
+                    <h2>Riwayat eksekusi</h2>
+                    <button type="button" class="btn btn-ghost btn-sm" id="btn-refresh-logs">Muat ulang</button>
+                </div>
+                <pre class="term" id="log-console" tabindex="0">Memuat log…</pre>
+                <p class="hint" style="margin:10px 0 0">25 baris terakhir dari absen.log</p>
+            </section>
+        </main>
+
+        <dialog id="modalDryRun">
+            <header>Hasil simulasi absen</header>
+            <pre class="term" id="dry-run-content"></pre>
+            <footer><button type="button" class="btn btn-ghost" id="btn-close-dry">Tutup</button></footer>
+        </dialog>
+
+        <dialog id="dlgConfirm">
+            <form method="dialog">
+                <header>Kirim presensi sekarang?</header>
+                <p class="dlg-body">Presensi dikirim ke MagangHub dengan lokasi dan catatan yang tersimpan saat ini.</p>
+                <footer>
+                    <button type="submit" value="cancel" class="btn btn-ghost">Batal</button>
+                    <button type="submit" value="ok" class="btn btn-primary">Kirim presensi</button>
+                </footer>
+            </form>
+        </dialog>
+
+        <div class="toast" id="toast" role="status"></div>
+
+        <script>
+            (() => {
+                const $ = s => document.querySelector(s);
+                const api = (a, opt) => fetch('index.php?api=' + a, opt).then(r => {
+                    if (r.status === 401) {
+                        location.reload();
+                        throw new Error('401');
+                    }
+                    if (!r.ok) throw new Error(r.status);
+                    return r.json();
+                });
+
+                // Tanggal dalam bahasa Indonesia
+                $('#val-date').textContent = new Intl.DateTimeFormat('id-ID', {
+                    weekday: 'long',
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric'
+                }).format(new Date());
+
+                // Toast
+                let toastTimer;
+
+                function toast(msg, type) {
+                    const t = $('#toast');
+                    t.textContent = msg;
+                    t.dataset.t = type || '';
+                    t.classList.add('show');
+                    clearTimeout(toastTimer);
+                    toastTimer = setTimeout(() => t.classList.remove('show'), 3200);
+                }
+
+                // Tombol sibuk / normal
+                function busy(btn, on, label) {
+                    if (on) {
+                        btn.dataset.label = btn.textContent;
+                        btn.textContent = label;
+                    } else {
+                        btn.textContent = btn.dataset.label;
+                    }
+                    btn.disabled = on;
+                }
+
+                function setHero(state, title, detail) {
+                    $('#dot').dataset.s = state;
+                    $('#hero-title').textContent = title;
+                    $('#hero-detail').textContent = detail || '';
+                }
+
+                // Tampilkan lokasi & jam dari data .env
+                function applyEnv(env) {
+                    if (!env) return;
+                    if (env.location) {
+                        $('#val-location').textContent = env.location;
+                        const coords = env.latitude && env.longitude ? ' (' + (+env.latitude).toFixed(4) + ', ' + (+env.longitude).toFixed(4) + ')' : '';
+                        $('#loc-current').textContent = 'Saat ini: ' + env.location + coords;
+                    }
+                    if (env.clock_in_time) {
+                        $('#val-time').textContent = env.clock_in_time + ' WIB';
+                        $('#chip-time').textContent = 'Otomatis pukul ' + env.clock_in_time + ' WIB';
+                    }
+                }
+
+                function checkStatus() {
+                    return api('status').then(res => {
+                        if (!res.status) throw new Error('status');
+                        const line = (res.output || '').split('\n').find(l => l.includes('Status:')) || '';
+                        if (res.is_attended) setHero('ok', 'Sudah absen hari ini', line.trim());
+                        else setHero('warn', 'Belum absen hari ini', 'Absen otomatis berjalan pukul ' + (res.env.clock_in_time || '15:00') + ' WIB, atau kirim sekarang.');
+                        applyEnv(res.env);
+                    }).catch(err => {
+                        if (err.message !== '401') setHero('err', 'Status tidak terbaca', 'Tidak bisa menjalankan main.py. Periksa path Python dan server lokal.');
+                    });
+                }
+
+                function fetchLogs() {
+                    return api('get_logs').then(res => {
+                        const el = $('#log-console');
+                        el.textContent = res.logs || 'Belum ada log.';
+                        el.scrollTop = el.scrollHeight;
+                    }).catch(() => {
+                        $('#log-console').textContent = 'Log tidak bisa dimuat.';
+                    });
+                }
+
+                checkStatus();
+                fetchLogs();
+
+                $('#btn-refresh-status').addEventListener('click', e => {
+                    const b = e.currentTarget;
+                    busy(b, true, 'Memeriksa…');
+                    checkStatus().finally(() => {
                         busy(b, false);
-                        checkStatus();
-                        fetchLogs();
+                        toast('Status diperbarui');
                     });
-            });
+                });
+                $('#btn-refresh-logs').addEventListener('click', e => {
+                    const b = e.currentTarget;
+                    busy(b, true, 'Memuat…');
+                    fetchLogs().finally(() => busy(b, false));
+                });
 
-            // Simulasi
-            const dlg = $('#modalDryRun');
-            $('#btn-dry-run').addEventListener('click', e => {
-                const b = e.currentTarget;
-                busy(b, true, 'Menyiapkan…');
-                api('dry_run')
-                    .then(res => {
-                        $('#dry-run-content').textContent = res.output || 'Tidak ada data.';
-                        dlg.showModal();
-                    })
-                    .catch(() => toast('Gagal mengambil data simulasi.', 'err'))
-                    .finally(() => busy(b, false));
-            });
-            $('#btn-close-dry').addEventListener('click', () => dlg.close());
-            dlg.addEventListener('click', e => {
-                if (e.target === dlg) dlg.close();
-            });
-        })();
-    </script>
+                // Keluar (hanya ada jika login aktif)
+                const logoutBtn = $('#btn-logout');
+                if (logoutBtn) logoutBtn.addEventListener('click', () => {
+                    busy(logoutBtn, true, 'Keluar…');
+                    fetch('index.php?api=logout', {
+                        method: 'POST'
+                    }).finally(() => location.reload());
+                });
+
+                // ---------- Pencarian lokasi (OpenStreetMap Nominatim) ----------
+                // Pencarian hanya dijalankan saat Enter/Cari (bukan saat mengetik), sesuai kebijakan Nominatim.
+                const locForm = $('#form-loc'),
+                    locList = $('#loc-list'),
+                    locSave = $('#btn-loc-save');
+                let picked = null;
+                const locMsg = t => {
+                    $('#loc-msg').textContent = t;
+                };
+
+                function renderResults(items) {
+                    locList.innerHTML = '';
+                    picked = null;
+                    locSave.disabled = true;
+                    items.forEach(r => {
+                        const title = r.name || r.display_name.split(',')[0];
+                        const li = document.createElement('li');
+                        li.setAttribute('role', 'option');
+                        li.setAttribute('aria-selected', 'false');
+                        li.tabIndex = 0;
+                        const strong = document.createElement('strong');
+                        strong.textContent = title;
+                        const sub = document.createElement('span');
+                        sub.textContent = r.display_name;
+                        li.append(strong, sub);
+                        const pick = () => {
+                            locList.querySelectorAll('li').forEach(x => x.setAttribute('aria-selected', 'false'));
+                            li.setAttribute('aria-selected', 'true');
+                            picked = {
+                                location: title,
+                                latitude: r.lat,
+                                longitude: r.lon
+                            };
+                            locSave.disabled = false;
+                            locMsg('Dipilih: ' + title + '. Klik "Gunakan lokasi ini" untuk menyimpan.');
+                        };
+                        li.addEventListener('click', pick);
+                        li.addEventListener('keydown', e => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                pick();
+                            }
+                        });
+                        locList.append(li);
+                    });
+                    locList.hidden = !items.length;
+                }
+
+                locForm.addEventListener('submit', async e => {
+                    e.preventDefault();
+                    const q = $('#loc-q').value.trim();
+                    if (q.length < 3) {
+                        locMsg('Ketik minimal 3 huruf untuk mencari.');
+                        return;
+                    }
+                    const btn = $('#btn-loc-search');
+                    busy(btn, true, 'Mencari…');
+                    try {
+                        const r = await fetch('https://nominatim.openstreetmap.org/search?' + new URLSearchParams({
+                            q,
+                            format: 'jsonv2',
+                            limit: '6',
+                            countrycodes: 'id',
+                            'accept-language': 'id'
+                        }));
+                        if (!r.ok) throw new Error(r.status);
+                        const items = await r.json();
+                        renderResults(items);
+                        locMsg(items.length ? items.length + ' hasil ditemukan. Pilih yang sesuai.' : 'Tidak ada hasil. Coba nama kota atau kecamatan.');
+                    } catch (err) {
+                        renderResults([]);
+                        locMsg('Pencarian gagal. Periksa koneksi internet lalu coba lagi.');
+                    } finally {
+                        busy(btn, false);
+                    }
+                });
+
+                locSave.addEventListener('click', () => {
+                    if (!picked) return;
+                    busy(locSave, true, 'Menyimpan…');
+                    const body = new FormData();
+                    Object.entries(picked).forEach(([k, v]) => body.append(k, v));
+                    api('save_location', {
+                            method: 'POST',
+                            body
+                        })
+                        .then(res => {
+                            toast(res.message, res.status ? '' : 'err');
+                            if (res.status) {
+                                applyEnv(res.env);
+                                renderResults([]);
+                                $('#loc-q').value = '';
+                                locMsg('Lokasi tersimpan. Cari lagi jika ingin mengganti.');
+                            }
+                        })
+                        .catch(err => {
+                            if (err.message !== '401') toast('Koneksi ke server gagal.', 'err');
+                        })
+                        .finally(() => {
+                            busy(locSave, false);
+                            locSave.disabled = !picked;
+                        });
+                });
+
+                // ---------- Catatan harian ----------
+                const form = $('#form-activity'),
+                    saveBtn = $('#btn-save-log');
+                const snapshot = () => new URLSearchParams(new FormData(form)).toString();
+                let saved = snapshot();
+                form.addEventListener('input', () => {
+                    saveBtn.disabled = snapshot() === saved;
+                });
+
+                form.addEventListener('submit', e => {
+                    e.preventDefault();
+                    busy(saveBtn, true, 'Menyimpan…');
+                    api('save_log', {
+                            method: 'POST',
+                            body: new FormData(form)
+                        })
+                        .then(res => {
+                            toast(res.message, res.status ? '' : 'err');
+                            if (res.status) {
+                                saved = snapshot();
+                                checkStatus();
+                            }
+                        })
+                        .catch(err => {
+                            if (err.message !== '401') toast('Koneksi ke server gagal.', 'err');
+                        })
+                        .finally(() => {
+                            busy(saveBtn, false);
+                            saveBtn.disabled = snapshot() === saved;
+                        });
+                });
+
+                // ---------- Absen manual (dengan dialog konfirmasi) ----------
+                const dlgC = $('#dlgConfirm');
+                const confirmAbsen = () => new Promise(resolve => {
+                    dlgC.returnValue = '';
+                    dlgC.addEventListener('close', () => resolve(dlgC.returnValue === 'ok'), {
+                        once: true
+                    });
+                    dlgC.showModal();
+                });
+
+                $('#btn-run-absen').addEventListener('click', async e => {
+                    if (!(await confirmAbsen())) return;
+                    const b = e.currentTarget;
+                    busy(b, true, 'Mengirim…');
+                    api('absen')
+                        .then(res => toast(res.message, res.status ? '' : 'err'))
+                        .catch(err => {
+                            if (err.message !== '401') toast('Gagal menjalankan skrip.', 'err');
+                        })
+                        .finally(() => {
+                            busy(b, false);
+                            checkStatus();
+                            fetchLogs();
+                        });
+                });
+
+                // ---------- Simulasi ----------
+                const dlg = $('#modalDryRun');
+                $('#btn-dry-run').addEventListener('click', e => {
+                    const b = e.currentTarget;
+                    busy(b, true, 'Menyiapkan…');
+                    api('dry_run')
+                        .then(res => {
+                            $('#dry-run-content').textContent = res.output || 'Tidak ada data.';
+                            dlg.showModal();
+                        })
+                        .catch(err => {
+                            if (err.message !== '401') toast('Gagal mengambil data simulasi.', 'err');
+                        })
+                        .finally(() => busy(b, false));
+                });
+                $('#btn-close-dry').addEventListener('click', () => dlg.close());
+                [dlg, dlgC].forEach(d => d.addEventListener('click', e => {
+                    if (e.target === d) d.close();
+                }));
+            })();
+        </script>
+    <?php endif; ?>
 </body>
 
 </html>
