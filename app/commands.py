@@ -90,21 +90,28 @@ def skip_reason() -> str | None:
     return None
 
 
-def validate_env():
-    """Return True if required env vars are set, else log error."""
+def validate_env(svc: AttendanceService | None = None) -> bool:
+    """Return True if required credentials and notes are set, else log error."""
     missing = []
-    if not settings.siapkerja_username:
+    user = getattr(svc, "_username", None) or settings.siapkerja_username
+    pwd = getattr(svc, "_password", None) or settings.siapkerja_password
+    act = getattr(svc, "_activity_log", None) or settings.activity_log
+    les = getattr(svc, "_lesson_learned", None) or settings.lesson_learned
+    obs = getattr(svc, "_obstacles", None) or settings.obstacles
+
+    if not user:
         missing.append("SIAPKERJA_USERNAME")
-    if not settings.siapkerja_password:
+    if not pwd:
         missing.append("SIAPKERJA_PASSWORD")
-    if not settings.activity_log:
+    if not act:
         missing.append("ACTIVITY_LOG")
-    if not settings.lesson_learned:
+    if not les:
         missing.append("LESSON_LEARNED")
-    if not settings.obstacles:
+    if not obs:
         missing.append("OBSTACLES")
+
     if missing:
-        log(f"[FAIL] Variabel berikut wajib diisi di .env: {', '.join(missing)}")
+        log(f"[FAIL] Variabel/data berikut wajib diisi: {', '.join(missing)}")
         return False
     return True
 
@@ -112,7 +119,7 @@ def validate_env():
 @network_guard
 def cmd_absen(svc: AttendanceService) -> int:
     """Send attendance for today. Return 0 on success, 1 on failure."""
-    if not validate_env():
+    if not validate_env(svc):
         notify("[FAIL] Konfigurasi tidak lengkap. Cek absen.log untuk detail.")
         return 1
     unknown = invalid_days()

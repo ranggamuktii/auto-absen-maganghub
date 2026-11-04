@@ -8,6 +8,8 @@ from urllib.parse import urlparse, unquote
 
 import pg8000.dbapi
 
+from app.crypto import encrypt_password, decrypt_password
+
 
 def get_db_url() -> str:
     """Get Postgres database URL from environment with fallback detection."""
@@ -150,10 +152,12 @@ def save_or_update_user(
     obstacles: str = "",
     auto_absen: bool = True,
 ) -> bool:
-    """Save or update user settings in the database."""
+    """Save or update user settings with AES-256 encrypted password."""
     conn = get_connection()
     if not conn:
         return False
+
+    stored_password = encrypt_password(password)
 
     try:
         cur = conn.cursor()
@@ -178,7 +182,7 @@ def save_or_update_user(
             """,
             (
                 username,
-                password,
+                stored_password,
                 location,
                 latitude,
                 longitude,
@@ -199,7 +203,7 @@ def save_or_update_user(
 
 
 def get_user(username: str) -> Optional[Dict[str, Any]]:
-    """Retrieve user settings by username."""
+    """Retrieve user settings with decrypted password."""
     conn = get_connection()
     if not conn:
         return None
@@ -223,13 +227,15 @@ def get_user(username: str) -> Optional[Dict[str, Any]]:
         if not row:
             return None
 
+        raw_pwd = decrypt_password(row[2])
+
         return {
             "user_id": row[0],
             "user_username": row[1],
-            "user_password": row[2],
+            "user_password": raw_pwd,
             "user_location": row[3],
-            "user_latitude": float(row[4]) if row[4] is not None else -6.208800,
-            "user_longitude": float(row[5]) if row[5] is not None else 106.845600,
+            "user_latitude": float(row[4]) if row[4] is not None else -6.370891,
+            "user_longitude": float(row[5]) if row[5] is not None else 107.272352,
             "user_activity_log": row[6] or "",
             "user_lesson_learned": row[7] or "",
             "user_obstacles": row[8] or "",
@@ -246,7 +252,7 @@ def get_user(username: str) -> Optional[Dict[str, Any]]:
 
 
 def get_active_auto_absen_users() -> List[Dict[str, Any]]:
-    """Get all users who have enabled auto-absen."""
+    """Get all users who have enabled auto-absen with decrypted passwords."""
     conn = get_connection()
     if not conn:
         return []
@@ -266,13 +272,14 @@ def get_active_auto_absen_users() -> List[Dict[str, Any]]:
         cur.close()
         users = []
         for row in rows:
+            raw_pwd = decrypt_password(row[2])
             users.append({
                 "user_id": row[0],
                 "user_username": row[1],
-                "user_password": row[2],
+                "user_password": raw_pwd,
                 "user_location": row[3],
-                "user_latitude": float(row[4]) if row[4] is not None else -6.208800,
-                "user_longitude": float(row[5]) if row[5] is not None else 106.845600,
+                "user_latitude": float(row[4]) if row[4] is not None else -6.370891,
+                "user_longitude": float(row[5]) if row[5] is not None else 107.272352,
                 "user_activity_log": row[6] or "",
                 "user_lesson_learned": row[7] or "",
                 "user_obstacles": row[8] or "",
@@ -324,5 +331,44 @@ def record_attendance_result(
     except Exception as e:
         print(f"[DB] record_attendance_result error: {e}")
         return False
+    finally:
+        conn.close()
+
+
+def get_recent_logs(username: str, limit: int = 15) -> List[Dict[str, Any]]:
+    """Get recent attendance audit logs for traceability."""
+    conn = get_connection()
+    if not conn:
+        return []
+
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT log_id, user_username, log_date, log_status, log_message, log_created_at
+            FROM tb_attendance_log
+            WHERE user_username = %s
+            ORDER BY log_id DESC
+            LIMIT %s;
+            """,
+            (username, limit),
+        )
+        rows = cur.fetchall()
+        cur.close()
+        logs = []
+        for r in rows:
+            created_str = str(r[5]) if r[5] else ""
+            logs.append({
+                "log_id": r[0],
+                "username": r[1],
+                "date": str(r[2]),
+                "status": r[3],
+                "message": r[4] or "",
+                "created_at": created_str,
+            })
+        return logs
+    except Exception as e:
+        print(f"[DB] get_recent_logs error: {e}")
+        return []
     finally:
         conn.close()

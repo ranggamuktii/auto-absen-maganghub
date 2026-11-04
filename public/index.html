@@ -216,6 +216,23 @@
         .toast[data-t="err"] { background: var(--err); color: #fff; }
         .toast[data-t="err"] .ic { color: #fff; }
 
+        /* Traceability Audit List */
+        .audit-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+        .audit-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; font-size: 13px; }
+        .audit-info { display: flex; align-items: center; gap: 10px; min-width: 0; }
+        .audit-badge { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 6px; text-transform: uppercase; letter-spacing: .04em; }
+        .badge-ok { background: #ECFDF3; color: #027A48; border: 1px solid #A6F4C5; }
+        .badge-warn { background: #FFFAEB; color: #B54708; border: 1px solid #FEDF89; }
+        .badge-err { background: #FEF3F2; color: #B42318; border: 1px solid #FECDCA; }
+        @media (prefers-color-scheme: dark) {
+            .badge-ok { background: #053321; color: #75E0A7; border-color: #085D3A; }
+            .badge-warn { background: #3E2405; color: #FDB022; border-color: #5D370A; }
+            .badge-err { background: #371410; color: #FDA29B; border-color: #551D18; }
+        }
+        .audit-ts { color: var(--muted); font-size: 12px; white-space: nowrap; }
+        .audit-msg { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink); font-weight: 500; }
+
+
         @media (max-width: 640px) {
             .who { display: none; }
             .acct { padding-right: 4px; }
@@ -435,6 +452,7 @@
                     <h2><span class="tile"><svg class="ic"><use href="#i-term"/></svg></span>Riwayat dan log eksekusi</h2>
                     <button type="button" class="btn btn-ghost btn-sm" id="btn-refresh-logs"><svg class="ic"><use href="#i-refresh"/></svg>Muat ulang</button>
                 </div>
+                <div id="audit-table-box"></div>
                 <div class="termbox">
                     <div class="term-head">
                         <span><svg class="ic"><use href="#i-term"/></svg>Respons terbaru dari API</span>
@@ -749,12 +767,46 @@
                     if (saved === null || !isDirty()) fillForm(v);
 
                     if (res.output && !keepLog) renderLog(res.output);
+                    loadAuditLogs();
                 }).catch(err => {
                     if (err.code === 401) return;
                     const msg = err.output || err.message || 'Gagal terhubung ke API.';
                     setHero('err', 'Status tidak terbaca', msg);
                     if (!keepLog) renderLog(msg);
                 });
+            }
+
+            async function loadAuditLogs() {
+                const box = $('#audit-table-box');
+                if (!box) return;
+                try {
+                    const res = await api('logs');
+                    if (!res || !res.logs || !res.logs.length) {
+                        box.innerHTML = '';
+                        return;
+                    }
+                    box.innerHTML = '<div class="audit-list"></div>';
+                    const list = box.querySelector('.audit-list');
+                    res.logs.slice(0, 5).forEach(l => {
+                        const item = el('div', 'audit-item');
+                        const isOk = l.status === 'SUCCESS' || /berhasil|success/i.test(l.message);
+                        const isWarn = /sudah absen|dilewati/i.test(l.message);
+                        const bClass = isOk ? 'badge-ok' : (isWarn ? 'badge-warn' : 'badge-err');
+                        const bText = isOk ? 'Berhasil' : (isWarn ? 'Dilewati' : 'Gagal');
+
+                        const left = el('div', 'audit-info');
+                        const b = el('span', 'audit-badge ' + bClass, bText);
+                        const cleanMsg = (l.message || '').split('\n').filter(Boolean)[0] || 'Eksekusi selesai';
+                        const msg = el('span', 'audit-msg', cleanMsg);
+                        msg.title = l.message;
+                        left.append(b, msg);
+
+                        const ts = (l.created_at || l.date || '').replace('T', ' ').slice(0, 16);
+                        const right = el('span', 'audit-ts', ts);
+                        item.append(left, right);
+                        list.append(item);
+                    });
+                } catch (e) { /* abaikan jika belum ada log */ }
             }
 
             $('#btn-refresh-status').addEventListener('click', e => {

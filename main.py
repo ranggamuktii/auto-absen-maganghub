@@ -490,7 +490,25 @@ def app(environ, start_response):
         start_response("200 OK", [("Content-Type", "application/json; charset=utf-8")])
         return [json.dumps(res_data, ensure_ascii=False, indent=2).encode("utf-8")]
 
-    # 8. Serve static HTML for root
+    # 8. Traceability Audit Logs Endpoint (/api/logs)
+    if path == "/api/logs":
+        user, pwd = _get_credentials(environ)
+        if not user or not pwd:
+            start_response("200 OK", [("Content-Type", "application/json; charset=utf-8")])
+            return [json.dumps({"status": False, "logs": [], "message": "Belum terautentikasi."}).encode("utf-8")]
+
+        logs = []
+        try:
+            from app.db import get_recent_logs, get_db_url
+            if get_db_url():
+                logs = get_recent_logs(user, limit=15)
+        except Exception as e:
+            print(f"[DB] Error loading audit logs: {e}")
+
+        start_response("200 OK", [("Content-Type", "application/json; charset=utf-8")])
+        return [json.dumps({"status": True, "logs": logs}, ensure_ascii=False, indent=2).encode("utf-8")]
+
+    # 9. Serve static HTML for root
     html_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "public", "index.html")
     if os.path.exists(html_file):
         with open(html_file, "rb") as f:
