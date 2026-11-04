@@ -253,6 +253,9 @@
             margin-bottom: 6px;
         }
 
+        input[type=text],
+        input[type=email],
+        input[type=password],
         textarea,
         input[type=time] {
             width: 100%;
@@ -261,7 +264,7 @@
             background: var(--field);
             border: 1px solid var(--line);
             border-radius: 10px;
-            padding: 11px 13px;
+            padding: 12px 14px;
         }
 
         textarea {
@@ -270,10 +273,47 @@
             line-height: 1.6;
         }
 
-        textarea:focus,
-        input:focus {
+        input:focus,
+        textarea:focus {
             outline: none;
             border-color: var(--ink);
+        }
+
+        .input-wrap {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-wrap input {
+            padding-right: 44px;
+        }
+
+        .toggle-pwd {
+            position: absolute;
+            right: 12px;
+            background: none;
+            border: none;
+            color: var(--muted);
+            cursor: pointer;
+            font-size: 13px;
+            padding: 4px;
+        }
+
+        .check-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 18px 0 24px;
+            font-size: 14px;
+            color: var(--muted);
+            cursor: pointer;
+        }
+
+        .check-group input[type=checkbox] {
+            width: 17px;
+            height: 17px;
+            cursor: pointer;
         }
 
         .foot {
@@ -363,6 +403,56 @@
             color: #fff;
         }
 
+        /* Login Card */
+        .login-box {
+            max-width: 440px;
+            margin: 40px auto 0;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .login-header h1 {
+            font-size: 26px;
+            font-weight: 700;
+            margin: 0 0 8px;
+            letter-spacing: -.02em;
+        }
+
+        .login-header p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .suggestion-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .pill {
+            font-size: 12px;
+            padding: 4px 10px;
+            background: var(--field);
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            cursor: pointer;
+            color: var(--muted);
+        }
+
+        .pill:hover {
+            color: var(--ink);
+            border-color: var(--ink);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
         @media (max-width:600px) {
             .top {
                 margin-bottom: 40px;
@@ -381,84 +471,119 @@
                 width: 100%;
             }
         }
-
-        @media (prefers-reduced-motion: reduce) {
-            * {
-                transition: none !important;
-            }
-        }
     </style>
 </head>
 
 <body>
     <main class="wrap">
 
-        <header class="top">
-            <div class="brand">Auto Absen <span>MagangHub</span></div>
-            <div class="chip" id="chip-time">Otomatis pukul 15:00 WIB</div>
-        </header>
-
-        <section class="hero" aria-live="polite">
-            <p class="date" id="val-date">Memuat tanggal…</p>
-            <h1><i class="dot" id="dot" data-s=""></i><span id="hero-title">Memeriksa status…</span></h1>
-            <p class="detail" id="hero-detail"></p>
-
-            <dl class="meta">
-                <div>
-                    <dt>Lokasi</dt>
-                    <dd id="val-location">-</dd>
-                </div>
-                <div>
-                    <dt>Absen otomatis</dt>
-                    <dd id="val-time">15:00 WIB</dd>
-                </div>
-            </dl>
-
-            <div class="actions">
-                <button type="button" class="btn btn-primary btn-lg" id="btn-run-absen">Absen sekarang</button>
-                <button type="button" class="btn btn-ghost btn-lg" id="btn-dry-run">Simulasi</button>
-                <button type="button" class="btn btn-ghost btn-lg" id="btn-refresh-status">Perbarui status</button>
+        <!-- VIEW 1: LOGIN SCREEN -->
+        <div id="view-login" class="login-box">
+            <div class="login-header">
+                <div class="brand mb-2">Auto Absen <span>MagangHub</span></div>
+                <h1>Masuk Akun Kemnaker</h1>
+                <p>Gunakan akun SIAPkerja Anda untuk mengakses panel dan presensi.</p>
             </div>
-        </section>
 
-        <section class="section">
-            <div class="section-head">
-                <h2>Catatan harian</h2>
-                <span class="hint">Disinkronkan dari Environment Variables Vercel</span>
-            </div>
-            <form class="panel" id="form-activity">
+            <form class="panel" id="form-login" autocomplete="on">
                 <div class="field">
-                    <label for="activity_log">Aktivitas hari ini</label>
-                    <textarea id="activity_log" name="activity_log" rows="4" placeholder="Apa yang kamu kerjakan hari ini?"></textarea>
+                    <label for="login_username">Email / Username Kemnaker</label>
+                    <input type="text" id="login_username" name="username" placeholder="nama@email.com" required autocomplete="username" list="user-suggestions">
+                    <datalist id="user-suggestions"></datalist>
+                    <div class="suggestion-pills" id="pill-container"></div>
                 </div>
+
                 <div class="field">
-                    <label for="lesson_learned">Yang dipelajari</label>
-                    <textarea id="lesson_learned" name="lesson_learned" rows="3" placeholder="Hal baru yang kamu pelajari"></textarea>
-                </div>
-                <div class="field">
-                    <label for="obstacles">Kendala</label>
-                    <textarea id="obstacles" name="obstacles" rows="3" placeholder="Hambatan yang kamu temui"></textarea>
-                </div>
-                <div class="foot">
-                    <div class="field">
-                        <label for="clock_in_time">Jam absen otomatis</label>
-                        <input type="time" id="clock_in_time" name="clock_in_time" value="15:00">
+                    <label for="login_password">Password</label>
+                    <div class="input-wrap">
+                        <input type="password" id="login_password" name="password" placeholder="Password akun Kemnaker" required autocomplete="current-password">
+                        <button type="button" class="toggle-pwd" id="btn-toggle-pwd">Lihat</button>
                     </div>
-                    <button type="submit" class="btn btn-primary" id="btn-save-log">Simpan catatan</button>
                 </div>
-            </form>
-        </section>
 
-        <section class="section">
-            <div class="section-head">
-                <h2>Riwayat eksekusi</h2>
-                <button type="button" class="btn btn-ghost" id="btn-refresh-logs" style="padding:7px 14px">Muat ulang</button>
-            </div>
-            <pre class="term" id="log-console" tabindex="0">Memuat log…</pre>
-            <p class="hint" style="margin:10px 0 0">Respons log terbaru dari serverless API</p>
-        </section>
+                <label class="check-group">
+                    <input type="checkbox" id="remember_me" checked>
+                    <span>Ingat akun saya di perangkat ini</span>
+                </label>
+
+                <button type="submit" class="btn btn-primary btn-lg" id="btn-login-submit" style="width:100%">Masuk ke Panel</button>
+            </form>
+        </div>
+
+        <!-- VIEW 2: DASHBOARD SCREEN -->
+        <div id="view-dashboard" class="hidden">
+            <header class="top">
+                <div class="brand">Auto Absen <span>MagangHub</span></div>
+                <div style="display:flex; align-items:center; gap:8px">
+                    <div class="chip" id="chip-user">user@kemnaker</div>
+                    <button type="button" class="btn btn-ghost" id="btn-logout" style="padding:6px 14px; font-size:13px">Keluar</button>
+                </div>
+            </header>
+
+            <section class="hero" aria-live="polite">
+                <p class="date" id="val-date">Memuat tanggal…</p>
+                <h1><i class="dot" id="dot" data-s=""></i><span id="hero-title">Memeriksa status…</span></h1>
+                <p class="detail" id="hero-detail"></p>
+
+                <dl class="meta">
+                    <div>
+                        <dt>Lokasi</dt>
+                        <dd id="val-location">-</dd>
+                    </div>
+                    <div>
+                        <dt>Absen otomatis</dt>
+                        <dd id="val-time">15:00 WIB</dd>
+                    </div>
+                </dl>
+
+                <div class="actions">
+                    <button type="button" class="btn btn-primary btn-lg" id="btn-run-absen">Absen sekarang</button>
+                    <button type="button" class="btn btn-ghost btn-lg" id="btn-dry-run">Simulasi</button>
+                    <button type="button" class="btn btn-ghost btn-lg" id="btn-refresh-status">Perbarui status</button>
+                </div>
+            </section>
+
+            <section class="section">
+                <div class="section-head">
+                    <h2>Catatan harian</h2>
+                    <span class="hint">Disinkronkan saat absen berjalan</span>
+                </div>
+                <form class="panel" id="form-activity">
+                    <div class="field">
+                        <label for="activity_log">Aktivitas hari ini</label>
+                        <textarea id="activity_log" name="activity_log" rows="4" placeholder="Apa yang kamu kerjakan hari ini?"></textarea>
+                    </div>
+                    <div class="field">
+                        <label for="lesson_learned">Yang dipelajari</label>
+                        <textarea id="lesson_learned" name="lesson_learned" rows="3" placeholder="Hal baru yang kamu pelajari"></textarea>
+                    </div>
+                    <div class="field">
+                        <label for="obstacles">Kendala</label>
+                        <textarea id="obstacles" name="obstacles" rows="3" placeholder="Hambatan yang kamu temui"></textarea>
+                    </div>
+                    <div class="foot">
+                        <div class="field">
+                            <label for="clock_in_time">Jam absen otomatis</label>
+                            <input type="time" id="clock_in_time" name="clock_in_time" value="15:00">
+                        </div>
+                        <button type="submit" class="btn btn-primary" id="btn-save-log">Simpan catatan</button>
+                    </div>
+                </form>
+            </section>
+
+            <section class="section">
+                <div class="section-head">
+                    <h2>Riwayat eksekusi</h2>
+                    <button type="button" class="btn btn-ghost" id="btn-refresh-logs" style="padding:7px 14px">Muat ulang</button>
+                </div>
+                <pre class="term" id="log-console" tabindex="0">Memuat log…</pre>
+                <p class="hint" style="margin:10px 0 0">Respons log terbaru dari serverless API</p>
+            </section>
+        </div>
+
     </main>
 
+    <!-- Dialog Simulasi -->
     <dialog id="modalDryRun">
         <header>Hasil simulasi absen</header>
         <pre class="term" id="dry-run-content"></pre>
@@ -470,10 +595,30 @@
     <script>
         (() => {
             const $ = s => document.querySelector(s);
-            const api = (endpoint) => fetch('/api/' + endpoint).then(r => {
-                if (!r.ok) return r.json().then(d => Promise.reject(d)).catch(() => Promise.reject(new Error(r.status)));
-                return r.json();
-            });
+            const AUTH_KEY = 'maganghub_auth_session';
+            const SUGGEST_KEY = 'maganghub_user_suggestions';
+
+            // State aktif
+            let activeAuth = null;
+
+            // Header auth otomatis jika sedang login
+            function authHeaders() {
+                const h = { 'Content-Type': 'application/json' };
+                if (activeAuth && activeAuth.username) {
+                    h['X-Auth-Username'] = activeAuth.username;
+                    h['X-Auth-Password'] = activeAuth.password;
+                }
+                return h;
+            }
+
+            const api = (endpoint, opt = {}) => {
+                const options = Object.assign({}, opt);
+                options.headers = Object.assign({}, authHeaders(), options.headers || {});
+                return fetch('/api/' + endpoint, options).then(r => {
+                    if (!r.ok) return r.json().then(d => Promise.reject(d)).catch(() => Promise.reject(new Error(r.status)));
+                    return r.json();
+                });
+            };
 
             // Format tanggal Indonesia
             $('#val-date').textContent = new Intl.DateTimeFormat('id-ID', {
@@ -509,9 +654,78 @@
                 $('#hero-detail').textContent = detail || '';
             }
 
+            // Suggestions
+            function loadSuggestions() {
+                try {
+                    const list = JSON.parse(localStorage.getItem(SUGGEST_KEY) || '[]');
+                    const dl = $('#user-suggestions');
+                    const pillBox = $('#pill-container');
+                    dl.innerHTML = '';
+                    pillBox.innerHTML = '';
+
+                    list.forEach(u => {
+                        const opt = document.createElement('option');
+                        opt.value = u;
+                        dl.appendChild(opt);
+
+                        const p = document.createElement('span');
+                        p.className = 'pill';
+                        p.textContent = u;
+                        p.addEventListener('click', () => {
+                            $('#login_username').value = u;
+                            $('#login_password').focus();
+                        });
+                        pillBox.appendChild(p);
+                    });
+                } catch(e) {}
+            }
+
+            function saveSuggestion(username) {
+                try {
+                    let list = JSON.parse(localStorage.getItem(SUGGEST_KEY) || '[]');
+                    if (!list.includes(username)) {
+                        list.unshift(username);
+                        list = list.slice(0, 5); // Simpan max 5 saran
+                        localStorage.setItem(SUGGEST_KEY, JSON.stringify(list));
+                    }
+                } catch(e) {}
+            }
+
+            // Toggle Password
+            $('#btn-toggle-pwd').addEventListener('click', () => {
+                const pwd = $('#login_password');
+                const btn = $('#btn-toggle-pwd');
+                if (pwd.type === 'password') {
+                    pwd.type = 'text';
+                    btn.textContent = 'Sembunyikan';
+                } else {
+                    pwd.type = 'password';
+                    btn.textContent = 'Lihat';
+                }
+            });
+
+            // Tampilkan View
+            function showDashboard(user) {
+                $('#view-login').classList.add('hidden');
+                $('#view-dashboard').classList.remove('hidden');
+                $('#chip-user').textContent = user.username;
+                checkStatus();
+            }
+
+            function showLogin() {
+                $('#view-dashboard').classList.add('hidden');
+                $('#view-login').classList.remove('hidden');
+                loadSuggestions();
+                $('#login_username').focus();
+            }
+
+            // Cek Status Presensi
             function checkStatus() {
                 return api('status').then(res => {
-                    if (!res.status) throw new Error('status');
+                    if (res.need_login) {
+                        showLogin();
+                        return;
+                    }
                     const line = (res.output || '').split('\n').find(l => l.includes('Status:')) || '';
                     if (res.is_attended) {
                         setHero('ok', 'Sudah absen hari ini', line.trim());
@@ -523,7 +737,6 @@
                         if (res.env.location) $('#val-location').textContent = res.env.location;
                         if (res.env.clock_in_time) {
                             $('#val-time').textContent = res.env.clock_in_time + ' WIB';
-                            $('#chip-time').textContent = 'Otomatis pukul ' + res.env.clock_in_time + ' WIB';
                             $('#clock_in_time').value = res.env.clock_in_time;
                         }
                         if (res.env.activity_log) $('#activity_log').value = res.env.activity_log;
@@ -534,14 +747,61 @@
                         $('#log-console').textContent = res.output;
                     }
                 }).catch((err) => {
-                    const msg = (err && err.output) ? err.output : 'Tidak bisa terhubung ke API Vercel.';
+                    const msg = (err && err.output) ? err.output : (err.message || 'Gagal terhubung ke API Vercel.');
                     setHero('err', 'Status tidak terbaca', msg);
                     $('#log-console').textContent = msg;
                 });
             }
 
-            checkStatus();
+            // Submit Login
+            $('#form-login').addEventListener('submit', e => {
+                e.preventDefault();
+                const btn = $('#btn-login-submit');
+                const username = $('#login_username').value.trim();
+                const password = $('#login_password').value.trim();
+                const remember = $('#remember_me').checked;
 
+                if (!username || !password) return;
+
+                busy(btn, true, 'Memverifikasi ke Kemnaker…');
+
+                fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                }).then(r => r.json()).then(res => {
+                    if (res.status) {
+                        toast(res.message);
+                        activeAuth = { username, password };
+                        saveSuggestion(username);
+
+                        if (remember) {
+                            localStorage.setItem(AUTH_KEY, JSON.stringify(activeAuth));
+                        } else {
+                            sessionStorage.setItem(AUTH_KEY, JSON.stringify(activeAuth));
+                            localStorage.removeItem(AUTH_KEY);
+                        }
+                        showDashboard({ username });
+                    } else {
+                        toast(res.message || 'Login gagal.', 'err');
+                    }
+                }).catch(err => {
+                    toast('Gagal terhubung ke server login: ' + err.message, 'err');
+                }).finally(() => {
+                    busy(btn, false);
+                });
+            });
+
+            // Logout
+            $('#btn-logout').addEventListener('click', () => {
+                activeAuth = null;
+                localStorage.removeItem(AUTH_KEY);
+                sessionStorage.removeItem(AUTH_KEY);
+                toast('Berhasil keluar.');
+                showLogin();
+            });
+
+            // Refresh Status
             $('#btn-refresh-status').addEventListener('click', e => {
                 const b = e.currentTarget;
                 busy(b, true, 'Memeriksa…');
@@ -551,19 +811,20 @@
                 });
             });
 
+            // Refresh Logs
             $('#btn-refresh-logs').addEventListener('click', e => {
                 const b = e.currentTarget;
                 busy(b, true, 'Memuat…');
                 checkStatus().finally(() => busy(b, false));
             });
 
-            // Catatan harian di Cloud
+            // Catatan
             $('#form-activity').addEventListener('submit', e => {
                 e.preventDefault();
-                toast('Di Vercel, catatan disinkronkan via Project Settings > Environment Variables.');
+                toast('Catatan aktif disinkronkan saat proses presensi.');
             });
 
-            // Absen manual
+            // Absen Sekarang
             $('#btn-run-absen').addEventListener('click', e => {
                 if (!confirm('Kirim presensi sekarang?')) return;
                 const b = e.currentTarget;
@@ -574,7 +835,7 @@
                         if (res.output) $('#log-console').textContent = res.output;
                     })
                     .catch(err => {
-                        toast(err.message || 'Gagal menjalankan skrip.', 'err');
+                        toast(err.message || 'Gagal menjalankan presensi.', 'err');
                         if (err.output) $('#log-console').textContent = err.output;
                     })
                     .finally(() => {
@@ -583,7 +844,7 @@
                     });
             });
 
-            // Simulasi
+            // Simulasi (Dry Run)
             const dlg = $('#modalDryRun');
             $('#btn-dry-run').addEventListener('click', e => {
                 const b = e.currentTarget;
@@ -600,6 +861,19 @@
             dlg.addEventListener('click', e => {
                 if (e.target === dlg) dlg.close();
             });
+
+            // Inisialisasi Auth pada load awal
+            try {
+                const saved = localStorage.getItem(AUTH_KEY) || sessionStorage.getItem(AUTH_KEY);
+                if (saved) {
+                    activeAuth = JSON.parse(saved);
+                    showDashboard({ username: activeAuth.username });
+                } else {
+                    showLogin();
+                }
+            } catch(e) {
+                showLogin();
+            }
         })();
     </script>
 </body>

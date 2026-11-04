@@ -25,8 +25,10 @@ class DailyLog:
 class AttendanceService:
     """Service for attendance operations."""
 
-    def __init__(self):
-        """Initialize with no API client; call login() first."""
+    def __init__(self, username: str | None = None, password: str | None = None):
+        """Initialize with optional credentials; call login() first."""
+        self._username = username
+        self._password = password
         self._client: ApiClient | None = None
 
     def login(self) -> None:
@@ -36,7 +38,7 @@ class AttendanceService:
     def _ensure_client(self):
         """Create the API client on first use."""
         if not self._client:
-            token = get_access_token()
+            token = get_access_token(self._username, self._password)
             self._client = ApiClient(token)
 
     @staticmethod

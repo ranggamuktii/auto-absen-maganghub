@@ -26,8 +26,12 @@ def _extract_csrf(html: str) -> str:
     return match.group(1)
 
 
-def get_access_token() -> str:
+def get_access_token(username: str | None = None, password: str | None = None) -> str:
     """Login to Kemnaker SSO and obtain an access token.
+
+    Args:
+        username: Optional SIAPkerja username (defaults to settings.siapkerja_username).
+        password: Optional SIAPkerja password (defaults to settings.siapkerja_password).
 
     Returns:
         Access token for the Monev API.
@@ -35,6 +39,11 @@ def get_access_token() -> str:
     Raises:
         Exception: If login or token retrieval fails.
     """
+    user = (username or settings.siapkerja_username or "").strip()
+    pwd = (password or settings.siapkerja_password or "").strip()
+    if not user or not pwd:
+        raise Exception("Email/username dan password SIAPkerja wajib diisi.")
+
     s = requests.Session()
 
     r = s.get(
@@ -54,7 +63,7 @@ def get_access_token() -> str:
 
     r3 = s.post(
         f"{settings.auth_base}/auth/login",
-        json={"username": settings.siapkerja_username, "password": settings.siapkerja_password},
+        json={"username": user, "password": pwd},
         headers={
             "X-CSRF-TOKEN": csrf,
             "X-Requested-With": "XMLHttpRequest",
