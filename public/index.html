@@ -11,14 +11,14 @@
     <style>
         :root {
             --bg: #EDF0EE; --surface: #FFFFFF; --field: #F6F8F7; --ink: #16201C; --muted: #5C6963; --line: #D9DFDC;
-            --ok: #0B6E5A; --warn: #B45309; --err: #B42318; --term: #121A16; --term-ink: #CFE0D6;
+            --ok: #0B6E5A; --warn: #B45309; --err: #B42318; --ok-bg: #DDF1EA; --warn-bg: #FBEBD3; --err-bg: #FBE1DE; --term: #121A16; --term-ink: #CFE0D6;
             --sans: 'Schibsted Grotesk', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
             --mono: 'JetBrains Mono', Consolas, 'Courier New', monospace;
         }
         @media (prefers-color-scheme: dark) {
             :root {
                 --bg: #0D1210; --surface: #151C19; --field: #101613; --ink: #E9F0EC; --muted: #92A199; --line: #26312C;
-                --ok: #4FD1AE; --warn: #F2B35E; --err: #F97066; --term: #080C0A;
+                --ok: #4FD1AE; --warn: #F2B35E; --err: #F97066; --ok-bg: #12332B; --warn-bg: #3A2A12; --err-bg: #3D1C19; --term: #080C0A;
             }
         }
         *, *::before, *::after { box-sizing: border-box; }
@@ -39,19 +39,39 @@
         .chip[data-s="ok"] { color: var(--ok); border-color: var(--ok); }
 
         /* Hero */
-        .hero { margin-bottom: 56px; }
-        .date { margin: 0 0 14px; color: var(--muted); }
-        .hero h1 { display: flex; align-items: center; gap: 14px; margin: 0; font-size: clamp(2rem, 6vw, 3.4rem); line-height: 1.05; font-weight: 600; letter-spacing: -.035em; }
-        .dot { flex: none; width: .36em; height: .36em; border-radius: 50%; background: var(--muted); }
-        .dot[data-s="ok"] { background: var(--ok); }
-        .dot[data-s="warn"] { background: var(--warn); }
-        .dot[data-s="err"] { background: var(--err); }
-        .detail { margin: 12px 0 0; min-height: 1.55em; color: var(--muted); max-width: 60ch; }
-        .meta { display: flex; flex-wrap: wrap; gap: 8px 36px; margin: 28px 0; }
-        .meta div { min-width: 0; }
+        .hero { margin-bottom: 8px; }
+        .hero-card { background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 28px; }
+        .hero-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 24px; }
+        .date { margin: 0; color: var(--muted); }
+        .status { display: flex; align-items: center; gap: 20px; }
+        .badge { flex: none; display: grid; place-items: center; width: 60px; height: 60px; border-radius: 18px; background: var(--field); color: var(--muted); }
+        .badge svg { display: none; width: 30px; height: 30px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+        .badge .i-load { display: block; animation: spin 1s linear infinite; }
+        .badge:is([data-s=ok],[data-s=warn],[data-s=err]) .i-load { display: none; }
+        .badge[data-s=ok] { background: var(--ok-bg); color: var(--ok); }
+        .badge[data-s=ok] .i-ok { display: block; }
+        .badge[data-s=warn] { background: var(--warn-bg); color: var(--warn); }
+        .badge[data-s=warn] .i-warn { display: block; }
+        .badge[data-s=err] { background: var(--err-bg); color: var(--err); }
+        .badge[data-s=err] .i-err { display: block; }
+        .status h1 { margin: 0; font-size: clamp(1.6rem, 4.6vw, 2.25rem); line-height: 1.1; font-weight: 600; letter-spacing: -.03em; }
+        .detail { margin: 6px 0 0; min-height: 1.55em; color: var(--muted); max-width: 60ch; }
+        .meta { display: grid; grid-template-columns: 1fr 1fr; margin: 28px 0 24px; background: var(--field); border: 1px solid var(--line); border-radius: 14px; }
+        .meta div { min-width: 0; padding: 14px 20px; }
+        .meta div + div { border-left: 1px solid var(--line); }
         .meta dt { font-size: 13px; color: var(--muted); }
-        .meta dd { margin: 0; font-weight: 500; }
+        .meta dd { margin: 2px 0 0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .actions { display: flex; flex-wrap: wrap; gap: 10px; }
+        .actions .btn-primary { min-width: 220px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @media (max-width: 640px) {
+            .hero-card { padding: 20px; border-radius: 18px; }
+            .status { gap: 14px; }
+            .badge { width: 48px; height: 48px; border-radius: 14px; }
+            .badge svg { width: 24px; height: 24px; }
+            .meta { grid-template-columns: 1fr; }
+            .meta div + div { border-left: 0; border-top: 1px solid var(--line); }
+        }
 
         /* Buttons */
         .btn { font: inherit; font-weight: 600; font-size: 14px; border-radius: 10px; padding: 11px 18px; border: 1px solid transparent; cursor: pointer; transition: opacity .15s, border-color .15s; }
@@ -142,7 +162,7 @@
             .savebar { flex-direction: column; align-items: stretch; padding: 14px; gap: 10px; }
             .savebar .hint { text-align: center; }
         }
-        @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+        @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
     </style>
 </head>
 
@@ -190,18 +210,35 @@
                 </div>
             </header>
 
-            <section class="hero" aria-live="polite">
-                <p class="date" id="val-date"></p>
-                <h1><i class="dot" id="dot" data-s=""></i><span id="hero-title">Memeriksa status…</span></h1>
-                <p class="detail" id="hero-detail"></p>
-                <dl class="meta">
-                    <div><dt>Lokasi presensi</dt><dd id="val-location">—</dd></div>
-                    <div><dt>Absen otomatis</dt><dd id="val-auto-status">—</dd></div>
-                </dl>
-                <div class="actions">
-                    <button type="button" class="btn btn-primary btn-lg" id="btn-run-absen">Absen sekarang</button>
-                    <button type="button" class="btn btn-ghost btn-lg" id="btn-dry-run">Simulasi</button>
-                    <button type="button" class="btn btn-ghost btn-lg" id="btn-refresh-status">Perbarui status</button>
+            <section class="hero">
+                <div class="hero-card">
+                    <div class="hero-top">
+                        <p class="date" id="val-date"></p>
+                        <button type="button" class="btn btn-ghost btn-sm" id="btn-refresh-status">Perbarui status</button>
+                    </div>
+
+                    <div class="status" aria-live="polite">
+                        <div class="badge" id="dot" data-s="" aria-hidden="true">
+                            <svg class="i-load" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-6.2-8.55"/></svg>
+                            <svg class="i-ok" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.8 2.8L16 9.5"/></svg>
+                            <svg class="i-warn" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                            <svg class="i-err" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.2v.1"/></svg>
+                        </div>
+                        <div>
+                            <h1 id="hero-title">Memeriksa status…</h1>
+                            <p class="detail" id="hero-detail"></p>
+                        </div>
+                    </div>
+
+                    <dl class="meta">
+                        <div><dt>Lokasi presensi</dt><dd id="val-location">—</dd></div>
+                        <div><dt>Absen otomatis</dt><dd id="val-auto-status">—</dd></div>
+                    </dl>
+
+                    <div class="actions">
+                        <button type="button" class="btn btn-primary btn-lg" id="btn-run-absen">Absen sekarang</button>
+                        <button type="button" class="btn btn-ghost btn-lg" id="btn-dry-run">Simulasi</button>
+                    </div>
                 </div>
             </section>
 
