@@ -12,9 +12,9 @@ class Settings(BaseSettings):
     hari_libur: str = "Sabtu,Minggu"
     libur_nasional: bool = True
     reminder_times: str = "16:00,21:00"
-    latitude: str = "-6.2088"
-    longitude: str = "106.8456"
-    location: str = "Jakarta"
+    latitude: str = "-6.370891"
+    longitude: str = "107.272352"
+    location: str = "Karawang"
     activity_log: str = ""
     lesson_learned: str = ""
     obstacles: str = ""

@@ -124,15 +124,35 @@ def app(environ, start_response):
                     init_db()
                     existing = get_user(user)
                     if not existing:
-                        save_or_update_user(username=user, password=pwd)
+                        from app.config import settings
+                        try:
+                            lat = float(settings.latitude)
+                        except (ValueError, TypeError):
+                            lat = -6.370891
+                        try:
+                            lon = float(settings.longitude)
+                        except (ValueError, TypeError):
+                            lon = 107.272352
+
+                        save_or_update_user(
+                            username=user,
+                            password=pwd,
+                            location=settings.location or "Karawang",
+                            latitude=lat,
+                            longitude=lon,
+                            activity_log=settings.activity_log or "",
+                            lesson_learned=settings.lesson_learned or "",
+                            obstacles=settings.obstacles or "",
+                            auto_absen=True,
+                        )
                     else:
                         # Update password in case it changed
                         save_or_update_user(
                             username=user,
                             password=pwd,
-                            location=existing.get("user_location", "Jakarta"),
-                            latitude=existing.get("user_latitude", -6.208800),
-                            longitude=existing.get("user_longitude", 106.845600),
+                            location=existing.get("user_location") or "Karawang",
+                            latitude=existing.get("user_latitude") or -6.370891,
+                            longitude=existing.get("user_longitude") or 107.272352,
                             activity_log=existing.get("user_activity_log", ""),
                             lesson_learned=existing.get("user_lesson_learned", ""),
                             obstacles=existing.get("user_obstacles", ""),
@@ -167,9 +187,15 @@ def app(environ, start_response):
 
         try:
             from app.db import save_or_update_user, get_user
-            loc = body_data.get("location", "Jakarta")
-            lat = float(body_data.get("latitude", -6.208800))
-            lon = float(body_data.get("longitude", 106.845600))
+            loc = body_data.get("location") or "Karawang"
+            try:
+                lat = float(body_data.get("latitude"))
+            except (ValueError, TypeError):
+                lat = -6.370891
+            try:
+                lon = float(body_data.get("longitude"))
+            except (ValueError, TypeError):
+                lon = 107.272352
             act = body_data.get("activity_log", "")
             les = body_data.get("lesson_learned", "")
             obs = body_data.get("obstacles", "")

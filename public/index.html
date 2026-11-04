@@ -572,7 +572,7 @@
                 <dl class="meta">
                     <div>
                         <dt>Lokasi Presensi</dt>
-                        <dd id="val-location">Jakarta</dd>
+                        <dd id="val-location">Karawang</dd>
                     </div>
                     <div>
                         <dt>Cron Otomatis</dt>
@@ -598,7 +598,7 @@
                     <div class="grid-2">
                         <div class="field">
                             <label for="input_location">Nama Lokasi / Kantor</label>
-                            <input type="text" id="input_location" name="location" placeholder="contoh: Jakarta, PT ABC">
+                            <input type="text" id="input_location" name="location" placeholder="contoh: Karawang, PT ABC">
                         </div>
                         <div class="field">
                             <label style="display:flex; justify-content:space-between; align-items:center">
@@ -606,8 +606,8 @@
                                 <button type="button" class="btn btn-ghost" id="btn-get-gps" style="padding:2px 8px; font-size:12px">📍 Deteksi GPS</button>
                             </label>
                             <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px">
-                                <input type="text" id="input_latitude" name="latitude" placeholder="Latitude (-6.2088)">
-                                <input type="text" id="input_longitude" name="longitude" placeholder="Longitude (106.8456)">
+                                <input type="text" id="input_latitude" name="latitude" placeholder="Latitude (-6.370891)">
+                                <input type="text" id="input_longitude" name="longitude" placeholder="Longitude (107.272352)">
                             </div>
                         </div>
                     </div>
@@ -722,9 +722,9 @@
 
             function getFormData() {
                 return {
-                    location: $('#input_location').value.trim() || 'Jakarta',
-                    latitude: parseFloat($('#input_latitude').value) || -6.208800,
-                    longitude: parseFloat($('#input_longitude').value) || 106.845600,
+                    location: $('#input_location').value.trim() || 'Karawang',
+                    latitude: parseFloat($('#input_latitude').value) || -6.370891,
+                    longitude: parseFloat($('#input_longitude').value) || 107.272352,
                     activity_log: $('#activity_log').value.trim(),
                     lesson_learned: $('#lesson_learned').value.trim(),
                     obstacles: $('#obstacles').value.trim(),
@@ -828,9 +828,9 @@
                     const pref = res.preferences || {};
                     const env = res.env || {};
 
-                    const loc = pref.user_location || env.location || 'Jakarta';
-                    const lat = pref.user_latitude !== undefined ? pref.user_latitude : (env.latitude || -6.208800);
-                    const lon = pref.user_longitude !== undefined ? pref.user_longitude : (env.longitude || 106.845600);
+                    const loc = pref.user_location || env.location || 'Karawang';
+                    const lat = pref.user_latitude !== undefined ? pref.user_latitude : (env.latitude || -6.370891);
+                    const lon = pref.user_longitude !== undefined ? pref.user_longitude : (env.longitude || 107.272352);
                     const act = pref.user_activity_log || env.activity_log || '';
                     const les = pref.user_lesson_learned || env.lesson_learned || '';
                     const obs = pref.user_obstacles || env.obstacles || '';
