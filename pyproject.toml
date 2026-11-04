@@ -5,6 +5,7 @@ requires-python = ">=3.10"
 dependencies = [
     "pydantic-settings>=2.0.0",
     "requests>=2.31.0",
+    "pg8000>=1.31.0",
 ]
 
 [tool.vercel]

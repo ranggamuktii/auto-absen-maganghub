@@ -2,6 +2,10 @@
 
 import sys
 import argparse
+import io
+import json
+import os
+from contextlib import redirect_stdout, redirect_stderr
 
 import requests
 
@@ -10,6 +14,7 @@ from app.models.attendance import AttendanceService
 from app.utils.log import log
 from app.utils.net import net_msg, with_retry
 from app.utils.whatsapp import log_notify
+from app.utils.time import today_str, now_wib
 
 
 def main():
@@ -48,14 +53,6 @@ def main():
         sys.exit(cmd_remind(svc))
     else:
         sys.exit(cmd_status(svc, days=args.days))
-
-
-# Vercel Serverless Function entry point (WSGI Standard)
-from http.server import BaseHTTPRequestHandler
-import json
-import io
-import os
-from contextlib import redirect_stdout, redirect_stderr
 
 
 def _get_credentials(environ, body_data=None):
@@ -118,11 +115,40 @@ def app(environ, start_response):
             from app.models.attendance import AttendanceService
             svc = AttendanceService(username=user, password=pwd)
             svc.login()
+
+            # Database integration (Neon Postgres)
+            preferences = None
+            try:
+                from app.db import init_db, save_or_update_user, get_user, get_db_url
+                if get_db_url():
+                    init_db()
+                    existing = get_user(user)
+                    if not existing:
+                        save_or_update_user(username=user, password=pwd)
+                    else:
+                        # Update password in case it changed
+                        save_or_update_user(
+                            username=user,
+                            password=pwd,
+                            location=existing.get("user_location", "Jakarta"),
+                            latitude=existing.get("user_latitude", -6.208800),
+                            longitude=existing.get("user_longitude", 106.845600),
+                            activity_log=existing.get("user_activity_log", ""),
+                            lesson_learned=existing.get("user_lesson_learned", ""),
+                            obstacles=existing.get("user_obstacles", ""),
+                            auto_absen=existing.get("user_auto_absen", True),
+                        )
+                    preferences = get_user(user)
+            except Exception as dbe:
+                print(f"[DB] Non-critical error on login: {dbe}")
+
             start_response("200 OK", [("Content-Type", "application/json; charset=utf-8")])
             return [json.dumps({
                 "status": True,
                 "message": "Login berhasil! Selamat datang.",
-                "user": {"username": user}
+                "user": {"username": user},
+                "preferences": preferences,
+                "db_connected": bool(preferences)
             }).encode("utf-8")]
         except Exception as e:
             start_response("200 OK", [("Content-Type", "application/json; charset=utf-8")])
@@ -131,19 +157,139 @@ def app(environ, start_response):
                 "message": f"Login gagal: {e}"
             }).encode("utf-8")]
 
-    # 3. Dry Run
+    # 3. Save Settings Endpoint (POST /api/save_settings)
+    if path == "/api/save_settings":
+        body_data = _read_body_json(environ)
+        user, pwd = _get_credentials(environ, body_data)
+        if not user or not pwd:
+            start_response("200 OK", [("Content-Type", "application/json; charset=utf-8")])
+            return [json.dumps({"status": False, "message": "Belum terautentikasi."}).encode("utf-8")]
+
+        try:
+            from app.db import save_or_update_user, get_user
+            loc = body_data.get("location", "Jakarta")
+            lat = float(body_data.get("latitude", -6.208800))
+            lon = float(body_data.get("longitude", 106.845600))
+            act = body_data.get("activity_log", "")
+            les = body_data.get("lesson_learned", "")
+            obs = body_data.get("obstacles", "")
+            auto = bool(body_data.get("auto_absen", True))
+
+            ok = save_or_update_user(
+                username=user,
+                password=pwd,
+                location=loc,
+                latitude=lat,
+                longitude=lon,
+                activity_log=act,
+                lesson_learned=les,
+                obstacles=obs,
+                auto_absen=auto,
+            )
+            updated = get_user(user)
+            start_response("200 OK", [("Content-Type", "application/json; charset=utf-8")])
+            return [json.dumps({
+                "status": ok,
+                "message": "Pengaturan auto-absen berhasil disimpan!" if ok else "Gagal menyimpan ke database.",
+                "preferences": updated
+            }).encode("utf-8")]
+        except Exception as e:
+            start_response("200 OK", [("Content-Type", "application/json; charset=utf-8")])
+            return [json.dumps({"status": False, "message": f"Error: {e}"}).encode("utf-8")]
+
+    # 4. Dry Run
     if path in ("/api/dry_run", "/api/dry-run"):
+        body_data = _read_body_json(environ)
+        lat = body_data.get("latitude")
+        lon = body_data.get("longitude")
+        loc = body_data.get("location")
+        act = body_data.get("activity_log")
+        les = body_data.get("lesson_learned")
+        obs = body_data.get("obstacles")
+
         try:
             from app.models.attendance import AttendanceService
-            from app.utils.time import today_str
-            payload = AttendanceService.attendance_payload(today_str())
+            payload = AttendanceService.attendance_payload(
+                today_str(),
+                latitude=lat,
+                longitude=lon,
+                location=loc,
+                activity_log=act,
+                lesson_learned=les,
+                obstacles=obs,
+            )
             body = json.dumps({"status": True, "output": json.dumps(payload, ensure_ascii=False, indent=2)}).encode("utf-8")
         except Exception as e:
             body = json.dumps({"status": False, "output": f"Simulasi gagal: {e}"}).encode("utf-8")
         start_response("200 OK", [("Content-Type", "application/json; charset=utf-8")])
         return [body]
 
-    # 4. Cron / Trigger Absen
+    # 5. Manual Trigger / Absen Sekarang (POST /api/trigger or /api/absen)
+    if path in ("/api/trigger", "/api/absen"):
+        body_data = _read_body_json(environ)
+        user, pwd = _get_credentials(environ, body_data)
+        if not user or not pwd:
+            start_response("200 OK", [("Content-Type", "application/json; charset=utf-8")])
+            return [json.dumps({
+                "status": False,
+                "message": "Kredensial belum tersedia. Silakan login terlebih dahulu."
+            }).encode("utf-8")]
+
+        loc = body_data.get("location")
+        lat = body_data.get("latitude")
+        lon = body_data.get("longitude")
+        act = body_data.get("activity_log")
+        les = body_data.get("lesson_learned")
+        obs = body_data.get("obstacles")
+
+        buffer = io.StringIO()
+        code = 1
+        err_msg = None
+        try:
+            with redirect_stdout(buffer), redirect_stderr(buffer):
+                from app.models.attendance import AttendanceService
+                from app.commands import cmd_absen
+                svc = AttendanceService(
+                    username=user,
+                    password=pwd,
+                    location=loc,
+                    latitude=lat,
+                    longitude=lon,
+                    activity_log=act,
+                    lesson_learned=les,
+                    obstacles=obs,
+                )
+                code = cmd_absen(svc)
+        except Exception as e:
+            err_msg = str(e)
+            buffer.write(f"\n[EXCEPTION] {err_msg}")
+
+        out = buffer.getvalue().strip()
+        is_ok = (code == 0)
+
+        # Record result in database if available
+        try:
+            from app.db import record_attendance_result, get_db_url
+            if get_db_url():
+                record_attendance_result(
+                    username=user,
+                    absen_date=today_str(),
+                    status="SUCCESS" if is_ok else "FAILED",
+                    message=out or err_msg or "",
+                )
+        except Exception:
+            pass
+
+        res_data = {
+            "status": is_ok,
+            "exit_code": code,
+            "message": "Absen berhasil diproses!" if is_ok else (err_msg or "Gagal memproses absen"),
+            "output": out
+        }
+        start_response("200 OK", [("Content-Type", "application/json; charset=utf-8")])
+        return [json.dumps(res_data, ensure_ascii=False, indent=2).encode("utf-8")]
+
+    # 6. Automated Multi-User Cron Endpoint (/api/cron)
     if path == "/api/cron":
         cron_secret = os.environ.get("CRON_SECRET", "").strip()
         auth_header = environ.get("HTTP_AUTHORIZATION", "").strip()
@@ -151,12 +297,69 @@ def app(environ, start_response):
             start_response("401 Unauthorized", [("Content-Type", "application/json; charset=utf-8")])
             return [json.dumps({"status": False, "message": "Unauthorized"}).encode("utf-8")]
 
+        # Check if database has registered auto-absen users
+        active_users = []
+        try:
+            from app.db import get_active_auto_absen_users, record_attendance_result, get_db_url
+            if get_db_url():
+                active_users = get_active_auto_absen_users()
+        except Exception as dbe:
+            print(f"[DB] Error querying active users: {dbe}")
+
+        results = []
+        if active_users:
+            from app.models.attendance import AttendanceService
+            from app.commands import cmd_absen
+
+            for u in active_users:
+                uname = u["user_username"]
+                upwd = u["user_password"]
+                buffer = io.StringIO()
+                code = 1
+                try:
+                    with redirect_stdout(buffer), redirect_stderr(buffer):
+                        svc = AttendanceService(
+                            username=uname,
+                            password=upwd,
+                            location=u.get("user_location"),
+                            latitude=u.get("user_latitude"),
+                            longitude=u.get("user_longitude"),
+                            activity_log=u.get("user_activity_log"),
+                            lesson_learned=u.get("user_lesson_learned"),
+                            obstacles=u.get("user_obstacles"),
+                        )
+                        code = cmd_absen(svc)
+                except Exception as e:
+                    buffer.write(f"\n[EXCEPTION] {e}")
+
+                out = buffer.getvalue().strip()
+                status_str = "SUCCESS" if code == 0 else "FAILED"
+                try:
+                    record_attendance_result(uname, today_str(), status_str, out)
+                except Exception:
+                    pass
+
+                results.append({
+                    "username": uname,
+                    "status": (code == 0),
+                    "output": out
+                })
+
+            start_response("200 OK", [("Content-Type", "application/json; charset=utf-8")])
+            return [json.dumps({
+                "status": True,
+                "message": f"Cron selesai mengeksekusi {len(active_users)} pengguna.",
+                "total_users": len(active_users),
+                "results": results
+            }, ensure_ascii=False, indent=2).encode("utf-8")]
+
+        # Fallback to single user from headers or ENV
         user, pwd = _get_credentials(environ)
         if not user or not pwd:
             start_response("200 OK", [("Content-Type", "application/json; charset=utf-8")])
             return [json.dumps({
                 "status": False,
-                "message": "Kredensial belum tersedia. Silakan login terlebih dahulu."
+                "message": "Tidak ada pengguna aktif di database dan kredensial belum tersedia."
             }).encode("utf-8")]
 
         buffer = io.StringIO()
@@ -183,9 +386,8 @@ def app(environ, start_response):
         start_response("200 OK", [("Content-Type", "application/json; charset=utf-8")])
         return [json.dumps(res_data, ensure_ascii=False, indent=2).encode("utf-8")]
 
-    # 5. Status Check
+    # 7. Status Check (/api/status)
     if path == "/api/status":
-        from app.utils.time import today_str, now_wib
         from app.config import settings
 
         user, pwd = _get_credentials(environ)
@@ -203,6 +405,17 @@ def app(environ, start_response):
                     "obstacles": settings.obstacles
                 }
             }, ensure_ascii=False, indent=2).encode("utf-8")]
+
+        # Query user preferences from DB if available
+        user_pref = None
+        db_connected = False
+        try:
+            from app.db import get_user, get_db_url
+            if get_db_url():
+                db_connected = True
+                user_pref = get_user(user)
+        except Exception:
+            pass
 
         buffer = io.StringIO()
         is_attended = False
@@ -228,18 +441,23 @@ def app(environ, start_response):
             "is_attended": is_attended,
             "error": err_msg,
             "output": out,
+            "db_connected": db_connected,
+            "preferences": user_pref,
             "env": {
-                "location": settings.location,
+                "location": (user_pref.get("user_location") if user_pref else None) or settings.location,
+                "latitude": (user_pref.get("user_latitude") if user_pref else None) or settings.latitude,
+                "longitude": (user_pref.get("user_longitude") if user_pref else None) or settings.longitude,
                 "clock_in_time": "15:00",
-                "activity_log": settings.activity_log,
-                "lesson_learned": settings.lesson_learned,
-                "obstacles": settings.obstacles
+                "activity_log": (user_pref.get("user_activity_log") if user_pref else None) or settings.activity_log,
+                "lesson_learned": (user_pref.get("user_lesson_learned") if user_pref else None) or settings.lesson_learned,
+                "obstacles": (user_pref.get("user_obstacles") if user_pref else None) or settings.obstacles,
+                "auto_absen": (user_pref.get("user_auto_absen") if user_pref else True)
             }
         }
         start_response("200 OK", [("Content-Type", "application/json; charset=utf-8")])
         return [json.dumps(res_data, ensure_ascii=False, indent=2).encode("utf-8")]
 
-    # 6. Serve static HTML for root
+    # 8. Serve static HTML for root
     html_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "public", "index.html")
     if os.path.exists(html_file):
         with open(html_file, "rb") as f:
@@ -251,11 +469,7 @@ def app(environ, start_response):
     return [b"Not Found"]
 
 
-# Alias for compatibility
-handler = app
-
-
-# Alias for compatibility
+# Alias for Vercel
 handler = app
 
 

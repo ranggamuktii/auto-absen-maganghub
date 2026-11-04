@@ -25,10 +25,26 @@ class DailyLog:
 class AttendanceService:
     """Service for attendance operations."""
 
-    def __init__(self, username: str | None = None, password: str | None = None):
-        """Initialize with optional credentials; call login() first."""
+    def __init__(
+        self,
+        username: str | None = None,
+        password: str | None = None,
+        location: str | None = None,
+        latitude: float | str | None = None,
+        longitude: float | str | None = None,
+        activity_log: str | None = None,
+        lesson_learned: str | None = None,
+        obstacles: str | None = None,
+    ):
+        """Initialize with optional credentials and attendance defaults."""
         self._username = username
         self._password = password
+        self._location = location
+        self._latitude = latitude
+        self._longitude = longitude
+        self._activity_log = activity_log
+        self._lesson_learned = lesson_learned
+        self._obstacles = obstacles
         self._client: ApiClient | None = None
 
     def login(self) -> None:
@@ -42,47 +58,82 @@ class AttendanceService:
             self._client = ApiClient(token)
 
     @staticmethod
-    def attendance_payload(date: str) -> dict:
+    def attendance_payload(
+        date: str,
+        latitude: float | str | None = None,
+        longitude: float | str | None = None,
+        location: str | None = None,
+        activity_log: str | None = None,
+        lesson_learned: str | None = None,
+        obstacles: str | None = None,
+    ) -> dict:
         """Build the attendance payload for a given date.
 
         Args:
             date: Date in YYYY-MM-DD format.
+            latitude: Optional latitude override.
+            longitude: Optional longitude override.
+            location: Optional location name override.
+            activity_log: Optional activity log override.
+            lesson_learned: Optional lesson learned override.
+            obstacles: Optional obstacles override.
 
         Returns:
             Payload that clock_in sends to the API.
         """
+        raw_lat = latitude if latitude is not None else settings.latitude
         try:
-            lat = float(settings.latitude)
+            lat = float(raw_lat)
         except (ValueError, TypeError):
-            lat = settings.latitude
+            lat = raw_lat
 
+        raw_lon = longitude if longitude is not None else settings.longitude
         try:
-            lon = float(settings.longitude)
+            lon = float(raw_lon)
         except (ValueError, TypeError):
-            lon = settings.longitude
+            lon = raw_lon
+
+        loc = location if location is not None else settings.location
+        act = activity_log if activity_log is not None else settings.activity_log
+        les = lesson_learned if lesson_learned is not None else settings.lesson_learned
+        obs = obstacles if obstacles is not None else settings.obstacles
 
         return {
             "date": date,
             "status": "PRESENT",
             "latitude": lat,
             "longitude": lon,
-            "location": settings.location,
-            "activity_log": settings.activity_log,
-            "lesson_learned": settings.lesson_learned,
-            "obstacles": settings.obstacles,
+            "location": loc,
+            "activity_log": act,
+            "lesson_learned": les,
+            "obstacles": obs,
         }
 
-    def clock_in(self, date: str) -> dict:
+    def clock_in(self, date: str, payload_override: dict | None = None) -> dict:
         """Submit attendance (PRESENT) for a given date.
 
         Args:
             date: Date in YYYY-MM-DD format.
+            payload_override: Optional explicit payload dictionary.
 
         Returns:
             JSON response from the API.
         """
         self._ensure_client()
-        return self._client.post("/attendances/with-daily-log", self.attendance_payload(date))
+        if payload_override:
+            payload = payload_override
+        else:
+            payload = self.attendance_payload(
+                date=date,
+                latitude=self._latitude,
+                longitude=self._longitude,
+                location=self._location,
+                activity_log=self._activity_log,
+                lesson_learned=self._lesson_learned,
+                obstacles=self._obstacles,
+            )
+        return self._client.post("/attendances/with-daily-log", payload)
+
 
     def get_log(self, date: str) -> DailyLog | None:
         """Fetch the attendance log for a given date.
