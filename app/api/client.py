@@ -3,6 +3,11 @@
 import requests
 
 TIMEOUT = 30
+BROWSER_USER_AGENT = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 Edg/124.0.0.0"
+)
+
 
 
 class ApiError(Exception):
@@ -32,9 +37,13 @@ class ApiClient:
         self.base_url = settings.api_base
         self.session = requests.Session()
         self.session.headers.update({
+            "User-Agent": BROWSER_USER_AGENT,
             "Accept": "application/json",
             "Content-Type": "application/json",
             "Authorization": f"Bearer {token}",
+            "Origin": "https://monev.maganghub.kemnaker.go.id",
+            "Referer": "https://monev.maganghub.kemnaker.go.id/",
+            "Accept-Language": "id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7",
         })
 
     def get(self, path: str, params: dict | None = None) -> dict:

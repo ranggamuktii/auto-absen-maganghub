@@ -7,6 +7,12 @@ from urllib.parse import urlparse, parse_qs
 from app.api.client import TIMEOUT
 from app.config import settings
 
+BROWSER_USER_AGENT = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 Edg/124.0.0.0"
+)
+
+
 
 def _extract_csrf(html: str) -> str:
     """Extract CSRF token from the SSO login page.
@@ -45,10 +51,18 @@ def get_access_token(username: str | None = None, password: str | None = None) -
         raise Exception("Email/username dan password SIAPkerja wajib diisi.")
 
     s = requests.Session()
+    s.headers.update({
+        "User-Agent": BROWSER_USER_AGENT,
+        "Accept-Language": "id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7",
+    })
 
     r = s.get(
         f"{settings.api_base}/auth/login",
-        headers={"Accept": "application/json", "X-Requested-With": "XMLHttpRequest"},
+        headers={
+            "Accept": "application/json",
+            "X-Requested-With": "XMLHttpRequest",
+            "Referer": "https://monev.maganghub.kemnaker.go.id/",
+        },
         timeout=TIMEOUT,
     )
     if not r.ok:
@@ -69,6 +83,8 @@ def get_access_token(username: str | None = None, password: str | None = None) -
             "X-Requested-With": "XMLHttpRequest",
             "Content-Type": "application/json",
             "Accept": "application/json",
+            "Origin": settings.auth_base,
+            "Referer": sso_url,
         },
         timeout=TIMEOUT,
     )
