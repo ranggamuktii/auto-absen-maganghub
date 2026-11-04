@@ -66,3 +66,4 @@ class handler(BaseHTTPRequestHandler):
         }
         self.wfile.write(json.dumps(response_data, ensure_ascii=False, indent=2).encode("utf-8"))
         return
+

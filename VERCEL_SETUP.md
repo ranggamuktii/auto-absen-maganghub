@@ -77,3 +77,4 @@ Klik tombol **Deploy**. Vercel akan otomatis menginstal dependensi (`pydantic-se
    Di Vercel dashboard, buka tab **Settings** ➜ **Cron Jobs**. Anda akan melihat cron job terdaftar aktif pada jadwal `0 8 * * 1-5`.
 3. **Uji Endpoint Langsung**:
    Buka URL: `https://<nama-project>.vercel.app/api/status` untuk melihat respons JSON status presensi hari ini.
+
