@@ -31,21 +31,28 @@
 
         /* Top bar */
         .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 56px; flex-wrap: wrap; }
-        .top-r { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .top-r { display: flex; align-items: center; gap: 4px; min-width: 0; }
+        .who { font-size: 14px; color: var(--muted); max-width: min(260px, 42vw); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .top-r .btn-text { color: var(--ink); font-weight: 600; }
+        .btn-text { font: inherit; font-size: 14px; font-weight: 500; color: var(--muted); background: none; border: 0; border-radius: 8px; padding: 6px 10px; cursor: pointer; transition: color .15s, background .15s; }
+        .btn-text:hover:not(:disabled) { color: var(--ink); background: var(--field); }
+        .btn-text:disabled { opacity: .45; cursor: not-allowed; }
+        .dbstat { display: flex; align-items: center; gap: 8px; margin: 40px 0 0; font-size: 13px; color: var(--muted); }
+        .dbstat::before { content: ""; flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+        .dbstat[data-s=ok]::before { background: var(--ok); }
+        .dbstat[data-s=off] { color: var(--warn); }
+        .dbstat[data-s=off]::before { background: var(--warn); }
         .brand { font-weight: 600; letter-spacing: -.01em; }
         .brand span { color: var(--muted); font-weight: 400; }
-        .chip { font: inherit; font-size: 13px; color: var(--muted); background: transparent; border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        button.chip { cursor: pointer; }
-        .chip[data-s="ok"] { color: var(--ok); border-color: var(--ok); }
 
         /* Hero */
         .hero { margin-bottom: 8px; }
-        .hero-card { background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 28px; }
-        .hero-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 24px; }
-        .date { margin: 0; color: var(--muted); }
-        .status { display: flex; align-items: center; gap: 20px; }
-        .badge { flex: none; display: grid; place-items: center; width: 60px; height: 60px; border-radius: 18px; background: var(--field); color: var(--muted); }
-        .badge svg { display: none; width: 30px; height: 30px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+        .date { margin: 0 0 12px; color: var(--muted); }
+        .hero-card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
+        .status { display: flex; align-items: center; gap: 18px; padding: 24px 28px; }
+        .status-text { flex: 1; min-width: 0; }
+        .badge { flex: none; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 14px; background: var(--field); color: var(--muted); }
+        .badge svg { display: none; width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
         .badge .i-load { display: block; animation: spin 1s linear infinite; }
         .badge:is([data-s=ok],[data-s=warn],[data-s=err]) .i-load { display: none; }
         .badge[data-s=ok] { background: var(--ok-bg); color: var(--ok); }
@@ -54,23 +61,19 @@
         .badge[data-s=warn] .i-warn { display: block; }
         .badge[data-s=err] { background: var(--err-bg); color: var(--err); }
         .badge[data-s=err] .i-err { display: block; }
-        .status h1 { margin: 0; font-size: clamp(1.6rem, 4.6vw, 2.25rem); line-height: 1.1; font-weight: 600; letter-spacing: -.03em; }
-        .detail { margin: 6px 0 0; min-height: 1.55em; color: var(--muted); max-width: 60ch; }
-        .meta { display: grid; grid-template-columns: 1fr 1fr; margin: 28px 0 24px; background: var(--field); border: 1px solid var(--line); border-radius: 14px; }
-        .meta div { min-width: 0; padding: 14px 20px; }
-        .meta div + div { border-left: 1px solid var(--line); }
+        .status h1 { margin: 0; font-size: clamp(1.35rem, 3.6vw, 1.75rem); line-height: 1.15; font-weight: 600; letter-spacing: -.025em; }
+        .detail { margin: 4px 0 0; min-height: 1.55em; color: var(--muted); max-width: 60ch; }
+        .hero-foot { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 20px; padding: 10px 20px 10px 28px; border-top: 1px solid var(--line); }
+        .meta { display: flex; flex-wrap: wrap; gap: 4px 28px; margin: 0; }
+        .meta div { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
         .meta dt { font-size: 13px; color: var(--muted); }
-        .meta dd { margin: 2px 0 0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .actions { display: flex; flex-wrap: wrap; gap: 10px; }
-        .actions .btn-primary { min-width: 220px; }
+        .meta dd { margin: 0; font-size: 14px; font-weight: 500; }
+        .tools { display: flex; gap: 2px; }
         @keyframes spin { to { transform: rotate(360deg); } }
         @media (max-width: 640px) {
-            .hero-card { padding: 20px; border-radius: 18px; }
-            .status { gap: 14px; }
-            .badge { width: 48px; height: 48px; border-radius: 14px; }
-            .badge svg { width: 24px; height: 24px; }
-            .meta { grid-template-columns: 1fr; }
-            .meta div + div { border-left: 0; border-top: 1px solid var(--line); }
+            .status { flex-wrap: wrap; padding: 20px; gap: 14px; }
+            .status .btn-lg { width: 100%; }
+            .hero-foot { padding: 12px 14px 12px 20px; }
         }
 
         /* Buttons */
@@ -158,7 +161,6 @@
             .top { margin-bottom: 40px; }
             .grid2 { grid-template-columns: 1fr; gap: 18px; }
             .row { flex-direction: column; }
-            .actions .btn-lg { width: 100%; }
             .savebar { flex-direction: column; align-items: stretch; padding: 14px; gap: 10px; }
             .savebar .hint { text-align: center; }
         }
@@ -204,19 +206,14 @@
             <header class="top">
                 <div class="brand">Auto Absen <span>MagangHub</span></div>
                 <div class="top-r">
-                    <button type="button" class="chip" id="chip-db" title="Status koneksi database">Database: memeriksa…</button>
-                    <span class="chip" id="chip-user">—</span>
-                    <button type="button" class="btn btn-ghost btn-sm" id="btn-logout">Keluar</button>
+                    <span class="who" id="chip-user" title="">—</span>
+                    <button type="button" class="btn-text" id="btn-logout">Keluar</button>
                 </div>
             </header>
 
             <section class="hero">
+                <p class="date" id="val-date"></p>
                 <div class="hero-card">
-                    <div class="hero-top">
-                        <p class="date" id="val-date"></p>
-                        <button type="button" class="btn btn-ghost btn-sm" id="btn-refresh-status">Perbarui status</button>
-                    </div>
-
                     <div class="status" aria-live="polite">
                         <div class="badge" id="dot" data-s="" aria-hidden="true">
                             <svg class="i-load" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-6.2-8.55"/></svg>
@@ -224,20 +221,21 @@
                             <svg class="i-warn" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
                             <svg class="i-err" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.2v.1"/></svg>
                         </div>
-                        <div>
+                        <div class="status-text">
                             <h1 id="hero-title">Memeriksa status…</h1>
                             <p class="detail" id="hero-detail"></p>
                         </div>
-                    </div>
-
-                    <dl class="meta">
-                        <div><dt>Lokasi presensi</dt><dd id="val-location">—</dd></div>
-                        <div><dt>Absen otomatis</dt><dd id="val-auto-status">—</dd></div>
-                    </dl>
-
-                    <div class="actions">
                         <button type="button" class="btn btn-primary btn-lg" id="btn-run-absen">Absen sekarang</button>
-                        <button type="button" class="btn btn-ghost btn-lg" id="btn-dry-run">Simulasi</button>
+                    </div>
+                    <div class="hero-foot">
+                        <dl class="meta">
+                            <div><dt>Lokasi</dt><dd id="val-location">—</dd></div>
+                            <div><dt>Absen otomatis</dt><dd id="val-auto-status">—</dd></div>
+                        </dl>
+                        <div class="tools">
+                            <button type="button" class="btn-text" id="btn-dry-run">Simulasi</button>
+                            <button type="button" class="btn-text" id="btn-refresh-status">Perbarui</button>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -328,6 +326,8 @@
                 <pre class="term" id="log-console" tabindex="0">Memuat log…</pre>
                 <p class="hint" style="margin:10px 0 0">Respons terbaru dari API</p>
             </section>
+
+            <p class="dbstat" id="chip-db" data-s="" title="Status koneksi database">Memeriksa database…</p>
         </div>
     </main>
 
@@ -571,8 +571,8 @@
                     if (res.need_login) { expireSession(); return; }
 
                     const db = $('#chip-db');
-                    db.dataset.s = res.db_connected ? 'ok' : '';
-                    db.textContent = res.db_connected ? 'Database terhubung' : 'Database belum terhubung';
+                    db.dataset.s = res.db_connected ? 'ok' : 'off';
+                    db.textContent = res.db_connected ? 'Database terhubung' : 'Database belum terhubung' + (res.db_message ? ': ' + res.db_message : '');
                     db.title = res.db_message || (res.db_connected ? 'Terhubung ke Neon Postgres' : 'Variabel database belum terdeteksi di Vercel.');
 
                     const line = (res.output || '').split('\n').find(l => l.includes('Status:')) || '';
@@ -614,7 +614,6 @@
                 busy(b, true, 'Memuat…');
                 checkStatus().finally(() => busy(b, false));
             });
-            $('#chip-db').addEventListener('click', e => toast(e.currentTarget.title, e.currentTarget.dataset.s === 'ok' ? '' : 'err'));
 
             // ---------- Lokasi: pencarian (OpenStreetMap Nominatim) & GPS ----------
             // Pencarian hanya saat Enter/Cari, bukan per ketikan, sesuai kebijakan Nominatim.
