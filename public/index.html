@@ -231,6 +231,24 @@
         }
         .audit-ts { color: var(--muted); font-size: 12px; white-space: nowrap; }
         .audit-msg { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink); font-weight: 500; }
+        .audit-empty { padding: 18px 20px; text-align: center; color: var(--muted); font-size: 13px; background: var(--surface); border: 1px dashed var(--line); border-radius: 10px; }
+
+        /* Notification Bell & Card */
+        .notif-btn { position: relative; display: inline-flex; align-items: center; gap: 6px; }
+        .notif-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; padding: 0 5px; font-size: 11px; font-weight: 700; border-radius: 999px; background: var(--ok); color: #fff; line-height: 1; }
+        .notif-card { display: flex; align-items: flex-start; gap: 14px; padding: 16px 20px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); margin-bottom: 12px; }
+        .notif-card.is-ok { border-color: var(--ok); background: #F0FDF9; color: #0E5A44; }
+        .notif-card.is-warn { border-color: var(--warn); background: #FFFBEB; color: #8C4700; }
+        .notif-card.is-err { border-color: var(--err); background: #FEF3F2; color: #912018; }
+        @media (prefers-color-scheme: dark) {
+            .notif-card.is-ok { background: #062B1F; border-color: #0E5A44; color: #6EE7C2; }
+            .notif-card.is-warn { background: #2A1702; border-color: #7E3E00; color: #FDB022; }
+            .notif-card.is-err { background: #2D0F0C; border-color: #8C2219; color: #FDA29B; }
+        }
+        .notif-card-ic { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 10px; background: var(--surface); border: 1px solid currentColor; flex-shrink: 0; }
+        .notif-card-content h3 { margin: 0 0 4px; font-size: 15px; font-weight: 600; }
+        .notif-card-content p { margin: 0; font-size: 13.5px; opacity: .9; line-height: 1.5; }
+
 
 
         @media (max-width: 640px) {
@@ -281,6 +299,7 @@
         <symbol id="i-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
         <symbol id="i-save" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></symbol>
         <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+        <symbol id="i-bell" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></symbol>
         <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
     </svg>
 
@@ -325,6 +344,11 @@
             <header class="top">
                 <div class="brand"><span class="logo"><svg class="ic"><use href="#i-logo"/></svg></span>Auto Absen <b>MagangHub</b></div>
                 <div class="top-r">
+                    <button type="button" class="btn-text notif-btn" id="btn-toggle-notif" title="Pusat Notifikasi & Traceability">
+                        <svg class="ic"><use href="#i-bell"/></svg>
+                        <span class="notif-badge" id="notif-badge">1</span>
+                        <span class="who">Notifikasi</span>
+                    </button>
                     <div class="acct"><span class="avatar" id="avatar">?</span><span class="who" id="chip-user">—</span></div>
                     <button type="button" class="btn-text" id="btn-logout"><svg class="ic"><use href="#i-logout"/></svg>Keluar</button>
                 </div>
@@ -356,6 +380,23 @@
                             <button type="button" class="btn-text" id="btn-dry-run"><svg class="ic"><use href="#i-flask"/></svg>Simulasi</button>
                             <button type="button" class="btn-text" id="btn-refresh-status"><svg class="ic"><use href="#i-refresh"/></svg>Perbarui</button>
                         </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- NOTIFIKASI & TRACEABILITY CARD -->
+            <section class="section" id="section-notif">
+                <div class="section-head">
+                    <h2><span class="tile"><svg class="ic"><use href="#i-bell"/></svg></span>Pemberitahuan & Traceability Presensi</h2>
+                    <span class="hint" id="notif-live-time">Jejak eksekusi sistem</span>
+                </div>
+                <div class="notif-card is-warn" id="notif-live-card">
+                    <div class="notif-card-ic">
+                        <svg class="ic"><use id="notif-live-ic" href="#i-bell"/></svg>
+                    </div>
+                    <div class="notif-card-content">
+                        <h3 id="notif-live-title">Sistem Standby — Menunggu Jadwal 17:00 WIB</h3>
+                        <p id="notif-live-desc">Cron otomatis dijadwalkan berjalan pada pukul 17:00 WIB untuk lokasi Karawang.</p>
                     </div>
                 </div>
             </section>
@@ -474,6 +515,18 @@
         </div>
         <div class="termbox"><pre class="term" id="dry-run-content"></pre></div>
         <footer><button type="button" class="btn btn-ghost" id="btn-close-dry">Tutup</button></footer>
+    </dialog>
+
+    <dialog id="modalNotif">
+        <div class="dlg-head">
+            <span class="dlg-ic"><svg class="ic"><use href="#i-bell"/></svg></span>
+            <h3>Pusat Notifikasi & Traceability</h3>
+            <button type="button" class="icon-btn" id="btn-x-notif" aria-label="Tutup"><svg class="ic"><use href="#i-x"/></svg></button>
+        </div>
+        <div class="dlg-body" style="padding-left:20px; padding-right:20px; padding-bottom:16px" id="notif-modal-content">
+            <p>Memuat notifikasi…</p>
+        </div>
+        <footer><button type="button" class="btn btn-ghost" id="btn-close-notif">Tutup</button></footer>
     </dialog>
 
     <dialog id="dlgConfirm">
@@ -750,6 +803,26 @@
                     if (res.is_attended) setHero('ok', 'Sudah absen hari ini', line.trim());
                     else setHero('warn', 'Belum absen hari ini', 'Absen otomatis berjalan pukul ' + CRON_TIME + ' WIB, atau kirim sekarang.');
 
+                    // Update notifikasi traceability banner
+                    const nCard = $('#notif-live-card');
+                    const nIc = $('#notif-live-ic');
+                    const nTitle = $('#notif-live-title');
+                    const nDesc = $('#notif-live-desc');
+                    const nTime = $('#notif-live-time');
+
+                    if (res.is_attended) {
+                        nCard.className = 'notif-card is-ok';
+                        nIc.setAttribute('href', '#i-check-circle');
+                        nTitle.textContent = 'Presensi Hari Ini Telah Terverifikasi';
+                        nDesc.textContent = 'Presensi MagangHub untuk hari ini telah tercatat di server Kemnaker. Absen otomatis Cron jam ' + CRON_TIME + ' WIB tidak akan menimpa data Anda.';
+                    } else {
+                        nCard.className = 'notif-card is-warn';
+                        nIc.setAttribute('href', '#i-clock');
+                        nTitle.textContent = 'Sistem Standby — Menunggu Jadwal ' + CRON_TIME + ' WIB';
+                        nDesc.textContent = 'Sistem siap mengirim absensi secara otomatis ke MagangHub pada pukul ' + CRON_TIME + ' WIB (5 sore) untuk lokasi ' + (res.preferences?.user_location || res.env?.location || DEFAULT_LOC.location) + '.';
+                    }
+                    if (res.time_wib) nTime.textContent = 'Pembaruan ' + res.time_wib.slice(11, 19) + ' WIB';
+
                     const pref = res.preferences || {}, env = res.env || {};
                     const pick = (a, b, c) => a !== undefined && a !== null ? a : (b !== undefined && b !== null && b !== '' ? b : c);
                     const v = {
@@ -778,35 +851,39 @@
 
             async function loadAuditLogs() {
                 const box = $('#audit-table-box');
+                const mBox = $('#notif-modal-content');
+                const nBadge = $('#notif-badge');
                 if (!box) return;
                 try {
                     const res = await api('logs');
-                    if (!res || !res.logs || !res.logs.length) {
-                        box.innerHTML = '';
+                    const logs = (res && res.logs) || [];
+                    if (nBadge) nBadge.textContent = logs.length > 0 ? logs.length : '1';
+
+                    if (!logs.length) {
+                        const emptyHtml = '<div class="audit-empty"><svg class="ic" style="margin-bottom:6px"><use href="#i-bell"/></svg><div><strong>Belum Ada Riwayat Eksekusi Otomatis</strong></div><span class="hint">Jejak notifikasi akan otomatis tercatat di sini setiap kali Cron jam ' + CRON_TIME + ' WIB berjalan atau tombol Absen Sekarang ditekan.</span></div>';
+                        box.innerHTML = emptyHtml;
+                        if (mBox) mBox.innerHTML = emptyHtml;
                         return;
                     }
-                    box.innerHTML = '<div class="audit-list"></div>';
-                    const list = box.querySelector('.audit-list');
-                    res.logs.slice(0, 5).forEach(l => {
-                        const item = el('div', 'audit-item');
+
+                    let listHtml = '<div class="audit-list">';
+                    logs.forEach(l => {
                         const isOk = l.status === 'SUCCESS' || /berhasil|success/i.test(l.message);
                         const isWarn = /sudah absen|dilewati/i.test(l.message);
                         const bClass = isOk ? 'badge-ok' : (isWarn ? 'badge-warn' : 'badge-err');
                         const bText = isOk ? 'Berhasil' : (isWarn ? 'Dilewati' : 'Gagal');
-
-                        const left = el('div', 'audit-info');
-                        const b = el('span', 'audit-badge ' + bClass, bText);
                         const cleanMsg = (l.message || '').split('\n').filter(Boolean)[0] || 'Eksekusi selesai';
-                        const msg = el('span', 'audit-msg', cleanMsg);
-                        msg.title = l.message;
-                        left.append(b, msg);
-
                         const ts = (l.created_at || l.date || '').replace('T', ' ').slice(0, 16);
-                        const right = el('span', 'audit-ts', ts);
-                        item.append(left, right);
-                        list.append(item);
+
+                        listHtml += '<div class="audit-item"><div class="audit-info"><span class="audit-badge ' + bClass + '">' + bText + '</span><span class="audit-msg" title="' + l.message.replace(/"/g, '&quot;') + '">' + cleanMsg + '</span></div><span class="audit-ts">' + ts + ' WIB</span></div>';
                     });
-                } catch (e) { /* abaikan jika belum ada log */ }
+                    listHtml += '</div>';
+
+                    box.innerHTML = listHtml;
+                    if (mBox) mBox.innerHTML = listHtml;
+                } catch (e) {
+                    box.innerHTML = '<div class="audit-empty">Belum ada riwayat jejak presensi.</div>';
+                }
             }
 
             $('#btn-refresh-status').addEventListener('click', e => {
@@ -968,7 +1045,14 @@
             });
             $('#btn-close-dry').addEventListener('click', () => dlg.close());
             $('#btn-x-dry').addEventListener('click', () => dlg.close());
-            [dlg, dlgC].forEach(d => d.addEventListener('click', e => { if (e.target === d) d.close(); }));
+
+            // Dialog Notifikasi & Traceability
+            const dlgN = $('#modalNotif');
+            $('#btn-toggle-notif').addEventListener('click', () => dlgN.showModal());
+            $('#btn-close-notif').addEventListener('click', () => dlgN.close());
+            $('#btn-x-notif').addEventListener('click', () => dlgN.close());
+
+            [dlg, dlgC, dlgN].forEach(d => d.addEventListener('click', e => { if (e.target === d) d.close(); }));
 
             // Peringatan jika menutup tab dengan perubahan belum tersimpan
             window.addEventListener('beforeunload', e => { if (isDirty()) { e.preventDefault(); e.returnValue = ''; } });

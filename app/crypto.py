@@ -50,3 +50,4 @@ def decrypt_password(stored_password: str) -> str:
     except Exception as e:
         print(f"[CRYPTO] Decryption warning: {e}")
         return stored_password
+
