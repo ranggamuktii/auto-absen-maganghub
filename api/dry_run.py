@@ -33,3 +33,4 @@ class handler(BaseHTTPRequestHandler):
                 "status": False,
                 "output": f"Error: {e}"
             }).encode("utf-8"))
+

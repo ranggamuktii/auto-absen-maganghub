@@ -50,7 +50,7 @@ def main():
         sys.exit(cmd_status(svc, days=args.days))
 
 
-# Vercel Serverless Function entry point
+# Vercel Serverless Function entry point (WSGI Standard)
 from http.server import BaseHTTPRequestHandler
 import json
 import io
@@ -58,100 +58,114 @@ import os
 from contextlib import redirect_stdout, redirect_stderr
 
 
-class handler(BaseHTTPRequestHandler):
-    """Vercel Serverless Function handler for API endpoints."""
+def app(environ, start_response):
+    """WSGI application callable for Vercel Serverless runtime."""
+    raw_path = environ.get("PATH_INFO", "") or ""
+    path = raw_path.rstrip("/") if raw_path != "/" else "/"
 
-    def do_GET(self):
-        path = self.path.split("?")[0].rstrip("/")
-        if path.endswith("/cron"):
-            cron_secret = os.environ.get("CRON_SECRET", "").strip()
-            auth_header = self.headers.get("Authorization", "").strip()
-            if cron_secret and auth_header != f"Bearer {cron_secret}":
-                self.send_response(401)
-                self.send_header("Content-Type", "application/json; charset=utf-8")
-                self.end_headers()
-                self.wfile.write(json.dumps({"status": False, "message": "Unauthorized"}).encode("utf-8"))
-                return
+    # 1. Favicon
+    if path == "/favicon.ico":
+        start_response("204 No Content", [])
+        return []
 
-            buffer = io.StringIO()
-            code = 1
-            err = None
-            try:
-                with redirect_stdout(buffer), redirect_stderr(buffer):
-                    svc = AttendanceService()
-                    code = cmd_absen(svc)
-            except Exception as e:
-                err = str(e)
-                buffer.write(f"\n[EXCEPTION] {err}")
+    # 2. Dry Run
+    if path in ("/api/dry_run", "/api/dry-run"):
+        try:
+            from app.models.attendance import AttendanceService
+            from app.utils.time import today_str
+            payload = AttendanceService.attendance_payload(today_str())
+            body = json.dumps({"status": True, "output": json.dumps(payload, ensure_ascii=False, indent=2)}).encode("utf-8")
+        except Exception as e:
+            body = json.dumps({"status": False, "output": f"Simulasi gagal: {e}"}).encode("utf-8")
+        start_response("200 OK", [("Content-Type", "application/json; charset=utf-8")])
+        return [body]
 
-            self.send_response(200 if code == 0 else 500)
-            self.send_header("Content-Type", "application/json; charset=utf-8")
-            self.end_headers()
-            self.wfile.write(json.dumps({
-                "status": code == 0,
-                "exit_code": code,
-                "message": "Absen berhasil diproses" if code == 0 else (err or "Gagal memproses absen"),
-                "output": buffer.getvalue().strip()
-            }, ensure_ascii=False, indent=2).encode("utf-8"))
-            return
-        elif path.endswith("/dry_run") or path.endswith("/dry-run"):
-            try:
-                payload = AttendanceService.attendance_payload(today_str())
-                output_text = json.dumps(payload, ensure_ascii=False, indent=2)
-                self.send_response(200)
-                self.send_header("Content-Type", "application/json; charset=utf-8")
-                self.end_headers()
-                self.wfile.write(json.dumps({"status": True, "output": output_text}).encode("utf-8"))
-            except Exception as e:
-                self.send_response(500)
-                self.send_header("Content-Type", "application/json; charset=utf-8")
-                self.end_headers()
-                self.wfile.write(json.dumps({"status": False, "output": f"Error: {e}"}).encode("utf-8"))
-            return
-        elif path.endswith("/status"):
-            from app.utils.time import today_str, now_wib
-            from app.config import settings
-            buffer = io.StringIO()
-            is_attended = False
-            err = None
-            try:
-                with redirect_stdout(buffer), redirect_stderr(buffer):
-                    svc = AttendanceService()
-                    entry = svc.get_log(today_str())
-                    is_attended = bool(entry)
-                    cmd_status(svc, days=1)
-            except Exception as e:
-                err = str(e)
-                buffer.write(f"\n[EXCEPTION] {err}")
+    # 3. Cron / Trigger Absen
+    if path == "/api/cron":
+        cron_secret = os.environ.get("CRON_SECRET", "").strip()
+        auth_header = environ.get("HTTP_AUTHORIZATION", "").strip()
+        if cron_secret and auth_header != f"Bearer {cron_secret}":
+            start_response("401 Unauthorized", [("Content-Type", "application/json; charset=utf-8")])
+            return [json.dumps({"status": False, "message": "Unauthorized"}).encode("utf-8")]
 
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json; charset=utf-8")
-            self.end_headers()
-            self.wfile.write(json.dumps({
-                "status": True,
-                "date": today_str(),
-                "time_wib": now_wib().strftime("%Y-%m-%d %H:%M:%S"),
-                "is_attended": is_attended,
-                "output": buffer.getvalue().strip(),
-                "env": {
-                    "location": settings.location,
-                    "clock_in_time": "15:00",
-                    "activity_log": settings.activity_log,
-                    "lesson_learned": settings.lesson_learned,
-                    "obstacles": settings.obstacles
-                }
-            }, ensure_ascii=False, indent=2).encode("utf-8"))
-            return
-        else:
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json; charset=utf-8")
-            self.end_headers()
-            self.wfile.write(json.dumps({
-                "status": True,
-                "message": "Auto Absen MagangHub Serverless API",
-                "endpoints": ["/api/cron", "/api/status"]
-            }, indent=2).encode("utf-8"))
-            return
+        buffer = io.StringIO()
+        code = 1
+        err_msg = None
+        try:
+            with redirect_stdout(buffer), redirect_stderr(buffer):
+                from app.models.attendance import AttendanceService
+                from app.commands import cmd_absen
+                svc = AttendanceService()
+                code = cmd_absen(svc)
+        except Exception as e:
+            err_msg = str(e)
+            buffer.write(f"\n[EXCEPTION] {err_msg}")
+
+        out = buffer.getvalue().strip()
+        is_ok = (code == 0)
+        res_data = {
+            "status": is_ok,
+            "exit_code": code,
+            "message": "Absen berhasil diproses" if is_ok else (err_msg or "Gagal memproses absen"),
+            "output": out
+        }
+        start_response("200 OK", [("Content-Type", "application/json; charset=utf-8")])
+        return [json.dumps(res_data, ensure_ascii=False, indent=2).encode("utf-8")]
+
+    # 4. Status Check
+    if path == "/api/status":
+        from app.utils.time import today_str, now_wib
+        from app.config import settings
+
+        buffer = io.StringIO()
+        is_attended = False
+        err_msg = None
+
+        try:
+            with redirect_stdout(buffer), redirect_stderr(buffer):
+                from app.models.attendance import AttendanceService
+                from app.commands import cmd_status
+                svc = AttendanceService()
+                entry = svc.get_log(today_str())
+                is_attended = bool(entry)
+                cmd_status(svc, days=1)
+        except Exception as e:
+            err_msg = str(e)
+            buffer.write(f"\n[EXCEPTION] {err_msg}")
+
+        out = buffer.getvalue().strip()
+        res_data = {
+            "status": True,
+            "date": today_str(),
+            "time_wib": now_wib().strftime("%Y-%m-%d %H:%M:%S"),
+            "is_attended": is_attended,
+            "error": err_msg,
+            "output": out,
+            "env": {
+                "location": settings.location,
+                "clock_in_time": "15:00",
+                "activity_log": settings.activity_log,
+                "lesson_learned": settings.lesson_learned,
+                "obstacles": settings.obstacles
+            }
+        }
+        start_response("200 OK", [("Content-Type", "application/json; charset=utf-8")])
+        return [json.dumps(res_data, ensure_ascii=False, indent=2).encode("utf-8")]
+
+    # 5. Serve static HTML for root
+    html_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "public", "index.html")
+    if os.path.exists(html_file):
+        with open(html_file, "rb") as f:
+            html_bytes = f.read()
+        start_response("200 OK", [("Content-Type", "text/html; charset=utf-8")])
+        return [html_bytes]
+
+    start_response("404 Not Found", [("Content-Type", "text/plain")])
+    return [b"Not Found"]
+
+
+# Alias for compatibility
+handler = app
 
 
 if __name__ == "__main__":
