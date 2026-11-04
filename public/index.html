@@ -129,26 +129,14 @@
         .has-ic:focus-within > .ic { color: var(--ink); }
         .pw-toggle { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); }
         .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+        .grid3 { display: grid; grid-template-columns: 2fr 1.1fr 1.1fr; gap: 14px; }
+        .grid3 .field { margin-bottom: 0; }
         .row { display: flex; gap: 10px; }
         .row .has-ic { flex: 1; min-width: 0; }
         .divider { height: 1px; background: var(--line); margin: 22px 0; border: 0; }
         .check { display: flex; align-items: flex-start; gap: 10px; cursor: pointer; }
         .check input { width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--ink); }
         .err { display: flex; align-items: center; gap: 8px; min-height: 1.55em; margin: 0 0 12px; color: var(--err); font-size: 14px; }
-
-        /* Lokasi */
-        .loc-list { list-style: none; margin: 12px 0 0; padding: 0; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
-        .loc-list li { display: flex; align-items: center; gap: 12px; padding: 10px 14px; cursor: pointer; border-top: 1px solid var(--line); transition: background .12s; }
-        .loc-list li:first-child { border-top: 0; }
-        .loc-list li:hover { background: var(--field); }
-        .loc-list .pin { display: grid; place-items: center; flex: none; width: 32px; height: 32px; border-radius: 9px; background: var(--field); color: var(--muted); transition: background .15s, color .15s; }
-        .loc-list .lt { display: grid; gap: 1px; flex: 1; min-width: 0; }
-        .loc-list .lt span { font-size: 13px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .loc-list .ck { color: var(--ok); opacity: 0; }
-        .loc-list li[aria-selected=true] { background: var(--field); }
-        .loc-list li[aria-selected=true] .pin { background: var(--ink); color: var(--surface); }
-        .loc-list li[aria-selected=true] .ck { opacity: 1; }
-        .loc-tools { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 10px; }
 
         /* Saklar */
         .switch { position: relative; display: flex; align-items: center; gap: 14px; cursor: pointer; }
@@ -233,21 +221,9 @@
         .audit-msg { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink); font-weight: 500; }
         .audit-empty { padding: 18px 20px; text-align: center; color: var(--muted); font-size: 13px; background: var(--surface); border: 1px dashed var(--line); border-radius: 10px; }
 
-        /* Notification Bell & Card */
+        /* Notification Bell */
         .notif-btn { position: relative; display: inline-flex; align-items: center; gap: 6px; }
         .notif-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; padding: 0 5px; font-size: 11px; font-weight: 700; border-radius: 999px; background: var(--ok); color: #fff; line-height: 1; }
-        .notif-card { display: flex; align-items: flex-start; gap: 14px; padding: 16px 20px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); margin-bottom: 12px; }
-        .notif-card.is-ok { border-color: var(--ok); background: #F0FDF9; color: #0E5A44; }
-        .notif-card.is-warn { border-color: var(--warn); background: #FFFBEB; color: #8C4700; }
-        .notif-card.is-err { border-color: var(--err); background: #FEF3F2; color: #912018; }
-        @media (prefers-color-scheme: dark) {
-            .notif-card.is-ok { background: #062B1F; border-color: #0E5A44; color: #6EE7C2; }
-            .notif-card.is-warn { background: #2A1702; border-color: #7E3E00; color: #FDB022; }
-            .notif-card.is-err { background: #2D0F0C; border-color: #8C2219; color: #FDA29B; }
-        }
-        .notif-card-ic { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 10px; background: var(--surface); border: 1px solid currentColor; flex-shrink: 0; }
-        .notif-card-content h3 { margin: 0 0 4px; font-size: 15px; font-weight: 600; }
-        .notif-card-content p { margin: 0; font-size: 13.5px; opacity: .9; line-height: 1.5; }
 
 
 
@@ -255,6 +231,7 @@
             .who { display: none; }
             .acct { padding-right: 4px; }
             .grid2 { grid-template-columns: 1fr; gap: 18px; }
+            .grid3 { grid-template-columns: 1fr; gap: 14px; }
             .row { flex-direction: column; }
             .status { flex-wrap: wrap; padding: 20px; gap: 14px; }
             .status .btn-lg { width: 100%; }
@@ -384,54 +361,21 @@
                 </div>
             </section>
 
-            <!-- NOTIFIKASI & TRACEABILITY CARD -->
-            <section class="section" id="section-notif">
-                <div class="section-head">
-                    <h2><span class="tile"><svg class="ic"><use href="#i-bell"/></svg></span>Pemberitahuan & Traceability Presensi</h2>
-                    <span class="hint" id="notif-live-time">Jejak eksekusi sistem</span>
-                </div>
-                <div class="notif-card is-warn" id="notif-live-card">
-                    <div class="notif-card-ic">
-                        <svg class="ic"><use id="notif-live-ic" href="#i-bell"/></svg>
-                    </div>
-                    <div class="notif-card-content">
-                        <h3 id="notif-live-title">Sistem Standby — Menunggu Jadwal 17:00 WIB</h3>
-                        <p id="notif-live-desc">Cron otomatis dijadwalkan berjalan pada pukul 17:00 WIB untuk lokasi Karawang.</p>
-                    </div>
-                </div>
-            </section>
-
             <form id="form-settings" novalidate>
                 <section class="section">
                     <div class="section-head">
                         <h2><span class="tile"><svg class="ic"><use href="#i-pin"/></svg></span>Lokasi presensi</h2>
-                        <span class="hint">Koordinat inilah yang dikirim saat absen</span>
+                        <button type="button" class="btn btn-ghost btn-sm" id="btn-get-gps"><svg class="ic"><use href="#i-locate"/></svg>Deteksi GPS</button>
                     </div>
                     <div class="panel">
-                        <div class="field">
-                            <label for="loc-q">Cari lokasi</label>
-                            <div class="row">
+                        <div class="grid3">
+                            <div class="field">
+                                <label for="input_location">Nama lokasi</label>
                                 <div class="has-ic">
-                                    <svg class="ic"><use href="#i-search"/></svg>
-                                    <input class="inp" type="search" id="loc-q" placeholder="Nama tempat atau alamat, misalnya Karawang Barat" autocomplete="off" maxlength="120">
+                                    <svg class="ic"><use href="#i-pin"/></svg>
+                                    <input class="inp" type="text" id="input_location" name="location" placeholder="Contoh: Karawang" maxlength="120">
                                 </div>
-                                <button type="button" class="btn btn-ghost" id="btn-loc-search"><svg class="ic"><use href="#i-search"/></svg>Cari</button>
                             </div>
-                            <ul class="loc-list" id="loc-list" role="listbox" aria-label="Hasil pencarian lokasi" hidden></ul>
-                            <div class="loc-tools">
-                                <span class="hint" id="loc-msg" aria-live="polite">Tekan <kbd>Enter</kbd> atau Cari, lalu pilih hasil yang sesuai.</span>
-                                <button type="button" class="btn btn-ghost btn-sm" id="btn-get-gps"><svg class="ic"><use href="#i-locate"/></svg>Gunakan lokasi saya</button>
-                            </div>
-                        </div>
-                        <hr class="divider">
-                        <div class="field">
-                            <label for="input_location">Nama lokasi</label>
-                            <div class="has-ic">
-                                <svg class="ic"><use href="#i-pin"/></svg>
-                                <input class="inp" type="text" id="input_location" name="location" placeholder="Contoh: Karawang" maxlength="120">
-                            </div>
-                        </div>
-                        <div class="grid2">
                             <div class="field">
                                 <label for="input_latitude">Latitude</label>
                                 <div class="has-ic"><span class="lead-t">Lat</span><input class="inp t mono" type="text" inputmode="decimal" id="input_latitude" name="latitude" placeholder="-6.370891"></div>
@@ -743,7 +687,6 @@
                 $('#form-settings').reset();
                 saved = null;
                 renderLog('Memuat log…');
-                $('#loc-list').hidden = true;
                 setHero('', 'Memeriksa status…', '');
             }
 
@@ -802,26 +745,6 @@
                     const line = (res.output || '').split('\n').find(l => l.includes('Status:')) || '';
                     if (res.is_attended) setHero('ok', 'Sudah absen hari ini', line.trim());
                     else setHero('warn', 'Belum absen hari ini', 'Absen otomatis berjalan pukul ' + CRON_TIME + ' WIB, atau kirim sekarang.');
-
-                    // Update notifikasi traceability banner
-                    const nCard = $('#notif-live-card');
-                    const nIc = $('#notif-live-ic');
-                    const nTitle = $('#notif-live-title');
-                    const nDesc = $('#notif-live-desc');
-                    const nTime = $('#notif-live-time');
-
-                    if (res.is_attended) {
-                        nCard.className = 'notif-card is-ok';
-                        nIc.setAttribute('href', '#i-check-circle');
-                        nTitle.textContent = 'Presensi Hari Ini Telah Terverifikasi';
-                        nDesc.textContent = 'Presensi MagangHub untuk hari ini telah tercatat di server Kemnaker. Absen otomatis Cron jam ' + CRON_TIME + ' WIB tidak akan menimpa data Anda.';
-                    } else {
-                        nCard.className = 'notif-card is-warn';
-                        nIc.setAttribute('href', '#i-clock');
-                        nTitle.textContent = 'Sistem Standby — Menunggu Jadwal ' + CRON_TIME + ' WIB';
-                        nDesc.textContent = 'Sistem siap mengirim absensi secara otomatis ke MagangHub pada pukul ' + CRON_TIME + ' WIB (5 sore) untuk lokasi ' + (res.preferences?.user_location || res.env?.location || DEFAULT_LOC.location) + '.';
-                    }
-                    if (res.time_wib) nTime.textContent = 'Pembaruan ' + res.time_wib.slice(11, 19) + ' WIB';
 
                     const pref = res.preferences || {}, env = res.env || {};
                     const pick = (a, b, c) => a !== undefined && a !== null ? a : (b !== undefined && b !== null && b !== '' ? b : c);
@@ -915,11 +838,8 @@
                 navigator.clipboard.writeText($('#log-console').innerText).then(() => toast('Log disalin.'), () => toast('Gagal menyalin log.', 'err'));
             });
 
-            // ---------- Lokasi: pencarian (OpenStreetMap Nominatim) & GPS ----------
-            // Pencarian hanya saat Enter/Cari, bukan per ketikan, sesuai kebijakan Nominatim.
+            // ---------- Lokasi & Deteksi GPS ----------
             const NOM = 'https://nominatim.openstreetmap.org/';
-            const locList = $('#loc-list');
-            const locMsg = t => { $('#loc-msg').textContent = t; };
 
             function applyLocation(name, lat, lng) {
                 $('#input_location').value = name;
@@ -927,53 +847,6 @@
                 $('#input_longitude').value = (+lng).toFixed(6);
                 syncDirty();
             }
-
-            function renderResults(items) {
-                locList.innerHTML = '';
-                items.forEach(r => {
-                    const title = r.name || r.display_name.split(',')[0];
-                    const li = el('li');
-                    li.setAttribute('role', 'option');
-                    li.setAttribute('aria-selected', 'false');
-                    li.tabIndex = 0;
-                    const pin = el('span', 'pin'); pin.innerHTML = ic('pin');
-                    const lt = el('div', 'lt'); lt.append(el('strong', '', title), el('span', '', r.display_name));
-                    const ck = el('span'); ck.innerHTML = ic('check', 'ck');
-                    li.append(pin, lt, ck.firstChild);
-                    const pick = () => {
-                        locList.querySelectorAll('li').forEach(x => x.setAttribute('aria-selected', 'false'));
-                        li.setAttribute('aria-selected', 'true');
-                        applyLocation(title, r.lat, r.lon);
-                        locMsg('Dipilih: ' + title + '. Jangan lupa simpan pengaturan.');
-                    };
-                    li.addEventListener('click', pick);
-                    li.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(); } });
-                    locList.append(li);
-                });
-                locList.hidden = !items.length;
-            }
-
-            async function searchLocation() {
-                const q = $('#loc-q').value.trim();
-                if (q.length < 3) { locMsg('Ketik minimal 3 huruf untuk mencari.'); return; }
-                const btn = $('#btn-loc-search');
-                busy(btn, true, 'Mencari…');
-                try {
-                    const r = await fetch(NOM + 'search?' + new URLSearchParams({
-                        q, format: 'jsonv2', limit: '6', countrycodes: 'id', 'accept-language': 'id'
-                    }));
-                    if (!r.ok) throw new Error(r.status);
-                    const items = await r.json();
-                    renderResults(items);
-                    locMsg(items.length ? items.length + ' hasil ditemukan. Pilih yang sesuai.' : 'Tidak ada hasil. Coba nama kota atau kecamatan.');
-                } catch (e) {
-                    renderResults([]);
-                    locMsg('Pencarian gagal. Periksa koneksi internet lalu coba lagi.');
-                } finally { busy(btn, false); }
-            }
-            $('#btn-loc-search').addEventListener('click', searchLocation);
-            // Enter di kolom cari hanya mencari, tidak menyimpan form
-            $('#loc-q').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); searchLocation(); } });
 
             const GPS_ERR = {
                 1: 'Izin lokasi ditolak. Aktifkan izin lokasi untuk situs ini di browser.',
@@ -984,11 +857,11 @@
             $('#btn-get-gps').addEventListener('click', () => {
                 if (!navigator.geolocation) { toast('Browser tidak mendukung geolokasi.', 'err'); return; }
                 const b = $('#btn-get-gps');
-                busy(b, true, 'Mencari posisi…');
+                busy(b, true, 'Mencari GPS…');
                 navigator.geolocation.getCurrentPosition(async pos => {
                     const { latitude: lat, longitude: lng } = pos.coords;
                     let name = $('#input_location').value.trim();
-                    try { // nama tempat opsional; koordinat tetap dipakai jika gagal
+                    try {
                         const r = await fetch(NOM + 'reverse?' + new URLSearchParams({ lat, lon: lng, format: 'jsonv2', zoom: '16', 'accept-language': 'id' }));
                         if (r.ok) {
                             const d = await r.json(), a = d.address || {};
@@ -996,7 +869,7 @@
                         }
                     } catch (e) { /* abaikan */ }
                     applyLocation(name || 'Lokasi saya', lat, lng);
-                    locMsg('Posisi terdeteksi (akurasi sekitar ' + Math.round(pos.coords.accuracy) + ' m). Jangan lupa simpan pengaturan.');
+                    toast('Lokasi terdeteksi (' + (name || 'Lokasi saya') + '). Jangan lupa simpan.');
                     busy(b, false);
                 }, err => {
                     busy(b, false);
