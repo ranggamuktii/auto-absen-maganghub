@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auto Absen MagangHub — Cloud Panel</title>
+    <!-- Google Font: Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Bootstrap 4.6 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+    <!-- Toastr CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        body {
+            background-color: #f8fafc;
+            color: #0f172a;
+            margin: 0;
+            padding: 35px 15px;
+            font-size: 14px;
+        }
+        .container {
+            max-width: 860px;
+        }
+        /* Solid colors only - No Gradients */
+        .card {
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+            margin-bottom: 24px;
+        }
+        .card-header {
+            background-color: #ffffff;
+            border-bottom: 1px solid #f1f5f9;
+            padding: 16px 20px;
+            font-weight: 600;
+            font-size: 15px;
+            border-top-left-radius: 12px !important;
+            border-top-right-radius: 12px !important;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .card-body {
+            padding: 22px;
+        }
+        .badge-status {
+            font-size: 13px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+        .badge-success-solid {
+            background-color: #10b981;
+            color: #ffffff;
+        }
+        .badge-warning-solid {
+            background-color: #f59e0b;
+            color: #ffffff;
+        }
+        .badge-neutral-solid {
+            background-color: #0284c7;
+            color: #ffffff;
+        }
+        .btn-solid-primary {
+            background-color: #2563eb;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            padding: 9px 18px;
+            font-weight: 500;
+            font-size: 13px;
+        }
+        .btn-solid-primary:hover {
+            background-color: #1d4ed8;
+            color: #ffffff;
+        }
+        .btn-solid-secondary {
+            background-color: #f1f5f9;
+            color: #334155;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 9px 16px;
+            font-weight: 500;
+            font-size: 13px;
+        }
+        .btn-solid-secondary:hover {
+            background-color: #e2e8f0;
+            color: #0f172a;
+        }
+        .terminal-box {
+            background-color: #0f172a;
+            color: #e2e8f0;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 12px;
+            padding: 16px;
+            border-radius: 8px;
+            min-height: 140px;
+            max-height: 280px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+            border: 1px solid #1e293b;
+        }
+        .header-title {
+            font-weight: 600;
+            font-size: 22px;
+            color: #0f172a;
+            letter-spacing: -0.3px;
+        }
+        .header-subtitle {
+            font-size: 13px;
+            color: #64748b;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Header -->
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h1 class="header-title mb-1">
+                <i class="fas fa-cloud text-primary mr-2"></i>Auto Absen MagangHub
+            </h1>
+            <p class="header-subtitle mb-0">Vercel Serverless & Cron Job Monitoring Panel</p>
+        </div>
+        <div>
+            <span class="badge badge-neutral-solid badge-status">
+                <i class="fas fa-stopwatch mr-1"></i> Cron: 15:00 WIB
+            </span>
+        </div>
+    </div>
+
+    <!-- Status Card -->
+    <div class="card">
+        <div class="card-header">
+            <span><i class="fas fa-info-circle text-muted mr-2"></i>Status Kehadiran Hari Ini</span>
+            <button class="btn btn-sm btn-solid-secondary" id="btn-refresh-status">
+                <i class="fas fa-sync-alt mr-1"></i> Refresh
+            </button>
+        </div>
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-7 mb-3 mb-md-0">
+                    <div class="text-muted small mb-1">Status Absen Kemnaker:</div>
+                    <div id="val-attendance-status">
+                        <span class="badge badge-neutral-solid badge-status">
+                            <i class="fas fa-spinner fa-spin mr-1"></i> Memeriksa status...
+                        </span>
+                    </div>
+                    <div class="mt-2 text-muted small" id="val-time-wib">
+                        Waktu Server: -
+                    </div>
+                </div>
+                <div class="col-md-5 text-md-right">
+                    <button class="btn btn-solid-primary" id="btn-trigger-cron">
+                        <i class="fas fa-paper-plane mr-1"></i> Trigger Absen Sekarang
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Terminal Log Card -->
+    <div class="card">
+        <div class="card-header">
+            <span><i class="fas fa-terminal text-muted mr-2"></i>Output / Execution Log</span>
+            <span class="text-muted small" id="status-tag">Ready</span>
+        </div>
+        <div class="card-body">
+            <div class="terminal-box" id="log-console">// Menunggu respons dari Vercel Serverless API...</div>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
+<script>
+$(document).ready(function() {
+    toastr.options = {
+        closeButton: true,
+        progressBar: true,
+        positionClass: "toast-top-right",
+        timeOut: "4000"
+    };
+
+    function checkStatus() {
+        $('#status-tag').text('Checking...');
+        $.getJSON('/api/status', function(res) {
+            $('#status-tag').text('Online');
+            if (res.status) {
+                if (res.is_attended) {
+                    $('#val-attendance-status').html('<span class="badge badge-success-solid badge-status"><i class="fas fa-check-circle mr-1"></i> Hadir Hari Ini (' + res.date + ')</span>');
+                } else {
+                    $('#val-attendance-status').html('<span class="badge badge-warning-solid badge-status"><i class="fas fa-clock mr-1"></i> Belum Absen (' + res.date + ')</span>');
+                }
+                $('#val-time-wib').text('Waktu: ' + (res.time_wib || '-') + ' WIB');
+                if (res.output) {
+                    $('#log-console').text(res.output);
+                }
+            }
+        }).fail(function(xhr) {
+            $('#status-tag').text('Error');
+            $('#val-attendance-status').html('<span class="text-danger small"><i class="fas fa-exclamation-circle mr-1"></i> Gagal terhubung ke API Vercel</span>');
+            if (xhr.responseText) {
+                $('#log-console').text(xhr.responseText);
+            }
+        });
+    }
+
+    // Trigger cron endpoint
+    $('#btn-trigger-cron').click(function() {
+        const btn = $(this);
+        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i> Memproses Absen...');
+        $('#status-tag').text('Executing...');
+
+        $.getJSON('/api/cron', function(res) {
+            if (res.status) {
+                toastr.success(res.message || 'Absen berhasil diproses!');
+            } else {
+                toastr.warning(res.message || 'Respons diterima.');
+            }
+            if (res.output) {
+                $('#log-console').text(res.output);
+            }
+            checkStatus();
+        }).fail(function(xhr) {
+            toastr.error('Eksekusi gagal. Cek log output.');
+            if (xhr.responseText) {
+                try {
+                    const parsed = JSON.parse(xhr.responseText);
+                    $('#log-console').text(parsed.output || parsed.message || xhr.responseText);
+                } catch(e) {
+                    $('#log-console').text(xhr.responseText);
+                }
+            }
+        }).always(function() {
+            btn.prop('disabled', false).html('<i class="fas fa-paper-plane mr-1"></i> Trigger Absen Sekarang');
+            $('#status-tag').text('Ready');
+        });
+    });
+
+    $('#btn-refresh-status').click(function() {
+        checkStatus();
+        toastr.info('Status diperbarui.');
+    });
+
+    // Check on initial load
+    checkStatus();
+});
+</script>
+
+</body>
+</html>

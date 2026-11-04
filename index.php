@@ -1,7 +1,8 @@
 <?php
+
 /**
  * Auto Absen MagangHub - Local Control Dashboard
- * Minimalist, Clean, Poppins font, Solid colors (No Gradients)
+ * Minimalis, solid color, tanpa gradasi. Vanilla JS (tanpa jQuery/Bootstrap).
  */
 
 $envFile = __DIR__ . '/.env';
@@ -9,12 +10,9 @@ $logFile = __DIR__ . '/absen.log';
 $pyBinary = __DIR__ . '/.venv/Scripts/python.exe';
 $mainScript = __DIR__ . '/main.py';
 
-// Helper: Baca field tertentu dari .env tanpa mengekspos kredensial
-function getSafeEnvData($filePath) {
-    if (!file_exists($filePath)) {
-        return [];
-    }
-    $lines = file($filePath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+// Baca field tertentu dari .env tanpa mengekspos kredensial
+function getSafeEnvData($filePath)
+{
     $data = [
         'clock_in_time'  => '15:00',
         'location'       => 'Karawang',
@@ -22,34 +20,35 @@ function getSafeEnvData($filePath) {
         'lesson_learned' => '',
         'obstacles'      => '',
     ];
-    foreach ($lines as $line) {
+    if (!file_exists($filePath)) return $data;
+    $map = [
+        'CLOCK_IN_TIME' => 'clock_in_time', 'LOCATION' => 'location',
+        'ACTIVITY_LOG' => 'activity_log', 'LESSON_LEARNED' => 'lesson_learned',
+        'OBSTACLES' => 'obstacles',
+    ];
+    foreach (file($filePath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
         $line = trim($line);
-        if (strpos($line, '#') === 0) continue;
-        if (strpos($line, '=') === false) continue;
+        if (strpos($line, '#') === 0 || strpos($line, '=') === false) continue;
         list($key, $val) = explode('=', $line, 2);
         $key = trim($key);
-        $val = trim($val, " \t\n\r\0\x0B\"'");
-        if ($key === 'CLOCK_IN_TIME')   $data['clock_in_time']  = $val;
-        if ($key === 'LOCATION')        $data['location']       = $val;
-        if ($key === 'ACTIVITY_LOG')    $data['activity_log']   = $val;
-        if ($key === 'LESSON_LEARNED')  $data['lesson_learned'] = $val;
-        if ($key === 'OBSTACLES')       $data['obstacles']      = $val;
+        if (isset($map[$key])) $data[$map[$key]] = trim($val, " \t\n\r\0\x0B\"'");
     }
     return $data;
 }
 
-// Helper: Simpan catatan harian ke .env secara aman
-function updateSafeEnvData($filePath, $updates) {
-    if (!file_exists($filePath)) {
-        return false;
-    }
+// Simpan catatan harian ke .env secara aman
+function updateSafeEnvData($filePath, $updates)
+{
+    if (!file_exists($filePath)) return false;
     $content = file_get_contents($filePath);
     foreach ($updates as $key => $val) {
-        // Escape newlines jika ada
         $cleanVal = str_replace(["\r", "\n"], ' ', trim($val));
         $pattern = "/^" . preg_quote($key, '/') . "=.*$/m";
         if (preg_match($pattern, $content)) {
-            $content = preg_replace($pattern, "{$key}={$cleanVal}", $content);
+            // callback: mencegah "$1" / "\" di teks dianggap backreference
+            $content = preg_replace_callback($pattern, function () use ($key, $cleanVal) {
+                return "{$key}={$cleanVal}";
+            }, $content);
         } else {
             $content .= "\n{$key}={$cleanVal}";
         }
@@ -57,65 +56,49 @@ function updateSafeEnvData($filePath, $updates) {
     return file_put_contents($filePath, $content) !== false;
 }
 
-// API Handler jika request via AJAX
+// API Handler (AJAX)
 if (isset($_GET['api'])) {
     header('Content-Type: application/json; charset=utf-8');
     $action = $_GET['api'] ?? '';
 
     if ($action === 'status') {
         $env = getSafeEnvData($envFile);
-        $cmd = "\"{$pyBinary}\" \"{$mainScript}\" status 2>&1";
-        $output = shell_exec($cmd);
+        $output = shell_exec("\"{$pyBinary}\" \"{$mainScript}\" status 2>&1");
         $isAttended = (strpos($output, 'Belum ada absen') === false && strpos($output, 'Status:') !== false);
-
         echo json_encode([
-            'status'     => true,
-            'is_attended'=> $isAttended,
-            'env'        => $env,
-            'output'     => trim($output ?? ''),
-            'today'      => date('Y-m-d')
+            'status' => true, 'is_attended' => $isAttended, 'env' => $env,
+            'output' => trim($output ?? ''), 'today' => date('Y-m-d'),
         ]);
         exit;
     }
 
     if ($action === 'absen') {
-        $cmd = "\"{$pyBinary}\" \"{$mainScript}\" absen 2>&1";
-        $output = shell_exec($cmd);
+        $output = shell_exec("\"{$pyBinary}\" \"{$mainScript}\" absen 2>&1");
         $success = (strpos($output, '[OK]') !== false);
         echo json_encode([
             'status'  => $success,
             'message' => $success ? 'Presensi berhasil diproses.' : 'Eksekusi presensi selesai.',
-            'output'  => trim($output ?? '')
+            'output'  => trim($output ?? ''),
         ]);
         exit;
     }
 
     if ($action === 'dry_run') {
-        $cmd = "\"{$pyBinary}\" \"{$mainScript}\" absen --dry-run 2>&1";
-        $output = shell_exec($cmd);
-        echo json_encode([
-            'status' => true,
-            'output' => trim($output ?? '')
-        ]);
+        $output = shell_exec("\"{$pyBinary}\" \"{$mainScript}\" absen --dry-run 2>&1");
+        echo json_encode(['status' => true, 'output' => trim($output ?? '')]);
         exit;
     }
 
     if ($action === 'save_log') {
-        $activity = $_POST['activity_log'] ?? '';
-        $lesson   = $_POST['lesson_learned'] ?? '';
-        $obstacle = $_POST['obstacles'] ?? '';
-        $time     = $_POST['clock_in_time'] ?? '15:00';
-
         $ok = updateSafeEnvData($envFile, [
-            'ACTIVITY_LOG'   => $activity,
-            'LESSON_LEARNED' => $lesson,
-            'OBSTACLES'      => $obstacle,
-            'CLOCK_IN_TIME'  => $time,
+            'ACTIVITY_LOG'   => $_POST['activity_log'] ?? '',
+            'LESSON_LEARNED' => $_POST['lesson_learned'] ?? '',
+            'OBSTACLES'      => $_POST['obstacles'] ?? '',
+            'CLOCK_IN_TIME'  => $_POST['clock_in_time'] ?? '15:00',
         ]);
-
         echo json_encode([
             'status'  => $ok,
-            'message' => $ok ? 'Draft catatan harian berhasil disimpan.' : 'Gagal menyimpan ke .env'
+            'message' => $ok ? 'Catatan harian tersimpan.' : 'Gagal menyimpan ke .env',
         ]);
         exit;
     }
@@ -123,13 +106,9 @@ if (isset($_GET['api'])) {
     if ($action === 'get_logs') {
         $lines = [];
         if (file_exists($logFile)) {
-            $all = file($logFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-            $lines = array_slice($all, -25);
+            $lines = array_slice(file($logFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES), -25);
         }
-        echo json_encode([
-            'status' => true,
-            'logs'   => implode("\n", $lines)
-        ]);
+        echo json_encode(['status' => true, 'logs' => implode("\n", $lines)]);
         exit;
     }
 
@@ -137,430 +116,642 @@ if (isset($_GET['api'])) {
     exit;
 }
 
-$initialEnv = getSafeEnvData($envFile);
+$env = getSafeEnvData($envFile);
+$h = fn ($s) => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
 ?>
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Auto Absen MagangHub — Control Panel</title>
-    <!-- Google Font: Poppins -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Auto Absen MagangHub</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Bootstrap 4.6 CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
-    <!-- Toastr CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-
+    <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
     <style>
-        * {
+        :root {
+            --bg: #EDF0EE;
+            --surface: #FFFFFF;
+            --field: #F6F8F7;
+            --ink: #16201C;
+            --muted: #5C6963;
+            --line: #D9DFDC;
+            --ok: #0B6E5A;
+            --warn: #B45309;
+            --err: #B42318;
+            --term: #121A16;
+            --term-ink: #CFE0D6;
+            --sans: 'Schibsted Grotesk', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            --mono: 'JetBrains Mono', Consolas, 'Courier New', monospace;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #0D1210;
+                --surface: #151C19;
+                --field: #101613;
+                --ink: #E9F0EC;
+                --muted: #92A199;
+                --line: #26312C;
+                --ok: #4FD1AE;
+                --warn: #F2B35E;
+                --err: #F97066;
+                --term: #080C0A;
+            }
+        }
+
+        *,
+        *::before,
+        *::after {
             box-sizing: border-box;
-            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         }
+
+        html {
+            -webkit-text-size-adjust: 100%;
+        }
+
         body {
-            background-color: #f4f6f9;
-            color: #1e293b;
             margin: 0;
-            padding: 30px 15px;
-            font-size: 14px;
+            background: var(--bg);
+            color: var(--ink);
+            font: 400 15px/1.55 var(--sans);
         }
-        .container {
-            max-width: 960px;
+
+        .wrap {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 28px 20px 64px;
         }
-        /* Solid colors only - No Gradients */
-        .card {
-            background-color: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            margin-bottom: 24px;
+
+        :focus-visible {
+            outline: 2px solid var(--ink);
+            outline-offset: 2px;
         }
-        .card-header {
-            background-color: #ffffff;
-            border-bottom: 1px solid #e2e8f0;
-            padding: 16px 20px;
-            font-weight: 600;
-            font-size: 15px;
-            border-top-left-radius: 12px !important;
-            border-top-right-radius: 12px !important;
+
+        /* Top bar */
+        .top {
             display: flex;
             align-items: center;
             justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 56px;
         }
-        .card-body {
-            padding: 20px;
+
+        .brand {
+            font-weight: 600;
+            letter-spacing: -.01em;
         }
-        .badge-status {
+
+        .brand span {
+            color: var(--muted);
+            font-weight: 400;
+        }
+
+        .chip {
             font-size: 13px;
-            padding: 6px 14px;
-            border-radius: 20px;
+            color: var(--muted);
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            padding: 5px 12px;
+        }
+
+        /* Hero: status adalah fokus halaman */
+        .hero {
+            margin-bottom: 56px;
+        }
+
+        .date {
+            margin: 0 0 14px;
+            color: var(--muted);
+        }
+
+        .hero h1 {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin: 0;
+            font-size: clamp(2rem, 6vw, 3.4rem);
+            line-height: 1.05;
+            font-weight: 600;
+            letter-spacing: -.035em;
+        }
+
+        .dot {
+            flex: none;
+            width: .36em;
+            height: .36em;
+            border-radius: 50%;
+            background: var(--muted);
+        }
+
+        .dot[data-s="ok"] {
+            background: var(--ok);
+        }
+
+        .dot[data-s="warn"] {
+            background: var(--warn);
+        }
+
+        .dot[data-s="err"] {
+            background: var(--err);
+        }
+
+        .detail {
+            margin: 12px 0 0;
+            min-height: 1.55em;
+            color: var(--muted);
+            max-width: 60ch;
+        }
+
+        .meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 36px;
+            margin: 28px 0;
+        }
+
+        .meta div {
+            min-width: 0;
+        }
+
+        .meta dt {
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .meta dd {
+            margin: 0;
             font-weight: 500;
         }
-        .badge-success-solid {
-            background-color: #10b981;
-            color: #ffffff;
+
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
         }
-        .badge-warning-solid {
-            background-color: #f59e0b;
-            color: #ffffff;
+
+        /* Buttons */
+        .btn {
+            font: inherit;
+            font-weight: 600;
+            font-size: 14px;
+            border-radius: 10px;
+            padding: 11px 18px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: opacity .15s, border-color .15s;
         }
-        .badge-neutral-solid {
-            background-color: #0284c7;
-            color: #ffffff;
+
+        .btn:disabled {
+            opacity: .45;
+            cursor: not-allowed;
         }
-        .btn-solid-primary {
-            background-color: #2563eb;
-            color: #ffffff;
-            border: none;
-            border-radius: 8px;
-            padding: 9px 18px;
+
+        .btn-primary {
+            background: var(--ink);
+            color: var(--surface);
+        }
+
+        .btn-primary:not(:disabled):hover {
+            opacity: .88;
+        }
+
+        .btn-lg {
+            padding: 14px 24px;
+            font-size: 15px;
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--ink);
+            border-color: var(--line);
+        }
+
+        .btn-ghost:not(:disabled):hover {
+            border-color: var(--ink);
+        }
+
+        /* Sections */
+        .section {
+            margin-top: 48px;
+        }
+
+        .section-head {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .section-head h2 {
+            margin: 0;
+            font-size: 19px;
+            font-weight: 600;
+            letter-spacing: -.02em;
+        }
+
+        .hint {
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .panel {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            padding: 24px;
+        }
+
+        .field {
+            margin-bottom: 18px;
+        }
+
+        .field label {
+            display: block;
             font-weight: 500;
-            font-size: 13px;
-            transition: background-color 0.15s ease-in-out;
-        }
-        .btn-solid-primary:hover {
-            background-color: #1d4ed8;
-            color: #ffffff;
-        }
-        .btn-solid-secondary {
-            background-color: #f1f5f9;
-            color: #334155;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            padding: 9px 16px;
-            font-weight: 500;
-            font-size: 13px;
-        }
-        .btn-solid-secondary:hover {
-            background-color: #e2e8f0;
-            color: #0f172a;
-        }
-        .form-control {
-            border-radius: 8px;
-            border: 1px solid #cbd5e1;
-            font-size: 13px;
-            padding: 10px 12px;
-            color: #0f172a;
-        }
-        .form-control:focus {
-            border-color: #2563eb;
-            box-shadow: 0 0 0 2px rgba(37,99,235,0.15);
-        }
-        label {
-            font-weight: 500;
-            font-size: 13px;
-            color: #475569;
             margin-bottom: 6px;
         }
-        .terminal-box {
-            background-color: #0f172a;
-            color: #e2e8f0;
-            font-family: 'Consolas', 'Courier New', monospace;
-            font-size: 12px;
-            padding: 16px;
-            border-radius: 8px;
-            max-height: 250px;
-            overflow-y: auto;
+
+        textarea,
+        input[type=time] {
+            width: 100%;
+            font: inherit;
+            color: var(--ink);
+            background: var(--field);
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 11px 13px;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 92px;
+            line-height: 1.5;
+        }
+
+        textarea:focus,
+        input:focus {
+            outline: none;
+            border-color: var(--ink);
+        }
+
+        .grid2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+        }
+
+        .foot {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 16px;
+            margin-top: 6px;
+        }
+
+        .foot .field {
+            margin: 0;
+            width: 170px;
+        }
+
+        /* Console */
+        .term {
+            margin: 0;
+            background: var(--term);
+            color: var(--term-ink);
+            font: 400 12.5px/1.65 var(--mono);
+            border-radius: 16px;
+            padding: 18px 20px;
+            max-height: 280px;
+            overflow: auto;
             white-space: pre-wrap;
             word-break: break-all;
-            border: 1px solid #1e293b;
         }
-        .header-title {
-            font-weight: 600;
-            font-size: 22px;
-            color: #0f172a;
-            letter-spacing: -0.3px;
+
+        /* Dialog + toast */
+        dialog {
+            width: min(560px, calc(100% - 32px));
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            padding: 0;
+            background: var(--surface);
+            color: var(--ink);
         }
-        .header-subtitle {
-            font-size: 13px;
-            color: #64748b;
-            margin-top: 2px;
+
+        dialog::backdrop {
+            background: rgba(10, 16, 13, .55);
         }
-        .stat-item {
-            padding: 12px 16px;
-            background-color: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            margin-bottom: 12px;
-        }
-        .stat-label {
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: #64748b;
+
+        dialog header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
             font-weight: 600;
         }
-        .stat-value {
-            font-size: 15px;
-            font-weight: 600;
-            color: #0f172a;
-            margin-top: 4px;
+
+        dialog .term {
+            border-radius: 0;
+            max-height: 50vh;
+        }
+
+        dialog footer {
+            padding: 14px 20px;
+            text-align: right;
+        }
+
+        .toast {
+            position: fixed;
+            left: 50%;
+            bottom: 24px;
+            transform: translate(-50%, 20px);
+            opacity: 0;
+            pointer-events: none;
+            background: var(--ink);
+            color: var(--surface);
+            padding: 11px 18px;
+            border-radius: 10px;
+            font-weight: 500;
+            font-size: 14px;
+            transition: opacity .2s, transform .2s;
+            max-width: calc(100% - 32px);
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translate(-50%, 0);
+        }
+
+        .toast[data-t="err"] {
+            background: var(--err);
+            color: #fff;
+        }
+
+        @media (max-width:600px) {
+            .top {
+                margin-bottom: 40px;
+            }
+
+            .grid2 {
+                grid-template-columns: 1fr;
+                gap: 0;
+            }
+
+            .foot {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .foot .field {
+                width: 100%;
+            }
+
+            .actions .btn-lg {
+                width: 100%;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                transition: none !important;
+            }
         }
     </style>
 </head>
+
 <body>
+    <main class="wrap">
 
-<div class="container">
-    <!-- Header -->
-    <div class="d-flex align-items-center justify-content-between mb-4">
-        <div>
-            <div class="header-title">Auto Absen MagangHub</div>
-            <div class="header-subtitle">Control Panel Otomasi Presensi Lokal</div>
-        </div>
-        <div class="text-right">
-            <span class="badge badge-neutral-solid badge-status" id="badge-bot-state">
-                <i class="fas fa-clock mr-1"></i> Trigger: <?php echo htmlspecialchars($initialEnv['clock_in_time']); ?> WIB
-            </span>
-        </div>
-    </div>
+        <header class="top">
+            <div class="brand">Auto Absen <span>MagangHub</span></div>
+            <div class="chip" id="chip-time">Otomatis pukul <?= $h($env['clock_in_time']) ?> WIB</div>
+        </header>
 
-    <!-- Row: Status & Actions -->
-    <div class="card">
-        <div class="card-header">
-            <span><i class="fas fa-tachometer-alt mr-2 text-primary"></i>Status Presensi Hari Ini</span>
-            <button class="btn btn-sm btn-solid-secondary py-1 px-2" id="btn-refresh-status" title="Refresh Status">
-                <i class="fas fa-sync-alt"></i>
-            </button>
-        </div>
-        <div class="card-body">
-            <div class="row align-items-center">
-                <div class="col-md-4">
-                    <div class="stat-item mb-md-0">
-                        <div class="stat-label">Hari & Tanggal</div>
-                        <div class="stat-value" id="val-date"><?php echo date('d F Y'); ?></div>
-                    </div>
+        <section class="hero" aria-live="polite">
+            <p class="date" id="val-date"><?= date('d F Y') ?></p>
+            <h1><i class="dot" id="dot" data-s=""></i><span id="hero-title">Memeriksa status…</span></h1>
+            <p class="detail" id="hero-detail"></p>
+
+            <dl class="meta">
+                <div>
+                    <dt>Lokasi</dt>
+                    <dd id="val-location"><?= $h($env['location']) ?></dd>
                 </div>
-                <div class="col-md-4">
-                    <div class="stat-item mb-md-0">
-                        <div class="stat-label">Status Kehadiran</div>
-                        <div class="stat-value" id="val-attendance-status">
-                            <span class="text-muted"><i class="fas fa-spinner fa-spin mr-1"></i> Memeriksa...</span>
-                        </div>
-                    </div>
+                <div>
+                    <dt>Absen otomatis</dt>
+                    <dd id="val-time"><?= $h($env['clock_in_time']) ?> WIB</dd>
                 </div>
-                <div class="col-md-4">
-                    <div class="stat-item mb-md-0">
-                        <div class="stat-label">Lokasi Terpasang</div>
-                        <div class="stat-value text-truncate" id="val-location"><?php echo htmlspecialchars($initialEnv['location']); ?></div>
-                    </div>
-                </div>
+            </dl>
+
+            <div class="actions">
+                <button type="button" class="btn btn-primary btn-lg" id="btn-run-absen">Absen sekarang</button>
+                <button type="button" class="btn btn-ghost btn-lg" id="btn-dry-run">Simulasi</button>
+                <button type="button" class="btn btn-ghost btn-lg" id="btn-refresh-status">Perbarui status</button>
             </div>
+        </section>
 
-            <hr class="my-3" style="border-top: 1px solid #f1f5f9;">
-
-            <!-- Quick Action Buttons -->
-            <div class="d-flex flex-wrap align-items-center" style="gap: 10px;">
-                <button type="button" class="btn btn-solid-primary" id="btn-run-absen">
-                    <i class="fas fa-paper-plane mr-1"></i> Absen Sekarang (Manual)
-                </button>
-                <button type="button" class="btn btn-solid-secondary" id="btn-dry-run">
-                    <i class="fas fa-eye mr-1"></i> Simulasi (Dry Run)
-                </button>
-                <button type="button" class="btn btn-solid-secondary" id="btn-refresh-logs">
-                    <i class="fas fa-terminal mr-1"></i> Muat Ulang Log
-                </button>
+        <section class="section">
+            <div class="section-head">
+                <h2>Catatan harian</h2>
+                <span class="hint">Disimpan ke .env, dipakai saat absen berjalan</span>
             </div>
-        </div>
-    </div>
-
-    <!-- Row: Draft Catatan Harian -->
-    <div class="card">
-        <div class="card-header">
-            <span><i class="fas fa-edit mr-2 text-primary"></i>Catatan Harian Magang</span>
-            <span class="text-muted small">Tersimpan di .env untuk presensi otomatis</span>
-        </div>
-        <div class="card-body">
-            <form id="form-activity">
-                <div class="form-group">
-                    <label for="activity_log">Uraian Aktivitas Hari Ini</label>
-                    <textarea class="form-control" id="activity_log" name="activity_log" rows="3" placeholder="Aktivitas yang dikerjakan..."><?php echo htmlspecialchars($initialEnv['activity_log']); ?></textarea>
+            <form class="panel" id="form-activity">
+                <div class="field">
+                    <label for="activity_log">Aktivitas hari ini</label>
+                    <textarea id="activity_log" name="activity_log" placeholder="Apa yang kamu kerjakan hari ini?"><?= $h($env['activity_log']) ?></textarea>
                 </div>
-                <div class="row">
-                    <div class="col-md-6 form-group">
-                        <label for="lesson_learned">Pembelajaran yang Diperoleh</label>
-                        <textarea class="form-control" id="lesson_learned" name="lesson_learned" rows="3" placeholder="Pembelajaran baru..."><?php echo htmlspecialchars($initialEnv['lesson_learned']); ?></textarea>
+                <div class="grid2">
+                    <div class="field">
+                        <label for="lesson_learned">Yang dipelajari</label>
+                        <textarea id="lesson_learned" name="lesson_learned" placeholder="Hal baru yang kamu pelajari"><?= $h($env['lesson_learned']) ?></textarea>
                     </div>
-                    <div class="col-md-6 form-group">
-                        <label for="obstacles">Kendala yang Dihadapi</label>
-                        <textarea class="form-control" id="obstacles" name="obstacles" rows="3" placeholder="Kendala harian..."><?php echo htmlspecialchars($initialEnv['obstacles']); ?></textarea>
+                    <div class="field">
+                        <label for="obstacles">Kendala</label>
+                        <textarea id="obstacles" name="obstacles" placeholder="Hambatan yang kamu temui"><?= $h($env['obstacles']) ?></textarea>
                     </div>
                 </div>
-                <div class="row align-items-center mt-2">
-                    <div class="col-md-3 form-group mb-md-0">
-                        <label for="clock_in_time">Jam Absen Otomatis</label>
-                        <input type="text" class="form-control" id="clock_in_time" name="clock_in_time" value="<?php echo htmlspecialchars($initialEnv['clock_in_time']); ?>" placeholder="15:00">
+                <div class="foot">
+                    <div class="field">
+                        <label for="clock_in_time">Jam absen otomatis</label>
+                        <input type="time" id="clock_in_time" name="clock_in_time" value="<?= $h($env['clock_in_time']) ?>">
                     </div>
-                    <div class="col-md-9 text-right mt-3 mt-md-0">
-                        <button type="submit" class="btn btn-solid-primary" id="btn-save-log">
-                            <i class="fas fa-save mr-1"></i> Simpan Perubahan Catatan
-                        </button>
-                    </div>
+                    <button type="submit" class="btn btn-primary" id="btn-save-log" disabled>Simpan catatan</button>
                 </div>
             </form>
-        </div>
-    </div>
+        </section>
 
-    <!-- Row: Console Log -->
-    <div class="card mb-0">
-        <div class="card-header">
-            <span><i class="fas fa-terminal mr-2 text-primary"></i>Konsol Riwayat Eksekusi (absen.log)</span>
-            <span class="text-muted small">25 baris terakhir</span>
-        </div>
-        <div class="card-body p-0">
-            <div class="terminal-box m-3" id="log-console">Memuat riwayat log...</div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal: Dry Run Preview -->
-<div class="modal fade" id="modalDryRun" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content" style="border-radius: 12px; border: 1px solid #e2e8f0;">
-            <div class="card-header">
-                <span><i class="fas fa-file-code mr-2 text-primary"></i>Payload Simulasi Absen</span>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="outline: none;">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+        <section class="section">
+            <div class="section-head">
+                <h2>Riwayat eksekusi</h2>
+                <button type="button" class="btn btn-ghost" id="btn-refresh-logs" style="padding:7px 14px">Muat ulang</button>
             </div>
-            <div class="modal-body p-3">
-                <pre class="terminal-box m-0" id="dry-run-content" style="max-height: 350px;"></pre>
-            </div>
-            <div class="modal-footer p-2" style="border-top: 1px solid #e2e8f0;">
-                <button type="button" class="btn btn-sm btn-solid-secondary" data-dismiss="modal">Tutup</button>
-            </div>
-        </div>
-    </div>
-</div>
+            <pre class="term" id="log-console" tabindex="0">Memuat log…</pre>
+            <p class="hint" style="margin:10px 0 0">25 baris terakhir dari absen.log</p>
+        </section>
+    </main>
 
-<!-- Scripts: jQuery, Bootstrap, Toastr -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <dialog id="modalDryRun">
+        <header>Hasil simulasi absen</header>
+        <pre class="term" id="dry-run-content"></pre>
+        <footer><button type="button" class="btn btn-ghost" id="btn-close-dry">Tutup</button></footer>
+    </dialog>
 
-<script>
-$(document).ready(function() {
-    toastr.options = {
-        closeButton: true,
-        progressBar: true,
-        positionClass: "toast-top-right",
-        timeOut: "3500"
-    };
+    <div class="toast" id="toast" role="status"></div>
 
-    // Load Status
-    function checkStatus() {
-        $.getJSON('index.php?api=status', function(res) {
-            if (res.status) {
-                if (res.is_attended) {
-                    $('#val-attendance-status').html('<span class="badge badge-success-solid badge-status"><i class="fas fa-check-circle mr-1"></i> Hadir Hari Ini</span>');
+    <script>
+        (() => {
+            const $ = s => document.querySelector(s);
+            const api = (a, opt) => fetch('index.php?api=' + a, opt).then(r => {
+                if (!r.ok) throw new Error(r.status);
+                return r.json();
+            });
+
+            // Tanggal dalam bahasa Indonesia
+            $('#val-date').textContent = new Intl.DateTimeFormat('id-ID', {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+            }).format(new Date());
+
+            // Toast
+            let toastTimer;
+
+            function toast(msg, type) {
+                const t = $('#toast');
+                t.textContent = msg;
+                t.dataset.t = type || '';
+                t.classList.add('show');
+                clearTimeout(toastTimer);
+                toastTimer = setTimeout(() => t.classList.remove('show'), 3200);
+            }
+
+            // Tombol sibuk / normal
+            function busy(btn, on, label) {
+                if (on) {
+                    btn.dataset.label = btn.textContent;
+                    btn.textContent = label;
                 } else {
-                    $('#val-attendance-status').html('<span class="badge badge-warning-solid badge-status"><i class="fas fa-clock mr-1"></i> Belum Absen</span>');
+                    btn.textContent = btn.dataset.label;
                 }
-                if (res.env) {
-                    if (res.env.location) $('#val-location').text(res.env.location);
-                    if (res.env.clock_in_time) {
-                        $('#badge-bot-state').html('<i class="fas fa-clock mr-1"></i> Trigger: ' + res.env.clock_in_time + ' WIB');
+                btn.disabled = on;
+            }
+
+            function setHero(state, title, detail) {
+                $('#dot').dataset.s = state;
+                $('#hero-title').textContent = title;
+                $('#hero-detail').textContent = detail || '';
+            }
+
+            function checkStatus() {
+                return api('status').then(res => {
+                    if (!res.status) throw new Error('status');
+                    const line = (res.output || '').split('\n').find(l => l.includes('Status:')) || '';
+                    if (res.is_attended) setHero('ok', 'Sudah absen hari ini', line.trim());
+                    else setHero('warn', 'Belum absen hari ini', 'Absen otomatis berjalan pukul ' + (res.env.clock_in_time || '15:00') + ' WIB, atau kirim sekarang.');
+                    if (res.env) {
+                        if (res.env.location) $('#val-location').textContent = res.env.location;
+                        if (res.env.clock_in_time) {
+                            $('#val-time').textContent = res.env.clock_in_time + ' WIB';
+                            $('#chip-time').textContent = 'Otomatis pukul ' + res.env.clock_in_time + ' WIB';
+                        }
                     }
-                }
+                }).catch(() => setHero('err', 'Status tidak terbaca', 'Tidak bisa menjalankan main.py. Periksa path Python dan server lokal.'));
             }
-        }).fail(function() {
-            $('#val-attendance-status').html('<span class="text-danger small"><i class="fas fa-exclamation-circle mr-1"></i> Gagal terhubung</span>');
-        });
-    }
 
-    // Load Logs
-    function fetchLogs() {
-        $.getJSON('index.php?api=get_logs', function(res) {
-            if (res.status && res.logs) {
-                $('#log-console').text(res.logs);
-                let consoleEl = document.getElementById('log-console');
-                consoleEl.scrollTop = consoleEl.scrollHeight;
+            function fetchLogs() {
+                return api('get_logs').then(res => {
+                    const el = $('#log-console');
+                    el.textContent = res.logs || 'Belum ada log.';
+                    el.scrollTop = el.scrollHeight;
+                }).catch(() => {
+                    $('#log-console').textContent = 'Log tidak bisa dimuat.';
+                });
             }
-        });
-    }
 
-    // Init
-    checkStatus();
-    fetchLogs();
-
-    $('#btn-refresh-status').click(function() {
-        checkStatus();
-        toastr.info('Status diperbarui.');
-    });
-
-    $('#btn-refresh-logs').click(function() {
-        fetchLogs();
-        toastr.info('Log diperbarui.');
-    });
-
-    // Form Save Catatan
-    $('#form-activity').submit(function(e) {
-        e.preventDefault();
-        const btn = $('#btn-save-log');
-        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i> Menyimpan...');
-
-        $.ajax({
-            url: 'index.php?api=save_log',
-            type: 'POST',
-            data: $(this).serialize(),
-            dataType: 'json',
-            success: function(res) {
-                if (res.status) {
-                    toastr.success(res.message);
-                    checkStatus();
-                } else {
-                    toastr.error(res.message);
-                }
-            },
-            error: function() {
-                toastr.error('Terjadi kesalahan koneksi.');
-            },
-            complete: function() {
-                btn.prop('disabled', false).html('<i class="fas fa-save mr-1"></i> Simpan Perubahan Catatan');
-            }
-        });
-    });
-
-    // Trigger Absen Manual
-    $('#btn-run-absen').click(function() {
-        const btn = $(this);
-        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i> Mengirim Presensi...');
-
-        $.getJSON('index.php?api=absen', function(res) {
-            if (res.status) {
-                toastr.success(res.message);
-            } else {
-                toastr.warning(res.message || 'Selesai diproses.');
-            }
             checkStatus();
             fetchLogs();
-        }).fail(function() {
-            toastr.error('Gagal mengeksekusi skrip.');
-        }).always(function() {
-            btn.prop('disabled', false).html('<i class="fas fa-paper-plane mr-1"></i> Absen Sekarang (Manual)');
-        });
-    });
 
-    // Dry Run
-    $('#btn-dry-run').click(function() {
-        const btn = $(this);
-        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i> Menyiapkan...');
+            $('#btn-refresh-status').addEventListener('click', e => {
+                const b = e.currentTarget;
+                busy(b, true, 'Memeriksa…');
+                checkStatus().finally(() => {
+                    busy(b, false);
+                    toast('Status diperbarui');
+                });
+            });
+            $('#btn-refresh-logs').addEventListener('click', e => {
+                const b = e.currentTarget;
+                busy(b, true, 'Memuat…');
+                fetchLogs().finally(() => busy(b, false));
+            });
 
-        $.getJSON('index.php?api=dry_run', function(res) {
-            btn.prop('disabled', false).html('<i class="fas fa-eye mr-1"></i> Simulasi (Dry Run)');
-            $('#dry-run-content').text(res.output || 'Tidak ada data.');
-            $('#modalDryRun').modal('show');
-        }).fail(function() {
-            btn.prop('disabled', false).html('<i class="fas fa-eye mr-1"></i> Simulasi (Dry Run)');
-            toastr.error('Gagal mengambil data simulasi.');
-        });
-    });
-});
-</script>
+            // Catatan: tombol simpan aktif hanya jika ada perubahan
+            const form = $('#form-activity'),
+                saveBtn = $('#btn-save-log');
+            const snapshot = () => new URLSearchParams(new FormData(form)).toString();
+            let saved = snapshot();
+            form.addEventListener('input', () => {
+                saveBtn.disabled = snapshot() === saved;
+            });
 
+            form.addEventListener('submit', e => {
+                e.preventDefault();
+                busy(saveBtn, true, 'Menyimpan…');
+                api('save_log', {
+                        method: 'POST',
+                        body: new FormData(form)
+                    })
+                    .then(res => {
+                        toast(res.message, res.status ? '' : 'err');
+                        if (res.status) {
+                            saved = snapshot();
+                            checkStatus();
+                        }
+                    })
+                    .catch(() => toast('Koneksi ke server gagal.', 'err'))
+                    .finally(() => {
+                        busy(saveBtn, false);
+                        saveBtn.disabled = snapshot() === saved;
+                    });
+            });
+
+            // Absen manual
+            $('#btn-run-absen').addEventListener('click', e => {
+                if (!confirm('Kirim presensi sekarang?')) return;
+                const b = e.currentTarget;
+                busy(b, true, 'Mengirim…');
+                api('absen')
+                    .then(res => toast(res.message, res.status ? '' : 'err'))
+                    .catch(() => toast('Gagal menjalankan skrip.', 'err'))
+                    .finally(() => {
+                        busy(b, false);
+                        checkStatus();
+                        fetchLogs();
+                    });
+            });
+
+            // Simulasi
+            const dlg = $('#modalDryRun');
+            $('#btn-dry-run').addEventListener('click', e => {
+                const b = e.currentTarget;
+                busy(b, true, 'Menyiapkan…');
+                api('dry_run')
+                    .then(res => {
+                        $('#dry-run-content').textContent = res.output || 'Tidak ada data.';
+                        dlg.showModal();
+                    })
+                    .catch(() => toast('Gagal mengambil data simulasi.', 'err'))
+                    .finally(() => busy(b, false));
+            });
+            $('#btn-close-dry').addEventListener('click', () => dlg.close());
+            dlg.addEventListener('click', e => {
+                if (e.target === dlg) dlg.close();
+            });
+        })();
+    </script>
 </body>
-</html>
 
+</html>
