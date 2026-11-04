@@ -409,13 +409,19 @@ def app(environ, start_response):
         # Query user preferences from DB if available
         user_pref = None
         db_connected = False
+        db_message = ""
         try:
-            from app.db import get_user, get_db_url
-            if get_db_url():
-                db_connected = True
+            from app.db import get_user, init_db, check_connection
+            is_ok, msg = check_connection()
+            db_connected = is_ok
+            db_message = msg
+            if is_ok:
+                init_db()
                 user_pref = get_user(user)
-        except Exception:
-            pass
+        except Exception as e:
+            db_connected = False
+            db_message = str(e)
+
 
         buffer = io.StringIO()
         is_attended = False
@@ -442,12 +448,13 @@ def app(environ, start_response):
             "error": err_msg,
             "output": out,
             "db_connected": db_connected,
+            "db_message": db_message,
             "preferences": user_pref,
             "env": {
                 "location": (user_pref.get("user_location") if user_pref else None) or settings.location,
                 "latitude": (user_pref.get("user_latitude") if user_pref else None) or settings.latitude,
                 "longitude": (user_pref.get("user_longitude") if user_pref else None) or settings.longitude,
-                "clock_in_time": "15:00",
+                "clock_in_time": "17:00",
                 "activity_log": (user_pref.get("user_activity_log") if user_pref else None) or settings.activity_log,
                 "lesson_learned": (user_pref.get("user_lesson_learned") if user_pref else None) or settings.lesson_learned,
                 "obstacles": (user_pref.get("user_obstacles") if user_pref else None) or settings.obstacles,

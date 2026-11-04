@@ -576,7 +576,7 @@
                     </div>
                     <div>
                         <dt>Cron Otomatis</dt>
-                        <dd id="val-auto-status">Aktif (08:00 WIB)</dd>
+                        <dd id="val-auto-status">Aktif (17:00 WIB)</dd>
                     </div>
                 </dl>
 
@@ -630,7 +630,7 @@
                     <div class="foot">
                         <label class="check-group">
                             <input type="checkbox" id="check_auto_absen" checked>
-                            <span><strong>Aktifkan Auto-Absen Otomatis</strong> (Cron Vercel setiap jam 08:00 WIB)</span>
+                            <span><strong>Aktifkan Auto-Absen Otomatis</strong> (Cron Vercel setiap jam 17:00 WIB / 5 Sore)</span>
                         </label>
                         <button type="submit" class="btn btn-primary" id="btn-save-settings">Simpan Pengaturan</button>
                     </div>
@@ -810,16 +810,18 @@
                     if (res.db_connected) {
                         dbBadge.textContent = '● Neon DB Terhubung';
                         dbBadge.dataset.s = 'ok';
+                        dbBadge.title = res.db_message || 'Terhubung ke Neon Postgres';
                     } else {
                         dbBadge.textContent = '○ Neon DB Belum Terhubung';
                         dbBadge.dataset.s = '';
+                        dbBadge.title = res.db_message || 'Variabel database belum terdeteksi di Vercel.';
                     }
 
                     const line = (res.output || '').split('\n').find(l => l.includes('Status:')) || '';
                     if (res.is_attended) {
                         setHero('ok', 'Sudah absen hari ini', line.trim());
                     } else {
-                        setHero('warn', 'Belum absen hari ini', 'Absen otomatis berjalan via Vercel Cron pukul 08:00 WIB, atau kirim langsung sekarang.');
+                        setHero('warn', 'Belum absen hari ini', 'Absen otomatis berjalan via Vercel Cron pukul 17:00 WIB (5 sore), atau kirim langsung sekarang.');
                     }
 
                     // Isi form dari preferensi database / env
@@ -835,7 +837,7 @@
                     const auto = pref.user_auto_absen !== undefined ? pref.user_auto_absen : (env.auto_absen !== false);
 
                     $('#val-location').textContent = loc;
-                    $('#val-auto-status').textContent = auto ? 'Aktif (08:00 WIB)' : 'Nonaktif';
+                    $('#val-auto-status').textContent = auto ? 'Aktif (17:00 WIB)' : 'Nonaktif';
 
                     $('#input_location').value = loc;
                     $('#input_latitude').value = lat;
@@ -984,6 +986,12 @@
                     busy(b, false);
                     checkStatus();
                 });
+            });
+
+            // DB Status Click
+            $('#chip-db').addEventListener('click', () => {
+                const msg = $('#chip-db').title;
+                if (msg) toast(msg, $('#chip-db').dataset.s === 'ok' ? '' : 'warn');
             });
 
             // Simulasi (Dry Run)

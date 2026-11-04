@@ -3,20 +3,38 @@
 import os
 import ssl
 from datetime import date
-from typing import Any, Dict, List, Optional
-from urllib.parse import urlparse
+from typing import Any, Dict, List, Optional, Tuple
+from urllib.parse import urlparse, unquote
 
 import pg8000.dbapi
 
 
 def get_db_url() -> str:
-    """Get Postgres database URL from environment."""
-    return (
-        os.environ.get("POSTGRES_URL")
-        or os.environ.get("DATABASE_URL")
-        or os.environ.get("POSTGRES_PRISMA_URL")
-        or ""
-    ).strip()
+    """Get Postgres database URL from environment with fallback detection."""
+    # 1. Direct connection string variants
+    for var in (
+        "POSTGRES_URL",
+        "DATABASE_URL",
+        "POSTGRES_PRISMA_URL",
+        "POSTGRES_URL_NON_POOLING",
+        "DATABASE_URL_UNPOOLED",
+        "NEON_DATABASE_URL",
+    ):
+        val = os.environ.get(var, "").strip()
+        if val:
+            return val
+
+    # 2. Reconstruct from components if present
+    host = (os.environ.get("PGHOST") or os.environ.get("POSTGRES_HOST") or "").strip()
+    user = (os.environ.get("PGUSER") or os.environ.get("POSTGRES_USER") or "").strip()
+    pwd = (os.environ.get("PGPASSWORD") or os.environ.get("POSTGRES_PASSWORD") or "").strip()
+    db = (os.environ.get("PGDATABASE") or os.environ.get("POSTGRES_DATABASE") or "").strip() or "neondb"
+    port = (os.environ.get("PGPORT") or os.environ.get("POSTGRES_PORT") or "").strip() or "5432"
+
+    if host and user and pwd:
+        return f"postgresql://{user}:{pwd}@{host}:{port}/{db}?sslmode=require"
+
+    return ""
 
 
 def get_connection():
@@ -25,25 +43,50 @@ def get_connection():
     if not url:
         return None
 
-    # Handle postgres:// scheme if provided by some providers
+    # Handle postgres:// scheme if provided
     if url.startswith("postgres://"):
         url = "postgresql://" + url[len("postgres://"):]
 
     parsed = urlparse(url)
-    ssl_context = None
-    if "sslmode=require" in url or (parsed.hostname and "neon.tech" in parsed.hostname):
-        ssl_context = ssl.create_default_context()
-
+    username = unquote(parsed.username) if parsed.username else None
+    password = unquote(parsed.password) if parsed.password else None
+    dbname = unquote(parsed.path.lstrip("/").split("?")[0]) if parsed.path else "neondb"
     port = parsed.port or 5432
+
+    # Enable SSL for Neon / cloud databases
+    ssl_context = None
+    if "sslmode=require" in url or (parsed.hostname and "neon.tech" in parsed.hostname) or "vercel-storage" in url:
+        ssl_context = ssl.create_default_context()
+        ssl_context.check_hostname = False
+        ssl_context.verify_mode = ssl.CERT_NONE
+
     return pg8000.dbapi.connect(
-        user=parsed.username,
-        password=parsed.password,
+        user=username,
+        password=password,
         host=parsed.hostname,
         port=port,
-        database=parsed.path.lstrip("/"),
+        database=dbname,
         ssl_context=ssl_context,
         timeout=15,
     )
+
+
+def check_connection() -> Tuple[bool, str]:
+    """Test connection and return (success, message)."""
+    url = get_db_url()
+    if not url:
+        return False, "Environment variable POSTGRES_URL / DATABASE_URL belum ditemukan di Vercel."
+    try:
+        conn = get_connection()
+        if not conn:
+            return False, "Gagal membuat koneksi socket database."
+        cur = conn.cursor()
+        cur.execute("SELECT 1;")
+        cur.close()
+        conn.close()
+        return True, "Koneksi ke Neon Postgres berhasil!"
+    except Exception as e:
+        return False, f"Koneksi gagal: {e}"
 
 
 def init_db() -> bool:
