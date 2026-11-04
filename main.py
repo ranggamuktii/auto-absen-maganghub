@@ -50,5 +50,87 @@ def main():
         sys.exit(cmd_status(svc, days=args.days))
 
 
+# Vercel Serverless Function entry point
+from http.server import BaseHTTPRequestHandler
+import json
+import io
+import os
+from contextlib import redirect_stdout, redirect_stderr
+
+
+class handler(BaseHTTPRequestHandler):
+    """Vercel Serverless Function handler for API endpoints."""
+
+    def do_GET(self):
+        path = self.path.split("?")[0].rstrip("/")
+        if path.endswith("/cron"):
+            cron_secret = os.environ.get("CRON_SECRET", "").strip()
+            auth_header = self.headers.get("Authorization", "").strip()
+            if cron_secret and auth_header != f"Bearer {cron_secret}":
+                self.send_response(401)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": False, "message": "Unauthorized"}).encode("utf-8"))
+                return
+
+            buffer = io.StringIO()
+            code = 1
+            err = None
+            try:
+                with redirect_stdout(buffer), redirect_stderr(buffer):
+                    svc = AttendanceService()
+                    code = cmd_absen(svc)
+            except Exception as e:
+                err = str(e)
+                buffer.write(f"\n[EXCEPTION] {err}")
+
+            self.send_response(200 if code == 0 else 500)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(json.dumps({
+                "status": code == 0,
+                "exit_code": code,
+                "message": "Absen berhasil diproses" if code == 0 else (err or "Gagal memproses absen"),
+                "output": buffer.getvalue().strip()
+            }, ensure_ascii=False, indent=2).encode("utf-8"))
+            return
+        elif path.endswith("/status"):
+            from app.utils.time import today_str, now_wib
+            buffer = io.StringIO()
+            is_attended = False
+            err = None
+            try:
+                with redirect_stdout(buffer), redirect_stderr(buffer):
+                    svc = AttendanceService()
+                    entry = svc.get_log(today_str())
+                    is_attended = bool(entry)
+                    cmd_status(svc, days=1)
+            except Exception as e:
+                err = str(e)
+                buffer.write(f"\n[EXCEPTION] {err}")
+
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(json.dumps({
+                "status": True,
+                "date": today_str(),
+                "time_wib": now_wib().strftime("%Y-%m-%d %H:%M:%S"),
+                "is_attended": is_attended,
+                "output": buffer.getvalue().strip()
+            }, ensure_ascii=False, indent=2).encode("utf-8"))
+            return
+        else:
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(json.dumps({
+                "status": True,
+                "message": "Auto Absen MagangHub Serverless API",
+                "endpoints": ["/api/cron", "/api/status"]
+            }, indent=2).encode("utf-8"))
+            return
+
+
 if __name__ == "__main__":
     main()
