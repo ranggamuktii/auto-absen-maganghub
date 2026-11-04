@@ -11,183 +11,285 @@
     <style>
         :root {
             --bg: #EDF0EE; --surface: #FFFFFF; --field: #F6F8F7; --ink: #16201C; --muted: #5C6963; --line: #D9DFDC;
-            --ok: #0B6E5A; --warn: #B45309; --err: #B42318; --ok-bg: #DDF1EA; --warn-bg: #FBEBD3; --err-bg: #FBE1DE; --term: #121A16; --term-ink: #CFE0D6;
+            --ok: #0B6E5A; --warn: #B45309; --err: #B42318; --ok-bg: #DDF1EA; --warn-bg: #FBEBD3; --err-bg: #FBE1DE;
+            --ring: rgba(22, 32, 28, .12); --toast-ok: #6EE7C2;
+            --term: #121A16; --term-ink: #CFE0D6; --term-dim: #6F8379;
             --sans: 'Schibsted Grotesk', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
             --mono: 'JetBrains Mono', Consolas, 'Courier New', monospace;
+            --dots: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Ccircle cx='1.5' cy='1.5' r='1' fill='%23D3D9D6'/%3E%3C/svg%3E");
         }
         @media (prefers-color-scheme: dark) {
             :root {
                 --bg: #0D1210; --surface: #151C19; --field: #101613; --ink: #E9F0EC; --muted: #92A199; --line: #26312C;
-                --ok: #4FD1AE; --warn: #F2B35E; --err: #F97066; --ok-bg: #12332B; --warn-bg: #3A2A12; --err-bg: #3D1C19; --term: #080C0A;
+                --ok: #4FD1AE; --warn: #F2B35E; --err: #F97066; --ok-bg: #12332B; --warn-bg: #3A2A12; --err-bg: #3D1C19;
+                --ring: rgba(233, 240, 236, .16); --toast-ok: #0B6E5A; --term: #080C0A;
+                --dots: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Ccircle cx='1.5' cy='1.5' r='1' fill='%231A2420'/%3E%3C/svg%3E");
             }
         }
         *, *::before, *::after { box-sizing: border-box; }
         [hidden] { display: none !important; }
         html { -webkit-text-size-adjust: 100%; }
-        body { margin: 0; background: var(--bg); color: var(--ink); font: 400 15px/1.55 var(--sans); }
-        .wrap { max-width: 880px; margin: 0 auto; padding: 28px 20px 64px; }
+        body { margin: 0; background: var(--bg) var(--dots); color: var(--ink); font: 400 15px/1.55 var(--sans); -webkit-font-smoothing: antialiased; }
+        ::selection { background: var(--ink); color: var(--surface); }
+        .wrap { max-width: 880px; margin: 0 auto; padding: 28px 20px 72px; }
         :focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
-        .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
-        /* Top bar */
-        .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 56px; flex-wrap: wrap; }
-        .top-r { display: flex; align-items: center; gap: 4px; min-width: 0; }
-        .who { font-size: 14px; color: var(--muted); max-width: min(260px, 42vw); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .top-r .btn-text { color: var(--ink); font-weight: 600; }
-        .btn-text { font: inherit; font-size: 14px; font-weight: 500; color: var(--muted); background: none; border: 0; border-radius: 8px; padding: 6px 10px; cursor: pointer; transition: color .15s, background .15s; }
+        /* Ikon */
+        .ic { flex: none; width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+        .spin { animation: spin .8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Tombol */
+        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; font: inherit; font-weight: 600; font-size: 14px; line-height: 1.2; border-radius: 10px; padding: 11px 16px; border: 1px solid transparent; cursor: pointer; transition: border-color .15s, opacity .15s, transform .1s; }
+        .btn:active:not(:disabled) { transform: translateY(1px); }
+        .btn:disabled { opacity: .45; cursor: not-allowed; }
+        .btn-primary { background: var(--ink); color: var(--surface); }
+        .btn-primary:not(:disabled):hover { opacity: .88; }
+        .btn-ghost { background: var(--surface); color: var(--ink); border-color: var(--line); }
+        .btn-ghost:not(:disabled):hover { border-color: var(--ink); }
+        .btn-lg { padding: 14px 22px; font-size: 15px; }
+        .btn-sm { padding: 7px 12px; font-size: 13px; }
+        .btn-send .ic { transition: transform .18s; }
+        .btn-send:not(:disabled):hover .ic { transform: translate(2px, -2px); }
+        .btn-text { display: inline-flex; align-items: center; gap: 7px; font: inherit; font-size: 14px; font-weight: 500; color: var(--muted); background: none; border: 0; border-radius: 8px; padding: 7px 10px; cursor: pointer; transition: color .15s, background .15s; }
         .btn-text:hover:not(:disabled) { color: var(--ink); background: var(--field); }
         .btn-text:disabled { opacity: .45; cursor: not-allowed; }
-        .dbstat { display: flex; align-items: center; gap: 8px; margin: 40px 0 0; font-size: 13px; color: var(--muted); }
-        .dbstat::before { content: ""; flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
-        .dbstat[data-s=ok]::before { background: var(--ok); }
-        .dbstat[data-s=off] { color: var(--warn); }
-        .dbstat[data-s=off]::before { background: var(--warn); }
-        .brand { font-weight: 600; letter-spacing: -.01em; }
-        .brand span { color: var(--muted); font-weight: 400; }
+        .icon-btn { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 9px; border: 1px solid transparent; background: none; color: var(--muted); cursor: pointer; transition: color .15s, background .15s, border-color .15s; }
+        .icon-btn:hover { color: var(--ink); background: var(--field); border-color: var(--line); }
+
+        /* Top bar */
+        .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 36px; }
+        .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; letter-spacing: -.01em; }
+        .brand b { color: var(--muted); font-weight: 400; }
+        .logo { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; background: var(--ink); color: var(--surface); }
+        .top-r { display: flex; align-items: center; gap: 6px; min-width: 0; }
+        .acct { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 4px 14px 4px 4px; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; }
+        .avatar { display: grid; place-items: center; flex: none; width: 28px; height: 28px; border-radius: 50%; background: var(--ok-bg); color: var(--ok); font-weight: 700; font-size: 13px; }
+        .who { max-width: min(240px, 38vw); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; color: var(--muted); }
+        .top-r .btn-text { color: var(--ink); font-weight: 600; }
 
         /* Hero */
         .hero { margin-bottom: 8px; }
-        .date { margin: 0 0 12px; color: var(--muted); }
-        .hero-card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
-        .status { display: flex; align-items: center; gap: 18px; padding: 24px 28px; }
+        .date { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; color: var(--muted); }
+        .hero-card { position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; }
+        .mark { position: absolute; right: -24px; top: -30px; width: 200px; height: 200px; stroke-width: 1; color: var(--line); opacity: .6; pointer-events: none; }
+        .hero-card:has(.badge[data-s=ok]) .mark { color: var(--ok-bg); opacity: 1; }
+        .hero-card:has(.badge[data-s=warn]) .mark { color: var(--warn-bg); opacity: 1; }
+        .hero-card:has(.badge[data-s=err]) .mark { color: var(--err-bg); opacity: 1; }
+        .status { position: relative; display: flex; align-items: center; gap: 18px; padding: 24px 28px; }
         .status-text { flex: 1; min-width: 0; }
-        .badge { flex: none; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 14px; background: var(--field); color: var(--muted); }
-        .badge svg { display: none; width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+        .badge { position: relative; flex: none; display: grid; place-items: center; width: 52px; height: 52px; border-radius: 16px; background: var(--field); color: var(--muted); }
+        .badge .ic { display: none; width: 26px; height: 26px; }
         .badge .i-load { display: block; animation: spin 1s linear infinite; }
-        .badge:is([data-s=ok],[data-s=warn],[data-s=err]) .i-load { display: none; }
+        .badge:is([data-s=ok], [data-s=warn], [data-s=err]) .i-load { display: none; }
         .badge[data-s=ok] { background: var(--ok-bg); color: var(--ok); }
         .badge[data-s=ok] .i-ok { display: block; }
         .badge[data-s=warn] { background: var(--warn-bg); color: var(--warn); }
         .badge[data-s=warn] .i-warn { display: block; }
+        .badge[data-s=warn]::after { content: ""; position: absolute; inset: 0; border-radius: inherit; border: 2px solid var(--warn); opacity: 0; animation: pulse 2.6s ease-out infinite; }
+        @keyframes pulse { 0% { transform: scale(1); opacity: .55; } 70%, 100% { transform: scale(1.45); opacity: 0; } }
         .badge[data-s=err] { background: var(--err-bg); color: var(--err); }
         .badge[data-s=err] .i-err { display: block; }
         .status h1 { margin: 0; font-size: clamp(1.35rem, 3.6vw, 1.75rem); line-height: 1.15; font-weight: 600; letter-spacing: -.025em; }
         .detail { margin: 4px 0 0; min-height: 1.55em; color: var(--muted); max-width: 60ch; }
-        .hero-foot { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 20px; padding: 10px 20px 10px 28px; border-top: 1px solid var(--line); }
-        .meta { display: flex; flex-wrap: wrap; gap: 4px 28px; margin: 0; }
-        .meta div { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
-        .meta dt { font-size: 13px; color: var(--muted); }
+        .hero-foot { position: relative; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 20px; padding: 10px 14px 10px 28px; border-top: 1px solid var(--line); background: var(--surface); }
+        .meta { display: flex; flex-wrap: wrap; gap: 6px 28px; margin: 0; }
+        .meta div { display: flex; align-items: center; gap: 8px; min-width: 0; }
+        .meta dt { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }
+        .meta dt .ic { width: 16px; height: 16px; }
         .meta dd { margin: 0; font-size: 14px; font-weight: 500; }
         .tools { display: flex; gap: 2px; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @media (max-width: 640px) {
-            .status { flex-wrap: wrap; padding: 20px; gap: 14px; }
-            .status .btn-lg { width: 100%; }
-            .hero-foot { padding: 12px 14px 12px 20px; }
-        }
 
-        /* Buttons */
-        .btn { font: inherit; font-weight: 600; font-size: 14px; border-radius: 10px; padding: 11px 18px; border: 1px solid transparent; cursor: pointer; transition: opacity .15s, border-color .15s; }
-        .btn:disabled { opacity: .45; cursor: not-allowed; }
-        .btn-primary { background: var(--ink); color: var(--surface); }
-        .btn-primary:not(:disabled):hover { opacity: .88; }
-        .btn-lg { padding: 14px 24px; font-size: 15px; }
-        .btn-sm { padding: 7px 14px; font-size: 13px; }
-        .btn-ghost { background: transparent; color: var(--ink); border-color: var(--line); }
-        .btn-ghost:not(:disabled):hover { border-color: var(--ink); }
-
-        /* Sections */
+        /* Bagian */
         .section { margin-top: 48px; }
-        .section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
-        .section-head h2 { margin: 0; font-size: 19px; font-weight: 600; letter-spacing: -.02em; }
+        .section-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+        .section-head h2 { display: flex; align-items: center; gap: 10px; margin: 0; font-size: 19px; font-weight: 600; letter-spacing: -.02em; }
+        .tile { display: grid; place-items: center; flex: none; width: 30px; height: 30px; border-radius: 9px; background: var(--surface); border: 1px solid var(--line); color: var(--ink); }
         .hint { font-size: 13px; color: var(--muted); }
         .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 24px; }
+        kbd { font: 400 11.5px var(--mono); padding: 1px 6px; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 5px; background: var(--field); color: var(--ink); }
+
+        /* Form */
         .field { margin-bottom: 18px; }
         .field:last-child { margin-bottom: 0; }
-        .field label { display: block; font-weight: 500; margin-bottom: 6px; }
-        .inp { width: 100%; font: inherit; color: var(--ink); background: var(--field); border: 1px solid var(--line); border-radius: 10px; padding: 11px 13px; }
-        .inp:focus { outline: none; border-color: var(--ink); }
+        .field > label { display: flex; align-items: center; gap: 8px; font-weight: 500; margin-bottom: 6px; }
+        .field > label .ic { width: 16px; height: 16px; color: var(--muted); }
+        .inp { width: 100%; font: inherit; color: var(--ink); background: var(--field); border: 1px solid var(--line); border-radius: 10px; padding: 11px 13px; transition: border-color .15s, box-shadow .15s, background .15s; }
+        .inp:hover { border-color: var(--muted); }
+        .inp:focus { outline: none; border-color: var(--ink); background: var(--surface); box-shadow: 0 0 0 4px var(--ring); }
+        .inp::placeholder { color: var(--muted); opacity: .7; }
         textarea.inp { resize: vertical; min-height: 84px; line-height: 1.6; }
-        .mono { font-family: var(--mono); font-size: 13.5px; }
+        .mono { font-family: var(--mono); font-size: 13.5px; font-variant-numeric: tabular-nums; }
+        .has-ic { position: relative; }
+        .has-ic > .ic { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; transition: color .15s; }
+        .has-ic > .lead-t { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); font: 400 12.5px var(--mono); color: var(--muted); pointer-events: none; }
+        .has-ic .inp { padding-left: 40px; }
+        .has-ic .inp.t { padding-left: 46px; }
+        .has-ic .inp.pr { padding-right: 46px; }
+        .has-ic:focus-within > .ic { color: var(--ink); }
+        .pw-toggle { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); }
         .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
         .row { display: flex; gap: 10px; }
-        .row .inp { flex: 1; min-width: 0; }
+        .row .has-ic { flex: 1; min-width: 0; }
         .divider { height: 1px; background: var(--line); margin: 22px 0; border: 0; }
-
-        /* Pencarian lokasi */
-        .loc-list { list-style: none; margin: 12px 0 0; padding: 0; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
-        .loc-list li { display: grid; gap: 2px; padding: 11px 14px; cursor: pointer; border-top: 1px solid var(--line); }
-        .loc-list li:first-child { border-top: 0; }
-        .loc-list li span { font-size: 13px; color: var(--muted); }
-        .loc-list li:hover, .loc-list li[aria-selected=true] { background: var(--field); }
-        .loc-list li[aria-selected=true] { box-shadow: inset 3px 0 0 var(--ink); }
-        .loc-msg { margin: 10px 0 0; }
-        .loc-tools { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 10px; }
-
-        /* Switch */
-        .switch { position: relative; display: flex; align-items: flex-start; gap: 14px; cursor: pointer; }
-        .switch input { position: absolute; opacity: 0; }
-        .track { flex: none; width: 42px; height: 24px; margin-top: 2px; border-radius: 999px; background: var(--line); position: relative; transition: background .15s; }
-        .track::after { content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: var(--surface); transition: transform .15s; }
-        .switch input:checked + .track { background: var(--ink); }
-        .switch input:checked + .track::after { transform: translateX(18px); }
-        .switch input:focus-visible + .track { outline: 2px solid var(--ink); outline-offset: 2px; }
-        .switch strong { display: block; font-weight: 500; }
         .check { display: flex; align-items: flex-start; gap: 10px; cursor: pointer; }
         .check input { width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--ink); }
+        .err { display: flex; align-items: center; gap: 8px; min-height: 1.55em; margin: 0 0 12px; color: var(--err); font-size: 14px; }
 
-        /* Save bar */
-        .savebar { position: sticky; bottom: 16px; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 24px; padding: 12px 12px 12px 20px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+        /* Lokasi */
+        .loc-list { list-style: none; margin: 12px 0 0; padding: 0; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+        .loc-list li { display: flex; align-items: center; gap: 12px; padding: 10px 14px; cursor: pointer; border-top: 1px solid var(--line); transition: background .12s; }
+        .loc-list li:first-child { border-top: 0; }
+        .loc-list li:hover { background: var(--field); }
+        .loc-list .pin { display: grid; place-items: center; flex: none; width: 32px; height: 32px; border-radius: 9px; background: var(--field); color: var(--muted); transition: background .15s, color .15s; }
+        .loc-list .lt { display: grid; gap: 1px; flex: 1; min-width: 0; }
+        .loc-list .lt span { font-size: 13px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .loc-list .ck { color: var(--ok); opacity: 0; }
+        .loc-list li[aria-selected=true] { background: var(--field); }
+        .loc-list li[aria-selected=true] .pin { background: var(--ink); color: var(--surface); }
+        .loc-list li[aria-selected=true] .ck { opacity: 1; }
+        .loc-tools { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 10px; }
+
+        /* Saklar */
+        .switch { position: relative; display: flex; align-items: center; gap: 14px; cursor: pointer; }
+        .switch input { position: absolute; opacity: 0; }
+        .sw-text { flex: 1; min-width: 0; }
+        .sw-text strong { display: block; font-weight: 500; }
+        .track { flex: none; width: 46px; height: 26px; border-radius: 999px; background: var(--line); position: relative; transition: background .2s; }
+        .track::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: var(--surface); transition: transform .2s cubic-bezier(.3, 1.4, .5, 1); }
+        .switch input:checked + .track { background: var(--ink); }
+        .switch input:checked + .track::after { transform: translateX(20px); }
+        .switch input:focus-visible + .track { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+        /* Bar simpan */
+        .savebar { position: sticky; bottom: 16px; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 24px; padding: 10px 10px 10px 18px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+        .sstate { display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: var(--muted); }
+        .sstate .ic { color: var(--ok); }
+        .pdot { display: none; width: 8px; height: 8px; margin: 0 5px; border-radius: 50%; background: var(--warn); }
+        .sstate[data-d="1"] { color: var(--ink); }
+        .sstate[data-d="1"] .ic { display: none; }
+        .sstate[data-d="1"] .pdot { display: block; animation: blink 1.6s ease-in-out infinite; }
+        @keyframes blink { 50% { opacity: .3; } }
 
         /* Login */
-        .login { max-width: 440px; margin: 0 auto; padding-top: 10vh; }
+        .login { max-width: 440px; margin: 0 auto; padding-top: 9vh; }
+        .login .logo { width: 44px; height: 44px; border-radius: 13px; }
         .login h1 { margin: 28px 0 8px; font-size: 2.25rem; font-weight: 600; letter-spacing: -.035em; line-height: 1.1; }
         .login .panel { margin-top: 24px; }
         .pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-        .pill { font: inherit; font-size: 12.5px; padding: 4px 10px; background: var(--field); border: 1px solid var(--line); border-radius: 8px; cursor: pointer; color: var(--muted); }
+        .pill { font: inherit; font-size: 12.5px; padding: 4px 10px; background: var(--field); border: 1px solid var(--line); border-radius: 8px; cursor: pointer; color: var(--muted); transition: color .15s, border-color .15s; }
         .pill:hover { color: var(--ink); border-color: var(--ink); }
-        .pw { position: relative; }
-        .pw .inp { padding-right: 84px; }
-        .pw button { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: 0; color: var(--muted); font: inherit; font-size: 13px; cursor: pointer; padding: 6px; }
-        .pw button:hover { color: var(--ink); }
-        .err { min-height: 1.55em; margin: 0 0 12px; color: var(--err); font-size: 14px; }
 
-        /* Console */
-        .term { margin: 0; background: var(--term); color: var(--term-ink); font: 400 12.5px/1.65 var(--mono); border-radius: 16px; padding: 18px 20px; max-height: 340px; overflow: auto; white-space: pre-wrap; word-break: break-word; }
+        /* Terminal */
+        .termbox { background: var(--term); border-radius: 16px; overflow: hidden; }
+        .term-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 8px 8px 18px; border-bottom: 1px solid rgba(255, 255, 255, .08); color: var(--term-dim); font-size: 13px; }
+        .term-head span { display: flex; align-items: center; gap: 8px; }
+        .term-head .icon-btn { color: var(--term-dim); }
+        .term-head .icon-btn:hover { color: var(--term-ink); background: rgba(255, 255, 255, .07); border-color: transparent; }
+        .term { margin: 0; padding: 14px 18px; font: 400 12.5px/1.65 var(--mono); color: var(--term-ink); max-height: 320px; overflow: auto; white-space: pre-wrap; word-break: break-word; scrollbar-width: thin; scrollbar-color: #2C3A33 transparent; }
+        .ln { min-height: 1.65em; }
+        .ln .ts { color: var(--term-dim); }
+        .ln.ok { color: #6EE7C2; }
+        .ln.bad { color: #FDA29B; }
+        .dbstat { display: flex; align-items: center; gap: 8px; margin: 36px 0 0; font-size: 13px; color: var(--muted); }
+        .dbstat::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+        .dbstat[data-s=ok]::before { background: var(--ok); }
+        .dbstat[data-s=off] { color: var(--warn); }
+        .dbstat[data-s=off]::before { background: var(--warn); }
 
         /* Dialog + toast */
-        dialog { width: min(560px, calc(100% - 32px)); border: 1px solid var(--line); border-radius: 16px; padding: 0; background: var(--surface); color: var(--ink); }
+        dialog { width: min(520px, calc(100% - 32px)); border: 1px solid var(--line); border-radius: 18px; padding: 0; background: var(--surface); color: var(--ink); }
+        dialog[open] { animation: pop .18s ease-out; }
+        @keyframes pop { from { opacity: 0; transform: translateY(8px) scale(.98); } }
         dialog::backdrop { background: rgba(10, 16, 13, .55); }
-        dialog header { padding: 18px 20px 6px; font-weight: 600; font-size: 17px; }
-        dialog .dlg-body { margin: 0; padding: 0 20px 6px; color: var(--muted); }
-        dialog .term { border-radius: 0; max-height: 50vh; margin-top: 10px; }
-        dialog footer { display: flex; justify-content: flex-end; gap: 10px; padding: 14px 20px; }
         dialog form { margin: 0; }
-        .toast { position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 20px); opacity: 0; pointer-events: none; background: var(--ink); color: var(--surface); padding: 11px 18px; border-radius: 10px; font-weight: 500; font-size: 14px; transition: opacity .2s, transform .2s; max-width: calc(100% - 32px); z-index: 99; }
+        .dlg-head { display: flex; align-items: center; gap: 12px; padding: 20px 20px 8px; }
+        .dlg-head h3 { flex: 1; margin: 0; font-size: 17px; font-weight: 600; letter-spacing: -.01em; }
+        .dlg-ic { display: grid; place-items: center; flex: none; width: 40px; height: 40px; border-radius: 12px; background: var(--field); border: 1px solid var(--line); }
+        .dlg-body { margin: 0; padding: 0 20px 6px 72px; color: var(--muted); }
+        dialog .termbox { margin: 8px 20px 0; }
+        dialog .term { max-height: 45vh; }
+        dialog footer { display: flex; justify-content: flex-end; gap: 10px; padding: 16px 20px 20px; }
+        .toast { position: fixed; left: 50%; top: 20px; display: flex; align-items: center; gap: 10px; transform: translate(-50%, -16px); opacity: 0; pointer-events: none; background: var(--ink); color: var(--surface); padding: 11px 16px 11px 12px; border-radius: 12px; font-weight: 500; font-size: 14px; transition: opacity .2s, transform .2s; max-width: calc(100% - 32px); z-index: 99; }
+        .toast .ic { color: var(--toast-ok); }
         .toast.show { opacity: 1; transform: translate(-50%, 0); }
         .toast[data-t="err"] { background: var(--err); color: #fff; }
+        .toast[data-t="err"] .ic { color: #fff; }
 
         @media (max-width: 640px) {
-            .top { margin-bottom: 40px; }
+            .who { display: none; }
+            .acct { padding-right: 4px; }
             .grid2 { grid-template-columns: 1fr; gap: 18px; }
             .row { flex-direction: column; }
+            .status { flex-wrap: wrap; padding: 20px; gap: 14px; }
+            .status .btn-lg { width: 100%; }
+            .hero-foot { padding: 12px 14px 12px 20px; }
+            .mark { width: 140px; height: 140px; }
             .savebar { flex-direction: column; align-items: stretch; padding: 14px; gap: 10px; }
-            .savebar .hint { text-align: center; }
+            .sstate { justify-content: center; }
+            .dlg-body { padding-left: 20px; }
         }
-        @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+        @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
     </style>
 </head>
 
 <body>
+    <!-- Sprite ikon (gaya garis, 24px) -->
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+        <symbol id="i-logo" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="m9 15.5 2 2 4-4"/></symbol>
+        <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
+        <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+        <symbol id="i-check-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8.5 12.5 2.5 2.5 4.5-5"/></symbol>
+        <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+        <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.2v.1"/></symbol>
+        <symbol id="i-loader" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-6.2-8.55"/></symbol>
+        <symbol id="i-send" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></symbol>
+        <symbol id="i-flask" viewBox="0 0 24 24"><path d="M10 2v7.5a2 2 0 0 1-.2.9L4.7 20.5a1 1 0 0 0 .9 1.5h12.8a1 1 0 0 0 .9-1.5l-5.1-10.1a2 2 0 0 1-.2-.9V2"/><path d="M8.5 2h7M7 16h10"/></symbol>
+        <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></symbol>
+        <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5M21 12H9"/></symbol>
+        <symbol id="i-login" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="m10 17 5-5-5-5M15 12H3"/></symbol>
+        <symbol id="i-pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></symbol>
+        <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+        <symbol id="i-locate" viewBox="0 0 24 24"><path d="M2 12h3M19 12h3M12 2v3M12 19v3"/><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="3"/></symbol>
+        <symbol id="i-note" viewBox="0 0 24 24"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5z"/><path d="M14 2v6h6M8 13h8M8 17h8"/></symbol>
+        <symbol id="i-activity" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></symbol>
+        <symbol id="i-book" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></symbol>
+        <symbol id="i-flag" viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><path d="M4 22v-7"/></symbol>
+        <symbol id="i-repeat" viewBox="0 0 24 24"><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></symbol>
+        <symbol id="i-db" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></symbol>
+        <symbol id="i-term" viewBox="0 0 24 24"><path d="m4 17 6-6-6-6M12 19h8"/></symbol>
+        <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+        <symbol id="i-eyeoff" viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 19c-6.5 0-10-7-10-7a18.5 18.5 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c6.5 0 10 7 10 7a18.5 18.5 0 0 1-2.16 3.19M14.12 14.12a3 3 0 1 1-4.24-4.24"/><path d="m2 2 20 20"/></symbol>
+        <symbol id="i-user" viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+        <symbol id="i-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+        <symbol id="i-save" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></symbol>
+        <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+        <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+    </svg>
+
     <main class="wrap">
 
         <!-- LOGIN -->
         <div id="view-login" class="login" hidden>
-            <div class="brand">Auto Absen <span>MagangHub</span></div>
+            <div class="brand"><span class="logo"><svg class="ic"><use href="#i-logo"/></svg></span>Auto Absen <b>MagangHub</b></div>
             <h1>Masuk akun Kemnaker</h1>
             <p class="detail">Gunakan akun SIAPkerja Anda untuk mengakses panel dan presensi.</p>
 
             <form class="panel" id="form-login" autocomplete="on">
                 <div class="field">
                     <label for="login_username">Email atau username</label>
-                    <input class="inp" type="text" id="login_username" name="username" placeholder="nama@email.com" required autocomplete="username" autocapitalize="off" spellcheck="false">
+                    <div class="has-ic">
+                        <svg class="ic"><use href="#i-user"/></svg>
+                        <input class="inp" type="text" id="login_username" name="username" placeholder="nama@email.com" required autocomplete="username" autocapitalize="off" spellcheck="false">
+                    </div>
                     <div class="pills" id="pill-container"></div>
                 </div>
                 <div class="field">
                     <label for="login_password">Kata sandi</label>
-                    <div class="pw">
-                        <input class="inp" type="password" id="login_password" name="password" required autocomplete="current-password">
-                        <button type="button" id="btn-toggle-pwd" aria-pressed="false">Lihat</button>
+                    <div class="has-ic">
+                        <svg class="ic"><use href="#i-lock"/></svg>
+                        <input class="inp pr" type="password" id="login_password" name="password" required autocomplete="current-password">
+                        <button type="button" class="icon-btn pw-toggle" id="btn-toggle-pwd" aria-label="Tampilkan kata sandi" aria-pressed="false"><svg class="ic"><use id="pw-ic" href="#i-eye"/></svg></button>
                     </div>
                 </div>
                 <label class="check field">
@@ -197,44 +299,45 @@
                     </span>
                 </label>
                 <p class="err" id="login-err" role="alert"></p>
-                <button type="submit" class="btn btn-primary btn-lg" id="btn-login-submit" style="width:100%">Masuk</button>
+                <button type="submit" class="btn btn-primary btn-lg" id="btn-login-submit" style="width:100%"><svg class="ic"><use href="#i-login"/></svg>Masuk</button>
             </form>
         </div>
 
         <!-- DASHBOARD -->
         <div id="view-dashboard" hidden>
             <header class="top">
-                <div class="brand">Auto Absen <span>MagangHub</span></div>
+                <div class="brand"><span class="logo"><svg class="ic"><use href="#i-logo"/></svg></span>Auto Absen <b>MagangHub</b></div>
                 <div class="top-r">
-                    <span class="who" id="chip-user" title="">—</span>
-                    <button type="button" class="btn-text" id="btn-logout">Keluar</button>
+                    <div class="acct"><span class="avatar" id="avatar">?</span><span class="who" id="chip-user">—</span></div>
+                    <button type="button" class="btn-text" id="btn-logout"><svg class="ic"><use href="#i-logout"/></svg>Keluar</button>
                 </div>
             </header>
 
             <section class="hero">
-                <p class="date" id="val-date"></p>
+                <p class="date"><svg class="ic"><use href="#i-calendar"/></svg><span id="val-date"></span></p>
                 <div class="hero-card">
+                    <svg class="ic mark" aria-hidden="true"><use href="#i-logo"/></svg>
                     <div class="status" aria-live="polite">
                         <div class="badge" id="dot" data-s="" aria-hidden="true">
-                            <svg class="i-load" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-6.2-8.55"/></svg>
-                            <svg class="i-ok" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.8 2.8L16 9.5"/></svg>
-                            <svg class="i-warn" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
-                            <svg class="i-err" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.2v.1"/></svg>
+                            <svg class="ic i-load"><use href="#i-loader"/></svg>
+                            <svg class="ic i-ok"><use href="#i-check-circle"/></svg>
+                            <svg class="ic i-warn"><use href="#i-clock"/></svg>
+                            <svg class="ic i-err"><use href="#i-alert"/></svg>
                         </div>
                         <div class="status-text">
                             <h1 id="hero-title">Memeriksa status…</h1>
                             <p class="detail" id="hero-detail"></p>
                         </div>
-                        <button type="button" class="btn btn-primary btn-lg" id="btn-run-absen">Absen sekarang</button>
+                        <button type="button" class="btn btn-primary btn-lg btn-send" id="btn-run-absen"><svg class="ic"><use href="#i-send"/></svg>Absen sekarang</button>
                     </div>
                     <div class="hero-foot">
                         <dl class="meta">
-                            <div><dt>Lokasi</dt><dd id="val-location">—</dd></div>
-                            <div><dt>Absen otomatis</dt><dd id="val-auto-status">—</dd></div>
+                            <div><dt><svg class="ic"><use href="#i-pin"/></svg>Lokasi</dt><dd id="val-location">—</dd></div>
+                            <div><dt><svg class="ic"><use href="#i-repeat"/></svg>Absen otomatis</dt><dd id="val-auto-status">—</dd></div>
                         </dl>
                         <div class="tools">
-                            <button type="button" class="btn-text" id="btn-dry-run">Simulasi</button>
-                            <button type="button" class="btn-text" id="btn-refresh-status">Perbarui</button>
+                            <button type="button" class="btn-text" id="btn-dry-run"><svg class="ic"><use href="#i-flask"/></svg>Simulasi</button>
+                            <button type="button" class="btn-text" id="btn-refresh-status"><svg class="ic"><use href="#i-refresh"/></svg>Perbarui</button>
                         </div>
                     </div>
                 </div>
@@ -243,35 +346,41 @@
             <form id="form-settings" novalidate>
                 <section class="section">
                     <div class="section-head">
-                        <h2>Lokasi presensi</h2>
-                        <span class="hint">Koordinat di bawah inilah yang dikirim saat absen</span>
+                        <h2><span class="tile"><svg class="ic"><use href="#i-pin"/></svg></span>Lokasi presensi</h2>
+                        <span class="hint">Koordinat inilah yang dikirim saat absen</span>
                     </div>
                     <div class="panel">
                         <div class="field">
                             <label for="loc-q">Cari lokasi</label>
                             <div class="row">
-                                <input class="inp" type="search" id="loc-q" placeholder="Nama tempat atau alamat, misalnya Karawang Barat" autocomplete="off" maxlength="120">
-                                <button type="button" class="btn btn-ghost" id="btn-loc-search">Cari</button>
+                                <div class="has-ic">
+                                    <svg class="ic"><use href="#i-search"/></svg>
+                                    <input class="inp" type="search" id="loc-q" placeholder="Nama tempat atau alamat, misalnya Karawang Barat" autocomplete="off" maxlength="120">
+                                </div>
+                                <button type="button" class="btn btn-ghost" id="btn-loc-search"><svg class="ic"><use href="#i-search"/></svg>Cari</button>
                             </div>
                             <ul class="loc-list" id="loc-list" role="listbox" aria-label="Hasil pencarian lokasi" hidden></ul>
                             <div class="loc-tools">
-                                <span class="hint" id="loc-msg" aria-live="polite">Tekan Enter atau Cari, lalu pilih hasil yang sesuai.</span>
-                                <button type="button" class="btn btn-ghost btn-sm" id="btn-get-gps">Gunakan lokasi saya</button>
+                                <span class="hint" id="loc-msg" aria-live="polite">Tekan <kbd>Enter</kbd> atau Cari, lalu pilih hasil yang sesuai.</span>
+                                <button type="button" class="btn btn-ghost btn-sm" id="btn-get-gps"><svg class="ic"><use href="#i-locate"/></svg>Gunakan lokasi saya</button>
                             </div>
                         </div>
                         <hr class="divider">
                         <div class="field">
                             <label for="input_location">Nama lokasi</label>
-                            <input class="inp" type="text" id="input_location" name="location" placeholder="Contoh: Karawang" maxlength="120">
+                            <div class="has-ic">
+                                <svg class="ic"><use href="#i-pin"/></svg>
+                                <input class="inp" type="text" id="input_location" name="location" placeholder="Contoh: Karawang" maxlength="120">
+                            </div>
                         </div>
                         <div class="grid2">
                             <div class="field">
                                 <label for="input_latitude">Latitude</label>
-                                <input class="inp mono" type="text" inputmode="decimal" id="input_latitude" name="latitude" placeholder="-6.370891">
+                                <div class="has-ic"><span class="lead-t">Lat</span><input class="inp t mono" type="text" inputmode="decimal" id="input_latitude" name="latitude" placeholder="-6.370891"></div>
                             </div>
                             <div class="field">
                                 <label for="input_longitude">Longitude</label>
-                                <input class="inp mono" type="text" inputmode="decimal" id="input_longitude" name="longitude" placeholder="107.272352">
+                                <div class="has-ic"><span class="lead-t">Lng</span><input class="inp t mono" type="text" inputmode="decimal" id="input_longitude" name="longitude" placeholder="107.272352"></div>
                             </div>
                         </div>
                     </div>
@@ -279,67 +388,82 @@
 
                 <section class="section">
                     <div class="section-head">
-                        <h2>Catatan harian</h2>
+                        <h2><span class="tile"><svg class="ic"><use href="#i-note"/></svg></span>Catatan harian</h2>
                         <span class="hint">Dikirim bersama presensi</span>
                     </div>
                     <div class="panel">
                         <div class="field">
-                            <label for="activity_log">Aktivitas hari ini</label>
+                            <label for="activity_log"><svg class="ic"><use href="#i-activity"/></svg>Aktivitas hari ini</label>
                             <textarea class="inp" id="activity_log" name="activity_log" rows="3" placeholder="Apa yang kamu kerjakan hari ini?"></textarea>
                         </div>
                         <div class="field">
-                            <label for="lesson_learned">Yang dipelajari</label>
+                            <label for="lesson_learned"><svg class="ic"><use href="#i-book"/></svg>Yang dipelajari</label>
                             <textarea class="inp" id="lesson_learned" name="lesson_learned" rows="2" placeholder="Hal baru yang kamu pelajari"></textarea>
                         </div>
                         <div class="field">
-                            <label for="obstacles">Kendala</label>
+                            <label for="obstacles"><svg class="ic"><use href="#i-flag"/></svg>Kendala</label>
                             <textarea class="inp" id="obstacles" name="obstacles" rows="2" placeholder="Hambatan yang kamu temui"></textarea>
                         </div>
                     </div>
                 </section>
 
                 <section class="section">
-                    <div class="section-head"><h2>Absen otomatis</h2></div>
+                    <div class="section-head"><h2><span class="tile"><svg class="ic"><use href="#i-repeat"/></svg></span>Absen otomatis</h2></div>
                     <div class="panel">
                         <label class="switch">
-                            <input type="checkbox" id="check_auto_absen" checked>
-                            <span class="track" aria-hidden="true"></span>
-                            <span>
+                            <span class="sw-text">
                                 <strong>Kirim presensi otomatis setiap hari</strong>
                                 <span class="hint">Dijalankan Vercel Cron pukul 17:00 WIB.</span>
                             </span>
+                            <input type="checkbox" id="check_auto_absen" checked>
+                            <span class="track" aria-hidden="true"></span>
                         </label>
                     </div>
                 </section>
 
                 <div class="savebar">
-                    <span class="hint" id="save-state">Semua perubahan tersimpan</span>
-                    <button type="submit" class="btn btn-primary" id="btn-save-settings" disabled>Simpan pengaturan</button>
+                    <span class="sstate" id="save-state" data-d="0">
+                        <svg class="ic"><use href="#i-check-circle"/></svg><i class="pdot"></i>
+                        <span id="save-text">Semua perubahan tersimpan</span>
+                    </span>
+                    <button type="submit" class="btn btn-primary" id="btn-save-settings" disabled><svg class="ic"><use href="#i-save"/></svg>Simpan pengaturan</button>
                 </div>
             </form>
 
             <section class="section">
                 <div class="section-head">
-                    <h2>Riwayat dan log eksekusi</h2>
-                    <button type="button" class="btn btn-ghost btn-sm" id="btn-refresh-logs">Muat ulang</button>
+                    <h2><span class="tile"><svg class="ic"><use href="#i-term"/></svg></span>Riwayat dan log eksekusi</h2>
+                    <button type="button" class="btn btn-ghost btn-sm" id="btn-refresh-logs"><svg class="ic"><use href="#i-refresh"/></svg>Muat ulang</button>
                 </div>
-                <pre class="term" id="log-console" tabindex="0">Memuat log…</pre>
-                <p class="hint" style="margin:10px 0 0">Respons terbaru dari API</p>
+                <div class="termbox">
+                    <div class="term-head">
+                        <span><svg class="ic"><use href="#i-term"/></svg>Respons terbaru dari API</span>
+                        <button type="button" class="icon-btn" id="btn-copy-log" aria-label="Salin log" title="Salin log"><svg class="ic"><use href="#i-copy"/></svg></button>
+                    </div>
+                    <pre class="term" id="log-console" tabindex="0">Memuat log…</pre>
+                </div>
             </section>
 
-            <p class="dbstat" id="chip-db" data-s="" title="Status koneksi database">Memeriksa database…</p>
+            <p class="dbstat" id="chip-db" data-s="" title="Status koneksi database"><svg class="ic"><use href="#i-db"/></svg><span id="db-text">Memeriksa database…</span></p>
         </div>
     </main>
 
     <dialog id="modalDryRun">
-        <header>Hasil simulasi payload absen</header>
-        <pre class="term" id="dry-run-content"></pre>
+        <div class="dlg-head">
+            <span class="dlg-ic"><svg class="ic"><use href="#i-flask"/></svg></span>
+            <h3>Hasil simulasi payload absen</h3>
+            <button type="button" class="icon-btn" id="btn-x-dry" aria-label="Tutup"><svg class="ic"><use href="#i-x"/></svg></button>
+        </div>
+        <div class="termbox"><pre class="term" id="dry-run-content"></pre></div>
         <footer><button type="button" class="btn btn-ghost" id="btn-close-dry">Tutup</button></footer>
     </dialog>
 
     <dialog id="dlgConfirm">
         <form method="dialog">
-            <header id="c-title"></header>
+            <div class="dlg-head">
+                <span class="dlg-ic"><svg class="ic"><use id="c-ic" href="#i-send"/></svg></span>
+                <h3 id="c-title"></h3>
+            </div>
             <p class="dlg-body" id="c-body"></p>
             <footer>
                 <button type="submit" value="cancel" class="btn btn-ghost">Batal</button>
@@ -348,7 +472,7 @@
         </form>
     </dialog>
 
-    <div class="toast" id="toast" role="status"></div>
+    <div class="toast" id="toast" role="status"><svg class="ic"><use id="toast-ic" href="#i-check"/></svg><span id="toast-text"></span></div>
 
     <script>
         (() => {
@@ -359,9 +483,12 @@
             const DEFAULT_LOC = { location: 'Karawang', latitude: -6.370891, longitude: 107.272352 };
 
             let activeAuth = null;
-            let saved = null; // snapshot form terakhir yang tersimpan (null = belum dimuat)
+            let saved = null; // snapshot form yang terakhir tersimpan (null = belum dimuat)
 
             // ---------- Util ----------
+            const ic = (n, c) => '<svg class="ic' + (c ? ' ' + c : '') + '"><use href="#i-' + n + '"/></svg>';
+            const el = (t, c, x) => { const e = document.createElement(t); if (c) e.className = c; if (x !== undefined) e.textContent = x; return e; };
+
             const authHeaders = () => {
                 const h = { 'Content-Type': 'application/json' };
                 if (activeAuth && activeAuth.username) {
@@ -388,16 +515,18 @@
             let toastTimer;
             function toast(msg, type) {
                 const t = $('#toast');
-                t.textContent = msg;
+                $('#toast-text').textContent = msg;
+                $('#toast-ic').setAttribute('href', type === 'err' ? '#i-alert' : '#i-check');
                 t.dataset.t = type || '';
                 t.classList.add('show');
                 clearTimeout(toastTimer);
                 toastTimer = setTimeout(() => t.classList.remove('show'), 3400);
             }
 
+            // Tombol sibuk: ikon diganti spinner, isi asli dipulihkan setelahnya
             function busy(btn, on, label) {
-                if (on) { btn.dataset.label = btn.textContent; btn.textContent = label; }
-                else { btn.textContent = btn.dataset.label; }
+                if (on) { btn.dataset.html = btn.innerHTML; btn.innerHTML = ic('loader', 'spin') + '<span>' + label + '</span>'; }
+                else if (btn.dataset.html !== undefined) { btn.innerHTML = btn.dataset.html; }
                 btn.disabled = on;
             }
 
@@ -409,12 +538,28 @@
 
             const autoLabel = on => on ? 'Aktif, ' + CRON_TIME + ' WIB' : 'Nonaktif';
 
+            // Log: waktu diredupkan, baris sukses/gagal diberi warna
+            function renderLog(text) {
+                const box = $('#log-console');
+                box.textContent = '';
+                (text || '').split('\n').forEach(line => {
+                    const d = el('div', 'ln');
+                    const m = line.match(/^(\[?\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}(?::\d{2})?[^\s\]]*\]?)\s*(.*)$/);
+                    if (m) { d.append(el('span', 'ts', m[1] + ' '), document.createTextNode(m[2])); } else { d.textContent = line; }
+                    if (/\[OK\]|berhasil|success/i.test(line)) d.classList.add('ok');
+                    else if (/error|gagal|fail|traceback|exception/i.test(line)) d.classList.add('bad');
+                    box.append(d);
+                });
+                box.scrollTop = box.scrollHeight;
+            }
+
             // Dialog konfirmasi generik
             const dlgC = $('#dlgConfirm');
-            const ask = ({ title, body, ok }) => new Promise(resolve => {
+            const ask = ({ title, body, ok, icon }) => new Promise(resolve => {
                 $('#c-title').textContent = title;
                 $('#c-body').textContent = body;
                 $('#c-ok').textContent = ok;
+                $('#c-ic').setAttribute('href', '#i-' + (icon || 'send'));
                 dlgC.returnValue = '';
                 dlgC.addEventListener('close', () => resolve(dlgC.returnValue === 'ok'), { once: true });
                 dlgC.showModal();
@@ -435,7 +580,8 @@
             function syncDirty() {
                 const d = isDirty();
                 $('#btn-save-settings').disabled = !d;
-                $('#save-state').textContent = d ? 'Ada perubahan yang belum disimpan' : 'Semua perubahan tersimpan';
+                $('#save-state').dataset.d = d ? '1' : '0';
+                $('#save-text').textContent = d ? 'Ada perubahan yang belum disimpan' : 'Semua perubahan tersimpan';
             }
 
             // Mengembalikan data siap kirim, atau null jika tidak valid (tanpa menebak koordinat)
@@ -470,10 +616,8 @@
                 box.innerHTML = '';
                 try {
                     JSON.parse(localStorage.getItem(SUGGEST_KEY) || '[]').forEach(u => {
-                        const p = document.createElement('button');
+                        const p = el('button', 'pill', u);
                         p.type = 'button';
-                        p.className = 'pill';
-                        p.textContent = u;
                         p.addEventListener('click', () => { $('#login_username').value = u; $('#login_password').focus(); });
                         box.appendChild(p);
                     });
@@ -482,17 +626,24 @@
 
             function saveSuggestion(username) {
                 try {
-                    let list = JSON.parse(localStorage.getItem(SUGGEST_KEY) || '[]').filter(u => u !== username);
+                    const list = JSON.parse(localStorage.getItem(SUGGEST_KEY) || '[]').filter(u => u !== username);
                     list.unshift(username);
                     localStorage.setItem(SUGGEST_KEY, JSON.stringify(list.slice(0, 5)));
                 } catch (e) { /* abaikan */ }
             }
 
+            function setErr(msg) {
+                const box = $('#login-err');
+                box.textContent = '';
+                if (msg) { box.insertAdjacentHTML('beforeend', ic('alert')); box.append(el('span', '', msg)); }
+            }
+
             $('#btn-toggle-pwd').addEventListener('click', e => {
                 const pwd = $('#login_password'), show = pwd.type === 'password';
                 pwd.type = show ? 'text' : 'password';
-                e.currentTarget.textContent = show ? 'Sembunyikan' : 'Lihat';
+                $('#pw-ic').setAttribute('href', show ? '#i-eyeoff' : '#i-eye');
                 e.currentTarget.setAttribute('aria-pressed', show);
+                e.currentTarget.setAttribute('aria-label', show ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi');
             });
 
             function showDashboard(user) {
@@ -500,13 +651,14 @@
                 $('#view-dashboard').hidden = false;
                 $('#chip-user').textContent = user.username;
                 $('#chip-user').title = user.username;
+                $('#avatar').textContent = (user.username || '?').charAt(0).toUpperCase();
                 checkStatus();
             }
 
             function showLogin(message) {
                 $('#view-dashboard').hidden = true;
                 $('#view-login').hidden = false;
-                $('#login-err').textContent = message || '';
+                setErr(message);
                 $('#login_password').value = '';
                 loadSuggestions();
                 $('#login_username').focus();
@@ -519,7 +671,7 @@
                 sessionStorage.removeItem(AUTH_KEY);
                 $('#form-settings').reset();
                 saved = null;
-                $('#log-console').textContent = 'Memuat log…';
+                renderLog('Memuat log…');
                 $('#loc-list').hidden = true;
                 setHero('', 'Memeriksa status…', '');
             }
@@ -531,11 +683,11 @@
 
             $('#form-login').addEventListener('submit', e => {
                 e.preventDefault();
-                const btn = $('#btn-login-submit'), err = $('#login-err');
+                const btn = $('#btn-login-submit');
                 const username = $('#login_username').value.trim();
                 const password = $('#login_password').value.trim();
                 if (!username || !password) return;
-                err.textContent = '';
+                setErr('');
                 busy(btn, true, 'Memverifikasi…');
 
                 fetch('/api/login', {
@@ -543,14 +695,14 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username, password })
                 }).then(r => r.json()).then(res => {
-                    if (!res.status) { err.textContent = res.message || 'Login gagal. Periksa email dan kata sandi.'; return; }
+                    if (!res.status) { setErr(res.message || 'Login gagal. Periksa email dan kata sandi.'); return; }
                     activeAuth = { username, password };
                     saveSuggestion(username);
                     if ($('#remember_me').checked) localStorage.setItem(AUTH_KEY, JSON.stringify(activeAuth));
                     else { sessionStorage.setItem(AUTH_KEY, JSON.stringify(activeAuth)); localStorage.removeItem(AUTH_KEY); }
                     showDashboard({ username });
                 }).catch(() => {
-                    err.textContent = 'Tidak bisa terhubung ke server login. Coba lagi.';
+                    setErr('Tidak bisa terhubung ke server login. Coba lagi.');
                 }).finally(() => busy(btn, false));
             });
 
@@ -558,7 +710,8 @@
                 if (isDirty() && !(await ask({
                     title: 'Keluar tanpa menyimpan?',
                     body: 'Ada perubahan pengaturan yang belum disimpan dan akan hilang.',
-                    ok: 'Keluar'
+                    ok: 'Keluar',
+                    icon: 'logout'
                 }))) return;
                 clearSession();
                 showLogin();
@@ -572,7 +725,7 @@
 
                     const db = $('#chip-db');
                     db.dataset.s = res.db_connected ? 'ok' : 'off';
-                    db.textContent = res.db_connected ? 'Database terhubung' : 'Database belum terhubung' + (res.db_message ? ': ' + res.db_message : '');
+                    $('#db-text').textContent = res.db_connected ? 'Database terhubung' : 'Database belum terhubung' + (res.db_message ? ': ' + res.db_message : '');
                     db.title = res.db_message || (res.db_connected ? 'Terhubung ke Neon Postgres' : 'Variabel database belum terdeteksi di Vercel.');
 
                     const line = (res.output || '').split('\n').find(l => l.includes('Status:')) || '';
@@ -595,12 +748,12 @@
                     // Jangan timpa isian yang sedang diedit
                     if (saved === null || !isDirty()) fillForm(v);
 
-                    if (res.output && !keepLog) $('#log-console').textContent = res.output;
+                    if (res.output && !keepLog) renderLog(res.output);
                 }).catch(err => {
                     if (err.code === 401) return;
                     const msg = err.output || err.message || 'Gagal terhubung ke API.';
                     setHero('err', 'Status tidak terbaca', msg);
-                    if (!keepLog) $('#log-console').textContent = msg;
+                    if (!keepLog) renderLog(msg);
                 });
             }
 
@@ -613,6 +766,10 @@
                 const b = e.currentTarget;
                 busy(b, true, 'Memuat…');
                 checkStatus().finally(() => busy(b, false));
+            });
+            $('#btn-copy-log').addEventListener('click', () => {
+                if (!navigator.clipboard) { toast('Browser tidak mendukung salin otomatis.', 'err'); return; }
+                navigator.clipboard.writeText($('#log-console').innerText).then(() => toast('Log disalin.'), () => toast('Gagal menyalin log.', 'err'));
             });
 
             // ---------- Lokasi: pencarian (OpenStreetMap Nominatim) & GPS ----------
@@ -632,15 +789,14 @@
                 locList.innerHTML = '';
                 items.forEach(r => {
                     const title = r.name || r.display_name.split(',')[0];
-                    const li = document.createElement('li');
+                    const li = el('li');
                     li.setAttribute('role', 'option');
                     li.setAttribute('aria-selected', 'false');
                     li.tabIndex = 0;
-                    const strong = document.createElement('strong');
-                    strong.textContent = title;
-                    const sub = document.createElement('span');
-                    sub.textContent = r.display_name;
-                    li.append(strong, sub);
+                    const pin = el('span', 'pin'); pin.innerHTML = ic('pin');
+                    const lt = el('div', 'lt'); lt.append(el('strong', '', title), el('span', '', r.display_name));
+                    const ck = el('span'); ck.innerHTML = ic('check', 'ck');
+                    li.append(pin, lt, ck.firstChild);
                     const pick = () => {
                         locList.querySelectorAll('li').forEach(x => x.setAttribute('aria-selected', 'false'));
                         li.setAttribute('aria-selected', 'true');
@@ -729,18 +885,19 @@
                 const ok = await ask({
                     title: 'Kirim presensi sekarang?',
                     body: 'Lokasi: ' + data.location + ' (' + data.latitude + ', ' + data.longitude + '). Data pada form saat ini yang akan dikirim.',
-                    ok: 'Kirim presensi'
+                    ok: 'Kirim presensi',
+                    icon: 'send'
                 });
                 if (!ok) return;
                 const b = e.currentTarget;
                 busy(b, true, 'Mengirim…');
                 api('trigger', { method: 'POST', body: JSON.stringify(data) }).then(res => {
                     toast(res.message || 'Absen berhasil diproses.');
-                    if (res.output) $('#log-console').textContent = res.output;
+                    if (res.output) renderLog(res.output);
                 }).catch(err => {
                     if (err.code === 401) return;
                     toast(err.message || 'Gagal menjalankan presensi.', 'err');
-                    if (err.output) $('#log-console').textContent = err.output;
+                    if (err.output) renderLog(err.output);
                 }).finally(() => { busy(b, false); checkStatus(true); });
             });
 
@@ -758,6 +915,7 @@
                 }).finally(() => busy(b, false));
             });
             $('#btn-close-dry').addEventListener('click', () => dlg.close());
+            $('#btn-x-dry').addEventListener('click', () => dlg.close());
             [dlg, dlgC].forEach(d => d.addEventListener('click', e => { if (e.target === d) d.close(); }));
 
             // Peringatan jika menutup tab dengan perubahan belum tersimpan
