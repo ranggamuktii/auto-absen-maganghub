@@ -1,268 +1,607 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Auto Absen MagangHub — Cloud Panel</title>
-    <!-- Google Font: Poppins -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Auto Absen MagangHub</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Bootstrap 4.6 CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
-    <!-- Toastr CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
-    <!-- FontAwesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-
+    <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
     <style>
-        * {
+        :root {
+            --bg: #EDF0EE;
+            --surface: #FFFFFF;
+            --field: #F6F8F7;
+            --ink: #16201C;
+            --muted: #5C6963;
+            --line: #D9DFDC;
+            --ok: #0B6E5A;
+            --warn: #B45309;
+            --err: #B42318;
+            --term: #121A16;
+            --term-ink: #CFE0D6;
+            --sans: 'Schibsted Grotesk', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            --mono: 'JetBrains Mono', Consolas, 'Courier New', monospace;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #0D1210;
+                --surface: #151C19;
+                --field: #101613;
+                --ink: #E9F0EC;
+                --muted: #92A199;
+                --line: #26312C;
+                --ok: #4FD1AE;
+                --warn: #F2B35E;
+                --err: #F97066;
+                --term: #080C0A;
+            }
+        }
+
+        *,
+        *::before,
+        *::after {
             box-sizing: border-box;
-            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         }
+
+        html {
+            -webkit-text-size-adjust: 100%;
+        }
+
         body {
-            background-color: #f8fafc;
-            color: #0f172a;
             margin: 0;
-            padding: 35px 15px;
-            font-size: 14px;
+            background: var(--bg);
+            color: var(--ink);
+            font: 400 15px/1.55 var(--sans);
         }
-        .container {
-            max-width: 860px;
+
+        .wrap {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 28px 20px 64px;
         }
-        /* Solid colors only - No Gradients */
-        .card {
-            background-color: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-            margin-bottom: 24px;
+
+        :focus-visible {
+            outline: 2px solid var(--ink);
+            outline-offset: 2px;
         }
-        .card-header {
-            background-color: #ffffff;
-            border-bottom: 1px solid #f1f5f9;
-            padding: 16px 20px;
-            font-weight: 600;
-            font-size: 15px;
-            border-top-left-radius: 12px !important;
-            border-top-right-radius: 12px !important;
+
+        /* Top bar */
+        .top {
             display: flex;
             align-items: center;
             justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 56px;
         }
-        .card-body {
-            padding: 22px;
+
+        .brand {
+            font-weight: 600;
+            letter-spacing: -.01em;
         }
-        .badge-status {
+
+        .brand span {
+            color: var(--muted);
+            font-weight: 400;
+        }
+
+        .chip {
             font-size: 13px;
-            padding: 6px 14px;
-            border-radius: 20px;
+            color: var(--muted);
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            padding: 5px 12px;
+        }
+
+        /* Hero */
+        .hero {
+            margin-bottom: 56px;
+        }
+
+        .date {
+            margin: 0 0 14px;
+            color: var(--muted);
+        }
+
+        .hero h1 {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin: 0;
+            font-size: clamp(2rem, 6vw, 3.4rem);
+            line-height: 1.05;
+            font-weight: 600;
+            letter-spacing: -.035em;
+        }
+
+        .dot {
+            flex: none;
+            width: .36em;
+            height: .36em;
+            border-radius: 50%;
+            background: var(--muted);
+        }
+
+        .dot[data-s="ok"] {
+            background: var(--ok);
+        }
+
+        .dot[data-s="warn"] {
+            background: var(--warn);
+        }
+
+        .dot[data-s="err"] {
+            background: var(--err);
+        }
+
+        .detail {
+            margin: 12px 0 0;
+            min-height: 1.55em;
+            color: var(--muted);
+            max-width: 60ch;
+        }
+
+        .meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 36px;
+            margin: 28px 0;
+        }
+
+        .meta div {
+            min-width: 0;
+        }
+
+        .meta dt {
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .meta dd {
+            margin: 0;
             font-weight: 500;
         }
-        .badge-success-solid {
-            background-color: #10b981;
-            color: #ffffff;
+
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
         }
-        .badge-warning-solid {
-            background-color: #f59e0b;
-            color: #ffffff;
+
+        /* Buttons */
+        .btn {
+            font: inherit;
+            font-weight: 600;
+            font-size: 14px;
+            border-radius: 10px;
+            padding: 11px 18px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: opacity .15s, border-color .15s;
         }
-        .badge-neutral-solid {
-            background-color: #0284c7;
-            color: #ffffff;
+
+        .btn:disabled {
+            opacity: .45;
+            cursor: not-allowed;
         }
-        .btn-solid-primary {
-            background-color: #2563eb;
-            color: #ffffff;
-            border: none;
-            border-radius: 8px;
-            padding: 9px 18px;
-            font-weight: 500;
+
+        .btn-primary {
+            background: var(--ink);
+            color: var(--surface);
+        }
+
+        .btn-primary:not(:disabled):hover {
+            opacity: .88;
+        }
+
+        .btn-lg {
+            padding: 14px 24px;
+            font-size: 15px;
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--ink);
+            border-color: var(--line);
+        }
+
+        .btn-ghost:not(:disabled):hover {
+            border-color: var(--ink);
+        }
+
+        /* Sections */
+        .section {
+            margin-top: 48px;
+        }
+
+        .section-head {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .section-head h2 {
+            margin: 0;
+            font-size: 19px;
+            font-weight: 600;
+            letter-spacing: -.02em;
+        }
+
+        .hint {
             font-size: 13px;
+            color: var(--muted);
         }
-        .btn-solid-primary:hover {
-            background-color: #1d4ed8;
-            color: #ffffff;
+
+        .panel {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            padding: 24px;
         }
-        .btn-solid-secondary {
-            background-color: #f1f5f9;
-            color: #334155;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            padding: 9px 16px;
+
+        .field {
+            margin-bottom: 18px;
+        }
+
+        .field label {
+            display: block;
             font-weight: 500;
-            font-size: 13px;
+            margin-bottom: 6px;
         }
-        .btn-solid-secondary:hover {
-            background-color: #e2e8f0;
-            color: #0f172a;
+
+        textarea,
+        input[type=time] {
+            width: 100%;
+            font: inherit;
+            color: var(--ink);
+            background: var(--field);
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 11px 13px;
         }
-        .terminal-box {
-            background-color: #0f172a;
-            color: #e2e8f0;
-            font-family: 'Consolas', 'Courier New', monospace;
-            font-size: 12px;
-            padding: 16px;
-            border-radius: 8px;
-            min-height: 140px;
+
+        textarea {
+            resize: vertical;
+            min-height: 110px;
+            line-height: 1.6;
+        }
+
+        textarea:focus,
+        input:focus {
+            outline: none;
+            border-color: var(--ink);
+        }
+
+        .foot {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 16px;
+            margin-top: 6px;
+        }
+
+        .foot .field {
+            margin: 0;
+            width: 170px;
+        }
+
+        /* Console */
+        .term {
+            margin: 0;
+            background: var(--term);
+            color: var(--term-ink);
+            font: 400 12.5px/1.65 var(--mono);
+            border-radius: 16px;
+            padding: 18px 20px;
             max-height: 280px;
-            overflow-y: auto;
+            overflow: auto;
             white-space: pre-wrap;
             word-break: break-all;
-            border: 1px solid #1e293b;
         }
-        .header-title {
+
+        /* Dialog + toast */
+        dialog {
+            width: min(560px, calc(100% - 32px));
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            padding: 0;
+            background: var(--surface);
+            color: var(--ink);
+        }
+
+        dialog::backdrop {
+            background: rgba(10, 16, 13, .55);
+        }
+
+        dialog header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
             font-weight: 600;
-            font-size: 22px;
-            color: #0f172a;
-            letter-spacing: -0.3px;
         }
-        .header-subtitle {
-            font-size: 13px;
-            color: #64748b;
+
+        dialog .term {
+            border-radius: 0;
+            max-height: 50vh;
+        }
+
+        dialog footer {
+            padding: 14px 20px;
+            text-align: right;
+        }
+
+        .toast {
+            position: fixed;
+            left: 50%;
+            bottom: 24px;
+            transform: translate(-50%, 20px);
+            opacity: 0;
+            pointer-events: none;
+            background: var(--ink);
+            color: var(--surface);
+            padding: 11px 18px;
+            border-radius: 10px;
+            font-weight: 500;
+            font-size: 14px;
+            transition: opacity .2s, transform .2s;
+            max-width: calc(100% - 32px);
+            z-index: 9999;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translate(-50%, 0);
+        }
+
+        .toast[data-t="err"] {
+            background: var(--err);
+            color: #fff;
+        }
+
+        @media (max-width:600px) {
+            .top {
+                margin-bottom: 40px;
+            }
+
+            .foot {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .foot .field {
+                width: 100%;
+            }
+
+            .actions .btn-lg {
+                width: 100%;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                transition: none !important;
+            }
         }
     </style>
 </head>
+
 <body>
+    <main class="wrap">
 
-<div class="container">
-    <!-- Header -->
-    <div class="d-flex align-items-center justify-content-between mb-4">
-        <div>
-            <h1 class="header-title mb-1">
-                <i class="fas fa-cloud text-primary mr-2"></i>Auto Absen MagangHub
-            </h1>
-            <p class="header-subtitle mb-0">Vercel Serverless & Cron Job Monitoring Panel</p>
-        </div>
-        <div>
-            <span class="badge badge-neutral-solid badge-status">
-                <i class="fas fa-stopwatch mr-1"></i> Cron: 15:00 WIB
-            </span>
-        </div>
-    </div>
+        <header class="top">
+            <div class="brand">Auto Absen <span>MagangHub</span></div>
+            <div class="chip" id="chip-time">Otomatis pukul 15:00 WIB</div>
+        </header>
 
-    <!-- Status Card -->
-    <div class="card">
-        <div class="card-header">
-            <span><i class="fas fa-info-circle text-muted mr-2"></i>Status Kehadiran Hari Ini</span>
-            <button class="btn btn-sm btn-solid-secondary" id="btn-refresh-status">
-                <i class="fas fa-sync-alt mr-1"></i> Refresh
-            </button>
-        </div>
-        <div class="card-body">
-            <div class="row align-items-center">
-                <div class="col-md-7 mb-3 mb-md-0">
-                    <div class="text-muted small mb-1">Status Absen Kemnaker:</div>
-                    <div id="val-attendance-status">
-                        <span class="badge badge-neutral-solid badge-status">
-                            <i class="fas fa-spinner fa-spin mr-1"></i> Memeriksa status...
-                        </span>
-                    </div>
-                    <div class="mt-2 text-muted small" id="val-time-wib">
-                        Waktu Server: -
-                    </div>
+        <section class="hero" aria-live="polite">
+            <p class="date" id="val-date">Memuat tanggal…</p>
+            <h1><i class="dot" id="dot" data-s=""></i><span id="hero-title">Memeriksa status…</span></h1>
+            <p class="detail" id="hero-detail"></p>
+
+            <dl class="meta">
+                <div>
+                    <dt>Lokasi</dt>
+                    <dd id="val-location">-</dd>
                 </div>
-                <div class="col-md-5 text-md-right">
-                    <button class="btn btn-solid-primary" id="btn-trigger-cron">
-                        <i class="fas fa-paper-plane mr-1"></i> Trigger Absen Sekarang
-                    </button>
+                <div>
+                    <dt>Absen otomatis</dt>
+                    <dd id="val-time">15:00 WIB</dd>
                 </div>
+            </dl>
+
+            <div class="actions">
+                <button type="button" class="btn btn-primary btn-lg" id="btn-run-absen">Absen sekarang</button>
+                <button type="button" class="btn btn-ghost btn-lg" id="btn-dry-run">Simulasi</button>
+                <button type="button" class="btn btn-ghost btn-lg" id="btn-refresh-status">Perbarui status</button>
             </div>
-        </div>
-    </div>
+        </section>
 
-    <!-- Terminal Log Card -->
-    <div class="card">
-        <div class="card-header">
-            <span><i class="fas fa-terminal text-muted mr-2"></i>Output / Execution Log</span>
-            <span class="text-muted small" id="status-tag">Ready</span>
-        </div>
-        <div class="card-body">
-            <div class="terminal-box" id="log-console">// Menunggu respons dari Vercel Serverless API...</div>
-        </div>
-    </div>
-</div>
+        <section class="section">
+            <div class="section-head">
+                <h2>Catatan harian</h2>
+                <span class="hint">Disinkronkan dari Environment Variables Vercel</span>
+            </div>
+            <form class="panel" id="form-activity">
+                <div class="field">
+                    <label for="activity_log">Aktivitas hari ini</label>
+                    <textarea id="activity_log" name="activity_log" rows="4" placeholder="Apa yang kamu kerjakan hari ini?"></textarea>
+                </div>
+                <div class="field">
+                    <label for="lesson_learned">Yang dipelajari</label>
+                    <textarea id="lesson_learned" name="lesson_learned" rows="3" placeholder="Hal baru yang kamu pelajari"></textarea>
+                </div>
+                <div class="field">
+                    <label for="obstacles">Kendala</label>
+                    <textarea id="obstacles" name="obstacles" rows="3" placeholder="Hambatan yang kamu temui"></textarea>
+                </div>
+                <div class="foot">
+                    <div class="field">
+                        <label for="clock_in_time">Jam absen otomatis</label>
+                        <input type="time" id="clock_in_time" name="clock_in_time" value="15:00">
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="btn-save-log">Simpan catatan</button>
+                </div>
+            </form>
+        </section>
 
-<!-- Scripts -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+        <section class="section">
+            <div class="section-head">
+                <h2>Riwayat eksekusi</h2>
+                <button type="button" class="btn btn-ghost" id="btn-refresh-logs" style="padding:7px 14px">Muat ulang</button>
+            </div>
+            <pre class="term" id="log-console" tabindex="0">Memuat log…</pre>
+            <p class="hint" style="margin:10px 0 0">Respons log terbaru dari serverless API</p>
+        </section>
+    </main>
 
-<script>
-$(document).ready(function() {
-    toastr.options = {
-        closeButton: true,
-        progressBar: true,
-        positionClass: "toast-top-right",
-        timeOut: "4000"
-    };
+    <dialog id="modalDryRun">
+        <header>Hasil simulasi absen</header>
+        <pre class="term" id="dry-run-content"></pre>
+        <footer><button type="button" class="btn btn-ghost" id="btn-close-dry">Tutup</button></footer>
+    </dialog>
 
-    function checkStatus() {
-        $('#status-tag').text('Checking...');
-        $.getJSON('/api/status', function(res) {
-            $('#status-tag').text('Online');
-            if (res.status) {
-                if (res.is_attended) {
-                    $('#val-attendance-status').html('<span class="badge badge-success-solid badge-status"><i class="fas fa-check-circle mr-1"></i> Hadir Hari Ini (' + res.date + ')</span>');
+    <div class="toast" id="toast" role="status"></div>
+
+    <script>
+        (() => {
+            const $ = s => document.querySelector(s);
+            const api = (endpoint) => fetch('/api/' + endpoint).then(r => {
+                if (!r.ok) return r.json().then(d => Promise.reject(d)).catch(() => Promise.reject(new Error(r.status)));
+                return r.json();
+            });
+
+            // Format tanggal Indonesia
+            $('#val-date').textContent = new Intl.DateTimeFormat('id-ID', {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+            }).format(new Date());
+
+            let toastTimer;
+            function toast(msg, type) {
+                const t = $('#toast');
+                t.textContent = msg;
+                t.dataset.t = type || '';
+                t.classList.add('show');
+                clearTimeout(toastTimer);
+                toastTimer = setTimeout(() => t.classList.remove('show'), 3200);
+            }
+
+            function busy(btn, on, label) {
+                if (on) {
+                    btn.dataset.label = btn.textContent;
+                    btn.textContent = label;
                 } else {
-                    $('#val-attendance-status').html('<span class="badge badge-warning-solid badge-status"><i class="fas fa-clock mr-1"></i> Belum Absen (' + res.date + ')</span>');
+                    btn.textContent = btn.dataset.label;
                 }
-                $('#val-time-wib').text('Waktu: ' + (res.time_wib || '-') + ' WIB');
-                if (res.output) {
-                    $('#log-console').text(res.output);
-                }
+                btn.disabled = on;
             }
-        }).fail(function(xhr) {
-            $('#status-tag').text('Error');
-            $('#val-attendance-status').html('<span class="text-danger small"><i class="fas fa-exclamation-circle mr-1"></i> Gagal terhubung ke API Vercel</span>');
-            if (xhr.responseText) {
-                $('#log-console').text(xhr.responseText);
-            }
-        });
-    }
 
-    // Trigger cron endpoint
-    $('#btn-trigger-cron').click(function() {
-        const btn = $(this);
-        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i> Memproses Absen...');
-        $('#status-tag').text('Executing...');
+            function setHero(state, title, detail) {
+                $('#dot').dataset.s = state;
+                $('#hero-title').textContent = title;
+                $('#hero-detail').textContent = detail || '';
+            }
 
-        $.getJSON('/api/cron', function(res) {
-            if (res.status) {
-                toastr.success(res.message || 'Absen berhasil diproses!');
-            } else {
-                toastr.warning(res.message || 'Respons diterima.');
+            function checkStatus() {
+                return api('status').then(res => {
+                    if (!res.status) throw new Error('status');
+                    const line = (res.output || '').split('\n').find(l => l.includes('Status:')) || '';
+                    if (res.is_attended) {
+                        setHero('ok', 'Sudah absen hari ini', line.trim());
+                    } else {
+                        const cTime = (res.env && res.env.clock_in_time) ? res.env.clock_in_time : '15:00';
+                        setHero('warn', 'Belum absen hari ini', 'Absen otomatis berjalan pukul ' + cTime + ' WIB via Vercel Cron, atau kirim sekarang.');
+                    }
+                    if (res.env) {
+                        if (res.env.location) $('#val-location').textContent = res.env.location;
+                        if (res.env.clock_in_time) {
+                            $('#val-time').textContent = res.env.clock_in_time + ' WIB';
+                            $('#chip-time').textContent = 'Otomatis pukul ' + res.env.clock_in_time + ' WIB';
+                            $('#clock_in_time').value = res.env.clock_in_time;
+                        }
+                        if (res.env.activity_log) $('#activity_log').value = res.env.activity_log;
+                        if (res.env.lesson_learned) $('#lesson_learned').value = res.env.lesson_learned;
+                        if (res.env.obstacles) $('#obstacles').value = res.env.obstacles;
+                    }
+                    if (res.output) {
+                        $('#log-console').textContent = res.output;
+                    }
+                }).catch((err) => {
+                    const msg = (err && err.output) ? err.output : 'Tidak bisa terhubung ke API Vercel.';
+                    setHero('err', 'Status tidak terbaca', msg);
+                    $('#log-console').textContent = msg;
+                });
             }
-            if (res.output) {
-                $('#log-console').text(res.output);
-            }
+
             checkStatus();
-        }).fail(function(xhr) {
-            toastr.error('Eksekusi gagal. Cek log output.');
-            if (xhr.responseText) {
-                try {
-                    const parsed = JSON.parse(xhr.responseText);
-                    $('#log-console').text(parsed.output || parsed.message || xhr.responseText);
-                } catch(e) {
-                    $('#log-console').text(xhr.responseText);
-                }
-            }
-        }).always(function() {
-            btn.prop('disabled', false).html('<i class="fas fa-paper-plane mr-1"></i> Trigger Absen Sekarang');
-            $('#status-tag').text('Ready');
-        });
-    });
 
-    $('#btn-refresh-status').click(function() {
-        checkStatus();
-        toastr.info('Status diperbarui.');
-    });
+            $('#btn-refresh-status').addEventListener('click', e => {
+                const b = e.currentTarget;
+                busy(b, true, 'Memeriksa…');
+                checkStatus().finally(() => {
+                    busy(b, false);
+                    toast('Status diperbarui');
+                });
+            });
 
-    // Check on initial load
-    checkStatus();
-});
-</script>
+            $('#btn-refresh-logs').addEventListener('click', e => {
+                const b = e.currentTarget;
+                busy(b, true, 'Memuat…');
+                checkStatus().finally(() => busy(b, false));
+            });
 
+            // Catatan harian di Cloud
+            $('#form-activity').addEventListener('submit', e => {
+                e.preventDefault();
+                toast('Di Vercel, catatan disinkronkan via Project Settings > Environment Variables.');
+            });
+
+            // Absen manual
+            $('#btn-run-absen').addEventListener('click', e => {
+                if (!confirm('Kirim presensi sekarang?')) return;
+                const b = e.currentTarget;
+                busy(b, true, 'Mengirim…');
+                api('cron')
+                    .then(res => {
+                        toast(res.message || 'Absen berhasil diproses!');
+                        if (res.output) $('#log-console').textContent = res.output;
+                    })
+                    .catch(err => {
+                        toast(err.message || 'Gagal menjalankan skrip.', 'err');
+                        if (err.output) $('#log-console').textContent = err.output;
+                    })
+                    .finally(() => {
+                        busy(b, false);
+                        checkStatus();
+                    });
+            });
+
+            // Simulasi
+            const dlg = $('#modalDryRun');
+            $('#btn-dry-run').addEventListener('click', e => {
+                const b = e.currentTarget;
+                busy(b, true, 'Menyiapkan…');
+                api('dry_run')
+                    .then(res => {
+                        $('#dry-run-content').textContent = res.output || 'Tidak ada data.';
+                        dlg.showModal();
+                    })
+                    .catch(() => toast('Gagal mengambil data simulasi.', 'err'))
+                    .finally(() => busy(b, false));
+            });
+            $('#btn-close-dry').addEventListener('click', () => dlg.close());
+            dlg.addEventListener('click', e => {
+                if (e.target === dlg) dlg.close();
+            });
+        })();
+    </script>
 </body>
-</html>
 
+</html>

@@ -13,6 +13,7 @@ if ROOT_DIR not in sys.path:
 from app.models.attendance import AttendanceService
 from app.commands import cmd_status
 from app.utils.time import today_str, now_wib
+from app.config import settings
 
 
 class handler(BaseHTTPRequestHandler):
@@ -45,7 +46,14 @@ class handler(BaseHTTPRequestHandler):
             "time_wib": now_wib().strftime("%Y-%m-%d %H:%M:%S"),
             "is_attended": is_attended,
             "error": error_msg,
-            "output": output_log
+            "output": output_log,
+            "env": {
+                "location": settings.location,
+                "clock_in_time": "15:00",
+                "activity_log": settings.activity_log,
+                "lesson_learned": settings.lesson_learned,
+                "obstacles": settings.obstacles
+            }
         }
         self.wfile.write(json.dumps(response_data, ensure_ascii=False, indent=2).encode("utf-8"))
         return

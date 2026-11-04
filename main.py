@@ -94,8 +94,23 @@ class handler(BaseHTTPRequestHandler):
                 "output": buffer.getvalue().strip()
             }, ensure_ascii=False, indent=2).encode("utf-8"))
             return
+        elif path.endswith("/dry_run") or path.endswith("/dry-run"):
+            try:
+                payload = AttendanceService.attendance_payload(today_str())
+                output_text = json.dumps(payload, ensure_ascii=False, indent=2)
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": True, "output": output_text}).encode("utf-8"))
+            except Exception as e:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": False, "output": f"Error: {e}"}).encode("utf-8"))
+            return
         elif path.endswith("/status"):
             from app.utils.time import today_str, now_wib
+            from app.config import settings
             buffer = io.StringIO()
             is_attended = False
             err = None
@@ -117,7 +132,14 @@ class handler(BaseHTTPRequestHandler):
                 "date": today_str(),
                 "time_wib": now_wib().strftime("%Y-%m-%d %H:%M:%S"),
                 "is_attended": is_attended,
-                "output": buffer.getvalue().strip()
+                "output": buffer.getvalue().strip(),
+                "env": {
+                    "location": settings.location,
+                    "clock_in_time": "15:00",
+                    "activity_log": settings.activity_log,
+                    "lesson_learned": settings.lesson_learned,
+                    "obstacles": settings.obstacles
+                }
             }, ensure_ascii=False, indent=2).encode("utf-8"))
             return
         else:
