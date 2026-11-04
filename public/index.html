@@ -64,7 +64,8 @@
         .logo { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; background: var(--ink); color: var(--surface); }
         .top-r { display: flex; align-items: center; gap: 6px; min-width: 0; }
         .acct { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 4px 14px 4px 4px; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; }
-        .avatar { display: grid; place-items: center; flex: none; width: 28px; height: 28px; border-radius: 50%; background: var(--ok-bg); color: var(--ok); font-weight: 700; font-size: 13px; }
+        .avatar { display: grid; place-items: center; flex: none; width: 28px; height: 28px; border-radius: 50%; background: var(--ok-bg); color: var(--ok); font-weight: 700; font-size: 13px; overflow: hidden; }
+        .avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block; }
         .who { max-width: min(240px, 38vw); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; color: var(--muted); }
         .top-r .btn-text { color: var(--ink); font-weight: 600; }
 
@@ -350,6 +351,7 @@
                     </div>
                     <div class="hero-foot">
                         <dl class="meta">
+                            <div id="meta-mitra" style="display:none"><dt><svg class="ic"><use href="#i-user"/></svg>Mitra Magang</dt><dd id="val-mitra">—</dd></div>
                             <div><dt><svg class="ic"><use href="#i-pin"/></svg>Lokasi</dt><dd id="val-location">—</dd></div>
                             <div><dt><svg class="ic"><use href="#i-repeat"/></svg>Absen otomatis</dt><dd id="val-auto-status">—</dd></div>
                         </dl>
@@ -661,12 +663,44 @@
                 e.currentTarget.setAttribute('aria-label', show ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi');
             });
 
-            function showDashboard(user) {
+            function applyProfile(prof) {
+                if (!prof) return;
+                const name = prof.name || (activeAuth && activeAuth.username) || '';
+                if (name) {
+                    $('#chip-user').textContent = name;
+                    $('#chip-user').title = name + ((activeAuth && activeAuth.username && activeAuth.username !== name) ? ' (' + activeAuth.username + ')' : '');
+                }
+                const av = $('#avatar');
+                if (prof.photo_url) {
+                    av.innerHTML = '';
+                    const img = document.createElement('img');
+                    img.src = prof.photo_url;
+                    img.alt = name;
+                    img.referrerPolicy = 'no-referrer';
+                    img.onerror = () => {
+                        av.textContent = (name || '?').charAt(0).toUpperCase();
+                    };
+                    av.appendChild(img);
+                } else if (name) {
+                    av.textContent = name.charAt(0).toUpperCase();
+                }
+                if (prof.mitra_name) {
+                    const mRow = $('#meta-mitra');
+                    const mVal = $('#val-mitra');
+                    if (mRow && mVal) {
+                        mVal.textContent = prof.mitra_name + (prof.position ? ' · ' + prof.position : '');
+                        mRow.style.display = 'block';
+                    }
+                }
+            }
+
+            function showDashboard(user, profile) {
                 $('#view-login').hidden = true;
                 $('#view-dashboard').hidden = false;
                 $('#chip-user').textContent = user.username;
                 $('#chip-user').title = user.username;
                 $('#avatar').textContent = (user.username || '?').charAt(0).toUpperCase();
+                if (profile) applyProfile(profile);
                 checkStatus();
             }
 
@@ -688,6 +722,10 @@
                 saved = null;
                 renderLog('Memuat log…');
                 setHero('', 'Memeriksa status…', '');
+                $('#avatar').innerHTML = '?';
+                $('#chip-user').textContent = '—';
+                const mRow = $('#meta-mitra');
+                if (mRow) mRow.style.display = 'none';
             }
 
             function expireSession() {
@@ -714,7 +752,8 @@
                     saveSuggestion(username);
                     if ($('#remember_me').checked) localStorage.setItem(AUTH_KEY, JSON.stringify(activeAuth));
                     else { sessionStorage.setItem(AUTH_KEY, JSON.stringify(activeAuth)); localStorage.removeItem(AUTH_KEY); }
-                    showDashboard({ username });
+                    if (res.profile) applyProfile(res.profile);
+                    showDashboard({ username }, res.profile);
                 }).catch(() => {
                     setErr('Tidak bisa terhubung ke server login. Coba lagi.');
                 }).finally(() => busy(btn, false));
@@ -745,6 +784,8 @@
                     const line = (res.output || '').split('\n').find(l => l.includes('Status:')) || '';
                     if (res.is_attended) setHero('ok', 'Sudah absen hari ini', line.trim());
                     else setHero('warn', 'Belum absen hari ini', 'Absen otomatis berjalan pukul ' + CRON_TIME + ' WIB, atau kirim sekarang.');
+
+                    if (res.profile) applyProfile(res.profile);
 
                     const pref = res.preferences || {}, env = res.env || {};
                     const pick = (a, b, c) => a !== undefined && a !== null ? a : (b !== undefined && b !== null && b !== '' ? b : c);

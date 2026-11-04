@@ -621,3 +621,114 @@ def test_send_whatsapp_posts_when_configured(monkeypatch):
     assert calls[0][1]["From"] == "whatsapp:+14155238886"
     assert calls[0][1]["To"] == "whatsapp:+628123456789"
     assert calls[0][1]["Body"] == "Tes Pesan"
+
+
+def test_attendance_service_get_profile(monkeypatch):
+    class FakeClient:
+        def get(self, path, params=None):
+            if path == "/users/me":
+                return {
+                    "data": {
+                        "name": "Budi Santoso",
+                        "email": "budi@example.com",
+                        "photo": "https://cdn.kemnaker.go.id/avatar.jpg",
+                        "phone": "081234567890",
+                        "nik": "3201234567890001",
+                        "internship": {
+                            "company_name": "PT Maju Mundur",
+                            "position": "Backend Developer",
+                        },
+                    }
+                }
+            raise AssertionError(f"Unexpected path: {path}")
+
+    svc = AttendanceService(username="u", password="p")
+    svc._client = FakeClient()
+    prof = svc.get_profile()
+
+    assert prof["name"] == "Budi Santoso"
+    assert prof["email"] == "budi@example.com"
+    assert prof["photo_url"] == "https://cdn.kemnaker.go.id/avatar.jpg"
+    assert prof["phone"] == "081234567890"
+    assert prof["nik"] == "3201234567890001"
+    assert prof["mitra_name"] == "PT Maju Mundur"
+    assert prof["position"] == "Backend Developer"
+
+
+def test_attendance_service_get_profile_relative_photo(monkeypatch):
+    class FakeClient:
+        def get(self, path, params=None):
+            return {
+                "nama": "Siti Nurhaliza",
+                "avatar": "/storage/photos/siti.png",
+                "mitra": {"name": "PT Telkom Indonesia"},
+            }
+
+    svc = AttendanceService(username="u", password="p")
+    svc._client = FakeClient()
+    prof = svc.get_profile()
+
+    assert prof["name"] == "Siti Nurhaliza"
+    assert prof["photo_url"] == "https://monev.maganghub.kemnaker.go.id/storage/photos/siti.png"
+    assert prof["mitra_name"] == "PT Telkom Indonesia"
+
+
+def test_attendance_service_get_profile_handles_error():
+    class BrokenClient:
+        def get(self, path, params=None):
+            raise Exception("Network timeout")
+
+    svc = AttendanceService(username="u", password="p")
+    svc._client = BrokenClient()
+    prof = svc.get_profile()
+    assert "error" in prof
+    assert "Network timeout" in prof["error"]
+
+
+def test_api_profile_endpoint():
+    import json
+    from main import app
+
+    # Unauthenticated
+    environ = {"PATH_INFO": "/api/profile", "REQUEST_METHOD": "GET"}
+    headers = []
+    status_code = []
+
+    def start_response(status, h):
+        status_code.append(status)
+        headers.extend(h)
+
+    res = app(environ, start_response)
+    data = json.loads(res[0].decode("utf-8"))
+    assert data["status"] is False
+    assert "Belum terautentikasi" in data["message"]
+
+
+def test_api_profile_endpoint_authenticated(monkeypatch):
+    import json
+    from main import app
+
+    monkeypatch.setattr(
+        AttendanceService,
+        "get_profile",
+        lambda self: {"name": "Test User", "photo_url": "https://example.com/p.jpg", "mitra_name": "PT Test"},
+    )
+
+    environ = {
+        "PATH_INFO": "/api/profile",
+        "REQUEST_METHOD": "GET",
+        "HTTP_X_AUTH_USERNAME": "testuser",
+        "HTTP_X_AUTH_PASSWORD": "secretpassword",
+    }
+    status_code = []
+    headers = []
+
+    def start_response(status, h):
+        status_code.append(status)
+        headers.extend(h)
+
+    res = app(environ, start_response)
+    data = json.loads(res[0].decode("utf-8"))
+    assert data["status"] is True
+    assert data["profile"]["name"] == "Test User"
+    assert data["profile"]["photo_url"] == "https://example.com/p.jpg"

@@ -116,10 +116,17 @@ def app(environ, start_response):
             svc = AttendanceService(username=user, password=pwd)
             svc.login()
 
+            # Attempt to fetch profile immediately on login
+            profile = {}
+            try:
+                profile = svc.get_profile()
+            except Exception as pe:
+                print(f"[API] Profile fetch on login warning: {pe}")
+
             # Database integration (Neon Postgres)
             preferences = None
             try:
-                from app.db import init_db, save_or_update_user, get_user, get_db_url
+                from app.db import init_db, save_or_update_user, update_user_profile, get_user, get_db_url
                 if get_db_url():
                     init_db()
                     existing = get_user(user)
@@ -158,6 +165,15 @@ def app(environ, start_response):
                             obstacles=existing.get("user_obstacles", ""),
                             auto_absen=existing.get("user_auto_absen", True),
                         )
+
+                    if profile and not profile.get("error"):
+                        update_user_profile(
+                            username=user,
+                            fullname=profile.get("name", ""),
+                            photo_url=profile.get("photo_url", ""),
+                            mitra=profile.get("mitra_name", ""),
+                            position=profile.get("position", ""),
+                        )
                     preferences = get_user(user)
             except Exception as dbe:
                 print(f"[DB] Non-critical error on login: {dbe}")
@@ -167,6 +183,7 @@ def app(environ, start_response):
                 "status": True,
                 "message": "Login berhasil! Selamat datang.",
                 "user": {"username": user},
+                "profile": profile,
                 "preferences": preferences,
                 "db_connected": bool(preferences)
             }).encode("utf-8")]
@@ -466,6 +483,38 @@ def app(environ, start_response):
             buffer.write(f"\n[EXCEPTION] {err_msg}")
 
         out = buffer.getvalue().strip()
+
+        # Profile from DB cache or fresh from /users/me
+        profile_data = None
+        if user_pref and (user_pref.get("user_fullname") or user_pref.get("user_photo_url") or user_pref.get("user_mitra")):
+            profile_data = {
+                "name": user_pref.get("user_fullname", ""),
+                "photo_url": user_pref.get("user_photo_url", ""),
+                "mitra_name": user_pref.get("user_mitra", ""),
+                "position": user_pref.get("user_position", ""),
+            }
+        else:
+            try:
+                from app.models.attendance import AttendanceService
+                _svc_prof = AttendanceService(username=user, password=pwd)
+                p = _svc_prof.get_profile()
+                if p and not p.get("error"):
+                    profile_data = p
+                    try:
+                        from app.db import update_user_profile, get_db_url
+                        if get_db_url():
+                            update_user_profile(
+                                username=user,
+                                fullname=p.get("name", ""),
+                                photo_url=p.get("photo_url", ""),
+                                mitra=p.get("mitra_name", ""),
+                                position=p.get("position", ""),
+                            )
+                    except Exception:
+                        pass
+            except Exception:
+                pass
+
         res_data = {
             "status": True,
             "date": today_str(),
@@ -473,6 +522,7 @@ def app(environ, start_response):
             "is_attended": is_attended,
             "error": err_msg,
             "output": out,
+            "profile": profile_data,
             "db_connected": db_connected,
             "db_message": db_message,
             "preferences": user_pref,
@@ -490,7 +540,41 @@ def app(environ, start_response):
         start_response("200 OK", [("Content-Type", "application/json; charset=utf-8")])
         return [json.dumps(res_data, ensure_ascii=False, indent=2).encode("utf-8")]
 
-    # 8. Traceability Audit Logs Endpoint (/api/logs)
+    # 8. User Profile Endpoint (/api/profile or /api/me)
+    if path in ("/api/profile", "/api/me"):
+        user, pwd = _get_credentials(environ)
+        if not user or not pwd:
+            start_response("200 OK", [("Content-Type", "application/json; charset=utf-8")])
+            return [json.dumps({"status": False, "message": "Belum terautentikasi."}).encode("utf-8")]
+
+        try:
+            from app.models.attendance import AttendanceService
+            svc = AttendanceService(username=user, password=pwd)
+            profile = svc.get_profile()
+
+            try:
+                from app.db import update_user_profile, get_db_url
+                if get_db_url() and profile and not profile.get("error"):
+                    update_user_profile(
+                        username=user,
+                        fullname=profile.get("name", ""),
+                        photo_url=profile.get("photo_url", ""),
+                        mitra=profile.get("mitra_name", ""),
+                        position=profile.get("position", ""),
+                    )
+            except Exception as dbe:
+                print(f"[DB] Profile cache warning: {dbe}")
+
+            start_response("200 OK", [("Content-Type", "application/json; charset=utf-8")])
+            return [json.dumps({
+                "status": True,
+                "profile": profile
+            }, ensure_ascii=False, indent=2).encode("utf-8")]
+        except Exception as e:
+            start_response("200 OK", [("Content-Type", "application/json; charset=utf-8")])
+            return [json.dumps({"status": False, "message": str(e)}).encode("utf-8")]
+
+    # 9. Traceability Audit Logs Endpoint (/api/logs)
     if path == "/api/logs":
         user, pwd = _get_credentials(environ)
         if not user or not pwd:

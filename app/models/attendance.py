@@ -51,6 +51,86 @@ class AttendanceService:
         """Authenticate and initialize the API client."""
         self._ensure_client()
 
+    def get_profile(self) -> dict:
+        """Fetch the current user profile from MagangHub Monev API (/users/me).
+
+        Returns:
+            Dict containing parsed profile details (name, photo_url, mitra_name, etc.).
+        """
+        self._ensure_client()
+        try:
+            resp = self._client.get("/users/me")
+        except Exception as e:
+            return {"error": str(e)}
+
+        raw = resp.get("data", resp) if isinstance(resp, dict) else {}
+        if not isinstance(raw, dict):
+            return {}
+
+        name = (
+            raw.get("name")
+            or raw.get("full_name")
+            or raw.get("nama")
+            or ""
+        )
+        photo = (
+            raw.get("photo_url")
+            or raw.get("photo")
+            or raw.get("avatar")
+            or raw.get("picture")
+            or raw.get("image")
+            or ""
+        )
+        if photo and str(photo).startswith("/"):
+            photo = f"https://monev.maganghub.kemnaker.go.id{photo}"
+
+        email = raw.get("email") or ""
+        phone = raw.get("phone") or raw.get("phone_number") or raw.get("no_hp") or ""
+        nik = raw.get("nik") or ""
+
+        # Internship / Mitra details
+        internship = (
+            raw.get("internship")
+            or raw.get("active_internship")
+            or (raw.get("internships")[0] if isinstance(raw.get("internships"), list) and raw.get("internships") else None)
+        )
+        mitra_name = ""
+        position = ""
+        if isinstance(internship, dict):
+            mitra_name = (
+                internship.get("company_name")
+                or internship.get("mitra_name")
+                or (internship.get("mitra") or {}).get("name")
+                or (internship.get("company") or {}).get("name")
+                or ""
+            )
+            position = (
+                internship.get("position")
+                or internship.get("posisi")
+                or (internship.get("position") or {}).get("name")
+                or ""
+            )
+
+        if not mitra_name and isinstance(raw.get("mitra"), dict):
+            mitra_name = raw.get("mitra", {}).get("name", "")
+        elif not mitra_name and isinstance(raw.get("mitra"), str):
+            mitra_name = raw.get("mitra", "")
+        elif not mitra_name and isinstance(raw.get("company"), dict):
+            mitra_name = raw.get("company", {}).get("name", "")
+        elif not mitra_name and isinstance(raw.get("company"), str):
+            mitra_name = raw.get("company", "")
+
+        return {
+            "name": name,
+            "photo_url": photo,
+            "email": email,
+            "phone": phone,
+            "nik": nik,
+            "mitra_name": mitra_name,
+            "position": position,
+            "raw": raw,
+        }
+
     def _ensure_client(self):
         """Create the API client on first use."""
         if not self._client:

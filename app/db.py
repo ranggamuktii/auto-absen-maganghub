@@ -131,6 +131,15 @@ def init_db() -> bool:
                 log_created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         """)
+
+        # Add profile columns to tb_user if they don't exist
+        cur.execute("""
+            ALTER TABLE tb_user ADD COLUMN IF NOT EXISTS user_fullname VARCHAR(200);
+            ALTER TABLE tb_user ADD COLUMN IF NOT EXISTS user_photo_url TEXT;
+            ALTER TABLE tb_user ADD COLUMN IF NOT EXISTS user_mitra VARCHAR(200);
+            ALTER TABLE tb_user ADD COLUMN IF NOT EXISTS user_position VARCHAR(200);
+        """)
+
         conn.commit()
         cur.close()
         return True
@@ -202,6 +211,41 @@ def save_or_update_user(
         conn.close()
 
 
+def update_user_profile(
+    username: str,
+    fullname: str = "",
+    photo_url: str = "",
+    mitra: str = "",
+    position: str = "",
+) -> bool:
+    """Update profile information for an existing user."""
+    conn = get_connection()
+    if not conn:
+        return False
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            """
+            UPDATE tb_user
+            SET user_fullname = COALESCE(NULLIF(%s, ''), user_fullname),
+                user_photo_url = COALESCE(NULLIF(%s, ''), user_photo_url),
+                user_mitra = COALESCE(NULLIF(%s, ''), user_mitra),
+                user_position = COALESCE(NULLIF(%s, ''), user_position),
+                user_updated_at = CURRENT_TIMESTAMP
+            WHERE user_username = %s;
+            """,
+            (fullname, photo_url, mitra, position, username),
+        )
+        conn.commit()
+        cur.close()
+        return True
+    except Exception as e:
+        print(f"[DB] update_user_profile error: {e}")
+        return False
+    finally:
+        conn.close()
+
+
 def get_user(username: str) -> Optional[Dict[str, Any]]:
     """Retrieve user settings with decrypted password."""
     conn = get_connection()
@@ -210,40 +254,88 @@ def get_user(username: str) -> Optional[Dict[str, Any]]:
 
     try:
         cur = conn.cursor()
-        cur.execute(
-            """
-            SELECT user_id, user_username, user_password, user_location,
-                   user_latitude, user_longitude, user_activity_log,
-                   user_lesson_learned, user_obstacles, user_auto_absen,
-                   user_last_absen_date, user_last_absen_status, user_last_absen_log
-            FROM tb_user
-            WHERE user_username = %s
-            LIMIT 1;
-            """,
-            (username,),
-        )
-        row = cur.fetchone()
-        cur.close()
-        if not row:
-            return None
+        try:
+            cur.execute(
+                """
+                SELECT user_id, user_username, user_password, user_location,
+                       user_latitude, user_longitude, user_activity_log,
+                       user_lesson_learned, user_obstacles, user_auto_absen,
+                       user_last_absen_date, user_last_absen_status, user_last_absen_log,
+                       user_fullname, user_photo_url, user_mitra, user_position
+                FROM tb_user
+                WHERE user_username = %s
+                LIMIT 1;
+                """,
+                (username,),
+            )
+            row = cur.fetchone()
+            cur.close()
+            if not row:
+                return None
 
-        raw_pwd = decrypt_password(row[2])
+            raw_pwd = decrypt_password(row[2])
 
-        return {
-            "user_id": row[0],
-            "user_username": row[1],
-            "user_password": raw_pwd,
-            "user_location": row[3],
-            "user_latitude": float(row[4]) if row[4] is not None else -6.370891,
-            "user_longitude": float(row[5]) if row[5] is not None else 107.272352,
-            "user_activity_log": row[6] or "",
-            "user_lesson_learned": row[7] or "",
-            "user_obstacles": row[8] or "",
-            "user_auto_absen": bool(row[9]),
-            "user_last_absen_date": str(row[10]) if row[10] else None,
-            "user_last_absen_status": row[11] or "",
-            "user_last_absen_log": row[12] or "",
-        }
+            return {
+                "user_id": row[0],
+                "user_username": row[1],
+                "user_password": raw_pwd,
+                "user_location": row[3],
+                "user_latitude": float(row[4]) if row[4] is not None else -6.370891,
+                "user_longitude": float(row[5]) if row[5] is not None else 107.272352,
+                "user_activity_log": row[6] or "",
+                "user_lesson_learned": row[7] or "",
+                "user_obstacles": row[8] or "",
+                "user_auto_absen": bool(row[9]),
+                "user_last_absen_date": str(row[10]) if row[10] else None,
+                "user_last_absen_status": row[11] or "",
+                "user_last_absen_log": row[12] or "",
+                "user_fullname": row[13] or "",
+                "user_photo_url": row[14] or "",
+                "user_mitra": row[15] or "",
+                "user_position": row[16] or "",
+            }
+        except Exception:
+            # Fallback if profile columns don't exist yet
+            conn.rollback()
+            cur = conn.cursor()
+            cur.execute(
+                """
+                SELECT user_id, user_username, user_password, user_location,
+                       user_latitude, user_longitude, user_activity_log,
+                       user_lesson_learned, user_obstacles, user_auto_absen,
+                       user_last_absen_date, user_last_absen_status, user_last_absen_log
+                FROM tb_user
+                WHERE user_username = %s
+                LIMIT 1;
+                """,
+                (username,),
+            )
+            row = cur.fetchone()
+            cur.close()
+            if not row:
+                return None
+
+            raw_pwd = decrypt_password(row[2])
+
+            return {
+                "user_id": row[0],
+                "user_username": row[1],
+                "user_password": raw_pwd,
+                "user_location": row[3],
+                "user_latitude": float(row[4]) if row[4] is not None else -6.370891,
+                "user_longitude": float(row[5]) if row[5] is not None else 107.272352,
+                "user_activity_log": row[6] or "",
+                "user_lesson_learned": row[7] or "",
+                "user_obstacles": row[8] or "",
+                "user_auto_absen": bool(row[9]),
+                "user_last_absen_date": str(row[10]) if row[10] else None,
+                "user_last_absen_status": row[11] or "",
+                "user_last_absen_log": row[12] or "",
+                "user_fullname": "",
+                "user_photo_url": "",
+                "user_mitra": "",
+                "user_position": "",
+            }
     except Exception as e:
         print(f"[DB] get_user error: {e}")
         return None
