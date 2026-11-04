@@ -49,11 +49,21 @@ class AttendanceService:
         Returns:
             Payload that clock_in sends to the API.
         """
+        try:
+            lat = float(settings.latitude)
+        except (ValueError, TypeError):
+            lat = settings.latitude
+
+        try:
+            lon = float(settings.longitude)
+        except (ValueError, TypeError):
+            lon = settings.longitude
+
         return {
             "date": date,
             "status": "PRESENT",
-            "latitude": settings.latitude,
-            "longitude": settings.longitude,
+            "latitude": lat,
+            "longitude": lon,
             "location": settings.location,
             "activity_log": settings.activity_log,
             "lesson_learned": settings.lesson_learned,
