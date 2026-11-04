@@ -179,7 +179,7 @@ $h = fn ($s) => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
         }
 
         .wrap {
-            max-width: 760px;
+            max-width: 880px;
             margin: 0 auto;
             padding: 28px 20px 64px;
         }
@@ -387,8 +387,8 @@ $h = fn ($s) => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
 
         textarea {
             resize: vertical;
-            min-height: 92px;
-            line-height: 1.5;
+            min-height: 110px;
+            line-height: 1.6;
         }
 
         textarea:focus,
@@ -560,17 +560,15 @@ $h = fn ($s) => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
             <form class="panel" id="form-activity">
                 <div class="field">
                     <label for="activity_log">Aktivitas hari ini</label>
-                    <textarea id="activity_log" name="activity_log" placeholder="Apa yang kamu kerjakan hari ini?"><?= $h($env['activity_log']) ?></textarea>
+                    <textarea id="activity_log" name="activity_log" rows="4" placeholder="Apa yang kamu kerjakan hari ini?"><?= $h($env['activity_log']) ?></textarea>
                 </div>
-                <div class="grid2">
-                    <div class="field">
-                        <label for="lesson_learned">Yang dipelajari</label>
-                        <textarea id="lesson_learned" name="lesson_learned" placeholder="Hal baru yang kamu pelajari"><?= $h($env['lesson_learned']) ?></textarea>
-                    </div>
-                    <div class="field">
-                        <label for="obstacles">Kendala</label>
-                        <textarea id="obstacles" name="obstacles" placeholder="Hambatan yang kamu temui"><?= $h($env['obstacles']) ?></textarea>
-                    </div>
+                <div class="field">
+                    <label for="lesson_learned">Yang dipelajari</label>
+                    <textarea id="lesson_learned" name="lesson_learned" rows="3" placeholder="Hal baru yang kamu pelajari"><?= $h($env['lesson_learned']) ?></textarea>
+                </div>
+                <div class="field">
+                    <label for="obstacles">Kendala</label>
+                    <textarea id="obstacles" name="obstacles" rows="3" placeholder="Hambatan yang kamu temui"><?= $h($env['obstacles']) ?></textarea>
                 </div>
                 <div class="foot">
                     <div class="field">
