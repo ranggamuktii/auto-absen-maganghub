@@ -530,7 +530,7 @@ def app(environ, start_response):
                 "location": (user_pref.get("user_location") if user_pref else None) or settings.location,
                 "latitude": (user_pref.get("user_latitude") if user_pref else None) or settings.latitude,
                 "longitude": (user_pref.get("user_longitude") if user_pref else None) or settings.longitude,
-                "clock_in_time": "08:08",
+                "clock_in_time": "08:15",
                 "activity_log": (user_pref.get("user_activity_log") if user_pref else None) or settings.activity_log,
                 "lesson_learned": (user_pref.get("user_lesson_learned") if user_pref else None) or settings.lesson_learned,
                 "obstacles": (user_pref.get("user_obstacles") if user_pref else None) or settings.obstacles,
