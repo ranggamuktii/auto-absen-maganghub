@@ -54,11 +54,16 @@ def invalid_reminder_times() -> list[str]:
     return bad
 
 
-def holiday_service() -> HolidayService | None:
+def holiday_service(svc: AttendanceService | None = None) -> HolidayService | None:
     """Return a holiday service, or None if the holiday check is disabled."""
     if not settings.libur_nasional:
         return None
-    return HolidayService()
+    user = getattr(svc, "_username", None) or settings.siapkerja_username
+    pwd = getattr(svc, "_password", None) or settings.siapkerja_password
+    client = getattr(svc, "_client", None)
+    if not client and (not user or not pwd):
+        return None
+    return HolidayService(username=user, password=pwd, client=client)
 
 
 def find_holiday(holidays: HolidayService | None, date: str) -> Holiday | None:
@@ -80,11 +85,15 @@ def find_holiday(holidays: HolidayService | None, date: str) -> Holiday | None:
         return None
 
 
-def skip_reason() -> str | None:
+def skip_reason(svc: AttendanceService | None = None) -> str | None:
     """Return why today is skipped, or None when today is a workday."""
     if should_skip():
         return "Hari ini libur"
-    holiday = find_holiday(holiday_service(), today_str())
+    try:
+        hs = holiday_service(svc)
+    except TypeError:
+        hs = holiday_service()
+    holiday = find_holiday(hs, today_str())
     if holiday:
         return f"{holiday.date} hari libur: {holiday.name}"
     return None
@@ -126,7 +135,7 @@ def cmd_absen(svc: AttendanceService) -> int:
     if unknown:
         log_notify(f"[FAIL] Nama hari tidak dikenal di HARI_LIBUR: {', '.join(unknown)}")
         return 1
-    reason = skip_reason()
+    reason = skip_reason(svc)
     if reason:
         log(f"[SKIP] {reason}. Absen dilewati.")
         return 0
@@ -156,7 +165,7 @@ def cmd_remind(svc: AttendanceService) -> int:
 
     Returns 0 on success, 1 on failure.
     """
-    reason = skip_reason()
+    reason = skip_reason(svc)
     if reason:
         log(f"[SKIP] {reason}. Pengingat dilewati.")
         return 0
@@ -188,10 +197,15 @@ def cmd_status(svc: AttendanceService, days: int = 1) -> int:
         svc: Authenticated attendance service.
         days: How many days back to show. 1 means detailed today view.
     """
+    try:
+        holidays = holiday_service(svc)
+    except TypeError:
+        holidays = holiday_service()
+
     if days == 1:
         entry = svc.get_log(today_str())
         if not entry:
-            holiday = find_holiday(holiday_service(), today_str())
+            holiday = find_holiday(holidays, today_str())
             if holiday:
                 log(f"{today_str()} hari libur: {holiday.name}")
                 return 0
@@ -202,7 +216,6 @@ def cmd_status(svc: AttendanceService, days: int = 1) -> int:
         log(f"  Pelajaran:  {entry.lesson_learned or 'tidak tercatat'}")
         log(f"  Kendala:    {entry.obstacles or 'tidak tercatat'}")
         return 0
-    holidays = holiday_service()
     for ago in range(days):
         date = date_str(ago)
         entry = svc.get_log(date)

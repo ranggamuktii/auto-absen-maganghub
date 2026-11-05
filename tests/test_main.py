@@ -732,3 +732,32 @@ def test_api_profile_endpoint_authenticated(monkeypatch):
     assert data["status"] is True
     assert data["profile"]["name"] == "Test User"
     assert data["profile"]["photo_url"] == "https://example.com/p.jpg"
+
+
+def test_holiday_service_with_authenticated_svc(monkeypatch):
+    monkeypatch.setattr(commands.settings, "siapkerja_username", "")
+    monkeypatch.setattr(commands.settings, "siapkerja_password", "")
+    monkeypatch.setattr(commands.settings, "libur_nasional", True)
+
+    class FakeClient:
+        pass
+
+    svc = AttendanceService(username="peserta@gmail.com", password="rahasia123")
+    svc._client = FakeClient()
+
+    hs = commands.holiday_service(svc)
+    assert hs is not None
+    assert hs._client is svc._client
+
+
+def test_holiday_service_returns_none_when_no_credentials(monkeypatch, capsys):
+    monkeypatch.setattr(commands.settings, "siapkerja_username", "")
+    monkeypatch.setattr(commands.settings, "siapkerja_password", "")
+    monkeypatch.setattr(commands.settings, "libur_nasional", True)
+
+    svc = AttendanceService()  # no credentials, no client
+    hs = commands.holiday_service(svc)
+    assert hs is None
+    # Verify find_holiday with None does not raise or emit any warning
+    assert commands.find_holiday(hs, "2026-08-17") is None
+    assert "[WARN]" not in capsys.readouterr().out

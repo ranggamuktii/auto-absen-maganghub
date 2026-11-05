@@ -39,15 +39,22 @@ class HolidayService:
     costs a single API request.
     """
 
-    def __init__(self):
-        """Initialize with no API client; the client is created on first use."""
-        self._client: ApiClient | None = None
+    def __init__(
+        self,
+        username: str | None = None,
+        password: str | None = None,
+        client: ApiClient | None = None,
+    ):
+        """Initialize with optional credentials or pre-authenticated API client."""
+        self._username = username
+        self._password = password
+        self._client: ApiClient | None = client
         self._cache: list[Holiday] | None = None
 
     def _ensure_client(self):
         """Create the API client on first use."""
         if not self._client:
-            self._client = ApiClient(get_access_token())
+            self._client = ApiClient(get_access_token(self._username, self._password))
 
     def list_holidays(self) -> list[Holiday]:
         """Fetch every holiday visible to the account, following pagination.
