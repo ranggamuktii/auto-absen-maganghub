@@ -90,14 +90,37 @@ textarea{resize:vertical;min-height:76px}
 .pill{font:12.5px var(--f);padding:5px 10px;border-radius:99px;background:var(--s2);border:0;color:var(--mut);cursor:pointer;transition:color .2s}
 .pill:hover{color:var(--pr)}
 .pill.on{background:var(--pr);color:var(--onp);font-weight:700}
-.k-item{padding:14px 0;border-bottom:1px solid var(--ln)}
+.k-item{padding:0;border:0}
 .k-item:last-child{border:0}
-.k-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
-.k-badge{font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;text-transform:uppercase}
+.k-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+.k-badge{font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;text-transform:uppercase;letter-spacing:.03em}
 .k-badge.ok{background:var(--gb);color:var(--g)}
 .k-badge.w{background:var(--wb);color:var(--w)}
 .k-badge.e{background:var(--eb);color:var(--e)}
-.k-body{font-size:13px;line-height:1.5;color:var(--ink);margin:4px 0}
+.k-body{font-size:13px;line-height:1.6;color:var(--ink);margin:3px 0}
+/* WA status indicator */
+.wa-status-row{display:flex;align-items:center;gap:10px;margin-top:8px;padding:10px 14px;background:var(--s2);border:1px solid var(--ln);border-radius:12px}
+.wa-dot{flex:none;width:8px;height:8px;border-radius:50%;background:var(--w)}
+.wa-dot.ok{background:var(--g)}
+.wa-status-row b{flex:1;font-size:13px;font-weight:600}
+.wa-status-row .btn{padding:7px 13px;font-size:12.5px;border-radius:10px}
+/* Logbook item redesign */
+.lb-item{background:var(--s1);border:1px solid var(--ln);border-radius:16px;overflow:hidden;transition:border-color .2s}
+.lb-item:hover{border-color:var(--ln2,var(--mut))}
+.lb-header{display:flex;align-items:center;gap:10px;padding:14px 16px;cursor:pointer;user-select:none}
+.lb-header b{font-size:.95rem;font-weight:700;flex:1}
+.lb-header .k-badge{font-size:11px}
+.lb-chevron{width:16px;height:16px;flex:none;color:var(--mut);transition:transform .3s var(--bn)}
+.lb-item.open .lb-chevron{transform:rotate(180deg)}
+.lb-body{display:none;padding:0 16px 14px;border-top:1px solid var(--ln)}
+.lb-item.open .lb-body{display:block}
+.lb-field{margin:12px 0 0}
+.lb-field-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);margin-bottom:4px}
+.lb-field-text{font-size:13.5px;line-height:1.65;color:var(--ink);white-space:pre-wrap;word-break:break-word}
+.lb-actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.lb-actions .btn{padding:7px 12px;font-size:12px;border-radius:10px}
+.lb-copy-all{background:var(--prb);color:var(--pr);border-color:transparent;font-weight:700}
+.lb-copy-all:hover:not(:disabled){background:var(--pr);color:var(--onp)}
 
 /* Header dan kerangka */
 .top{position:sticky;top:0;z-index:20;padding-top:env(safe-area-inset-top);background:color-mix(in srgb,var(--bg) 80%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid transparent;transition:border-color .3s}
@@ -160,7 +183,9 @@ textarea{resize:vertical;min-height:76px}
 .sv .btn{border-radius:99px}
 
 /* Riwayat */
-.pane{max-height:380px;overflow:auto;scrollbar-width:thin;scrollbar-color:var(--ln) transparent;overscroll-behavior:contain}
+.pane{max-height:460px;overflow:auto;scrollbar-width:thin;scrollbar-color:var(--ln) transparent;overscroll-behavior:contain}
+#pk-logs{display:flex;flex-direction:column;gap:10px;padding:4px 2px}
+#pk-logs:empty{display:block}
 .it{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--ln)}
 .it:last-child{border:0}
 .it>div{min-width:0}
@@ -218,17 +243,18 @@ dialog footer{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}
 .tpm button.on,.tpm button.on:hover:not(:disabled){background:var(--pr);color:var(--onp)}
 
 /* Motion: pantulan tipis dan animasi scroll */
-@keyframes rise{from{opacity:0;transform:translateY(14px)}}
-@keyframes drop{from{opacity:0;transform:translateY(-8px) scale(.94)}}
-@keyframes hop{40%{transform:translateY(-4px) scale(1.08)}}
-.rv{transition:opacity .55s ease,transform .75s var(--bn)}
-.pre{opacity:0;transform:translateY(26px) scale(.985)}
-.hero>:not(.cf){animation:rise .7s var(--bn) both}
-.hero>:nth-child(2){animation-delay:.07s}
-.hero>:nth-child(3){animation-delay:.14s}
-.hero>:nth-child(4){animation-delay:.21s}
-.it{animation:rise .55s var(--bn) both;animation-delay:calc(var(--i,0)*45ms)}
-.nav a.on .ic{animation:hop .5s var(--bn)}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}}
+@keyframes drop{from{opacity:0;transform:translateY(-6px) scale(.95)}}
+@keyframes hop{40%{transform:translateY(-3px) scale(1.07)}}
+@keyframes fadein{from{opacity:0}}
+.rv{transition:opacity .5s ease,transform .65s cubic-bezier(.22,1,.36,1)}
+.pre{opacity:0;transform:translateY(20px) scale(.988)}
+.hero>:not(.cf){animation:rise .6s cubic-bezier(.22,1,.36,1) both}
+.hero>:nth-child(2){animation-delay:.06s}
+.hero>:nth-child(3){animation-delay:.12s}
+.hero>:nth-child(4){animation-delay:.18s}
+.it{animation:rise .45s cubic-bezier(.22,1,.36,1) both;animation-delay:calc(var(--i,0)*40ms)}
+.nav a.on .ic{animation:hop .45s var(--bn)}
 .pg{position:absolute;left:0;bottom:-1px;width:100%;height:2px;background:var(--pr);transform:scaleX(0);transform-origin:0 50%}
 .top.sc{border-bottom-color:var(--ln)}
 .hh{display:flex;align-items:center;justify-content:space-between}
@@ -273,6 +299,9 @@ dialog footer{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}
 <symbol id="i-wa" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></symbol>
 <symbol id="i-phone" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></symbol>
 <symbol id="i-bell" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/></symbol>
+<symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+<symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+<symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
 </svg>
 
 <!-- LOGIN -->
@@ -349,9 +378,6 @@ dialog footer{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}
 </div>
 <div class="grp rv">
 <h3 class="gh"><svg class="ic"><use href="#i-wa"/></svg>Notifikasi WhatsApp
-  <span style="margin-left:auto;display:inline-flex;gap:6px">
-    <button type="button" class="btn gho sm" id="btn-wa-test" style="font-size:12px;padding:6px 12px"><svg class="ic" style="width:14px;height:14px"><use href="#i-send"/></svg>Tes Pesan</button>
-  </span>
 </h3>
 <label class="sw">
   <span>
@@ -372,10 +398,11 @@ dialog footer{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}
       <svg class="ic"><use href="#i-phone"/></svg>
       <input type="tel" id="wa_number" placeholder="Contoh: 081234567890 atau +62812...">
     </div>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;flex-wrap:wrap;gap:6px">
-      <span class="k-badge w" id="wa-status-badge">Belum Terverifikasi</span>
-      <button type="button" class="btn gho sm" id="btn-wa-verify" style="padding:4px 10px;font-size:11.5px">
-        <svg class="ic" style="width:13px;height:13px"><use href="#i-check"/></svg>Verifikasi Nomor
+    <div class="wa-status-row">
+      <span class="wa-dot" id="wa-dot"></span>
+      <b id="wa-status-badge">Belum Terverifikasi</b>
+      <button type="button" class="btn gho" id="btn-wa-verify" style="padding:7px 14px;font-size:12.5px;border-radius:10px">
+        <svg class="ic" style="width:14px;height:14px"><use href="#i-shield"/></svg>Verifikasi
       </button>
     </div>
   </label>
@@ -625,17 +652,27 @@ $('#tab-k-logs').onclick=()=>swTab('k-logs');
 
 async function loadLogs(){
   try{const r=await api('logs');logs=r&&r.logs||[]}catch(e){if(e.code===401)return;logs=[]}
+  const statusLabel={ok:'Berhasil',w:'Dilewati',e:'Gagal'};
   $('#ph').innerHTML=logs.length?logs.map((l,i)=>{
     const m=l.message||'';
     const isSkip=l.status==='SKIPPED'||l.status==='SKIP'||/\[skip\]|dilewati|sudah absen|absen dilewati|hari libur|akhir pekan/i.test(m);
     const isOk=!isSkip&&(l.status==='SUCCESS'||/berhasil|sukses|success/i.test(m));
     const c=isOk?'ok':isSkip?'w':'e';
-    const tx=isOk?'Berhasil':isSkip?'Dilewati':'Gagal';
     const iconName=isOk?'check-circle':isSkip?'skip':'alert';
     const ts=String(l.created_at||l.date||'').replace('T',' ').slice(0,16);
     const rawTitle=m.split('\n').filter(Boolean)[0]||'Eksekusi selesai';
     const cleanTitle=rawTitle.replace(/^\[(SKIP|SUCCESS|FAILED|INFO)\]\s*/i,'');
-    return `<div class="it" style="--i:${Math.min(i,8)}"><span class="ico ${c}">${ic(iconName)}</span><div style="flex:1;min-width:0"><div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><b style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(m)}">${esc(cleanTitle)}</b><span class="k-badge ${c}" style="font-size:10px;padding:2px 7px;flex:none">${tx}</span></div><small style="color:var(--mut)">${esc(ts)} WIB</small></div></div>`}).join('')
+    const isLast=i===logs.length-1;
+    return `<div class="it" style="--i:${Math.min(i,8)};padding:12px 0 12px ${isLast?'0':'0'};position:relative">
+      <span class="ico ${c}" style="margin-top:1px">${ic(iconName)}</span>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:flex-start;gap:8px">
+          <b style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.88rem" title="${esc(m)}">${esc(cleanTitle)}</b>
+          <span class="k-badge ${c}" style="flex:none;margin-top:1px">${statusLabel[c]}</span>
+        </div>
+        <small style="margin-top:3px;font-family:var(--m);font-size:.78rem">${esc(ts)} WIB</small>
+      </div>
+    </div>`}).join('')
     :`<div class="empty">${ic('list')}<div><b>Belum ada riwayat</b></div><small>Hasil absen akan muncul di sini setelah cron ${CRON} WIB berjalan atau Anda menekan Absen sekarang.</small></div>`}
 
 async function loadKemLogs(){
@@ -645,14 +682,59 @@ async function loadKemLogs(){
     if(!kemLogs.length){bx.innerHTML=`<div class="empty">${ic('note')}<div><b>Belum ada logbook resmi</b></div></div>`;return}
     bx.innerHTML=kemLogs.map((l,i)=>{
       const isOk=l.state==='APPROVED',bCls=isOk?'ok':'w',bTxt=isOk?'Approved':(l.state||'Submitted');
-      return `<div class="k-item"><div class="k-head"><b>${esc(l.date)}</b><span class="k-badge ${bCls}">${esc(bTxt)}</span></div><div class="k-body"><strong>Aktivitas:</strong> ${esc(l.activity_log||'—')}</div>${l.lesson_learned?`<div class="k-body" style="color:var(--mut)"><strong>Dipahami:</strong> ${esc(l.lesson_learned)}</div>`:''}${l.obstacles?`<div class="k-body" style="color:var(--mut)"><strong>Kendala:</strong> ${esc(l.obstacles)}</div>`:''}<button type="button" class="btn gho sm" style="margin-top:8px;padding:6px 12px;font-size:12px" data-idx="${i}"><svg class="ic" style="width:14px;height:14px"><use href="#i-note"/></svg>Gunakan Teks Ini</button></div>`}).join('');
+      const fields=[
+        l.activity_log?`<div class="lb-field"><div class="lb-field-label">Aktivitas</div><div class="lb-field-text">${esc(l.activity_log)}</div></div>`:'',
+        l.lesson_learned?`<div class="lb-field"><div class="lb-field-label">Yang Dipelajari</div><div class="lb-field-text" style="color:var(--mut)">${esc(l.lesson_learned)}</div></div>`:'',
+        l.obstacles?`<div class="lb-field"><div class="lb-field-label">Kendala</div><div class="lb-field-text" style="color:var(--mut)">${esc(l.obstacles)}</div></div>`:''
+      ].filter(Boolean).join('');
+      return `<div class="lb-item" data-idx="${i}">
+        <div class="lb-header">
+          <svg class="ic" style="width:15px;height:15px;color:var(--mut)"><use href="#i-note"/></svg>
+          <b>${esc(l.date||'—')}</b>
+          <span class="k-badge ${bCls}">${esc(bTxt)}</span>
+          <svg class="lb-chevron ic"><use href="#i-chevron-down"/></svg>
+        </div>
+        <div class="lb-body">
+          ${fields}
+          <div class="lb-actions">
+            <button type="button" class="btn lb-copy-all" data-idx="${i}">
+              ${ic('copy','')}<span>Salin Laporan</span>
+            </button>
+            <button type="button" class="btn gho" style="padding:7px 12px;font-size:12px;border-radius:10px" data-use="${i}">
+              ${ic('note','')}<span>Gunakan Teks Ini</span>
+            </button>
+          </div>
+        </div>
+      </div>`}).join('');
+    /* toggle expand */
+    bx.querySelectorAll('.lb-item').forEach(card=>{
+      card.querySelector('.lb-header').addEventListener('click',()=>{
+        const isOpen=card.classList.contains('open');
+        bx.querySelectorAll('.lb-item.open').forEach(c=>c.classList.remove('open'));
+        if(!isOpen)card.classList.add('open');
+      });
+    });
+    /* copy full report */
     bx.querySelectorAll('button[data-idx]').forEach(b=>{
-      b.onclick=()=>{
+      b.addEventListener('click',e=>{
+        e.stopPropagation();
         const item=kemLogs[+b.dataset.idx];if(!item)return;
+        const txt=`📋 Logbook ${item.date||''}\n\n✅ Aktivitas:\n${item.activity_log||'—'}\n\n📚 Yang Dipelajari:\n${item.lesson_learned||'—'}\n\n⚠️ Kendala:\n${item.obstacles||'—'}`;
+        navigator.clipboard.writeText(txt).then(()=>toast('Laporan disalin ke clipboard!')).catch(()=>toast('Gagal menyalin. Coba lagi.','err'));
+      });
+    });
+    /* use text */
+    bx.querySelectorAll('button[data-use]').forEach(b=>{
+      b.addEventListener('click',e=>{
+        e.stopPropagation();
+        const item=kemLogs[+b.dataset.use];if(!item)return;
         $('#a1').value=item.activity_log||'';$('#a2').value=item.lesson_learned||'';$('#a3').value=item.obstacles||'';
         sync();updateCounters();toast('Catatan harian disalin ke form!');
-        const el=document.getElementById('set');if(el)el.scrollIntoView({behavior:'smooth'})};
+        const el=document.getElementById('set');if(el)el.scrollIntoView({behavior:'smooth'});
+      });
     });
+    /* auto-open first item */
+    const first=bx.querySelector('.lb-item');if(first)first.classList.add('open');
   }catch(e){bx.innerHTML=`<div class="empty"><div>Gagal memuat logbook: ${esc(e.message)}</div></div>`}
 }
 
@@ -715,28 +797,18 @@ if(btnWaSim){
       otpIn.focus();
       return;
     }
-    const badge=$('#wa-status-badge');
-    if(badge){
-      badge.className='k-badge ok';
-      badge.textContent='Terverifikasi (Aktif)';
-    }
+    const badge=$('#wa-status-badge'),dot=$('#wa-dot');
+    if(badge){badge.textContent='Terverifikasi ✓';}
+    if(dot){dot.classList.add('ok');}
+    // ubah tombol verify jadi label hijau
+    const verBtn=$('#btn-wa-verify');
+    if(verBtn){verBtn.style.display='none'}
     if(dgWa)dgWa.close();
     toast(`Nomor WhatsApp ${num||''} berhasil diverifikasi!`);
     sync();
   };
 }
-const btnWaTest=$('#btn-wa-test');
-if(btnWaTest){
-  btnWaTest.onclick=()=>{
-    const num=($('#wa_number').value||'').trim();
-    if(!num){
-      toast('Masukkan nomor WhatsApp penerima terlebih dahulu.','err');
-      $('#wa_number').focus();
-      return;
-    }
-    toast(`[Simulasi UI] Pesan uji coba dikirim ke ${num}.`);
-  };
-}
+const btnWaTest=null; // removed
 
 /* Simpan, absen, simulasi */
 $('#fs').addEventListener('submit',e=>{
@@ -789,7 +861,7 @@ addEventListener('scroll',()=>{if(tk)return;tk=requestAnimationFrame(()=>{tk=0;c
 /* Mulai */
 try{const s=localStorage.getItem(AK)||sessionStorage.getItem(AK);if(s){auth=JSON.parse(s);dash(auth.username)}else login()}catch(e){login()}
 })();
-</script>\n\n<style id="design-upgrade">
+</script><style id="design-upgrade">
 /* Palet: hijau zamrud dipertahankan, permukaan dibuat lebih berlapis */
 :root{--bg:#090d0c;--s1:#101715;--s2:#16201d;--ln:#1f2b27;--ln2:#2c3b36;--ink:#eaf2ee;--mut:#8a9b94;--pr:#3fd99a;--prh:#7bebb9;--prb:rgba(63,217,154,.12);--onp:#03160d;--seg:#22302b;--sh:0 1px 0 rgba(255,255,255,.04) inset,0 24px 48px -28px rgba(0,0,0,.7)}
 @media(prefers-color-scheme:light){:root{--bg:#f2f6f4;--s1:#fff;--s2:#eef3f0;--ln:#e1e9e5;--ln2:#cdd9d3;--ink:#0b1712;--mut:#576961;--pr:#0b7a58;--prh:#075f44;--prb:rgba(11,122,88,.1);--onp:#fff;--seg:#fff;--sh:0 1px 2px rgba(15,40,30,.06),0 24px 44px -30px rgba(15,40,30,.3)}}
@@ -839,15 +911,23 @@ input[type=radio]{width:auto;accent-color:var(--pr)}
 div:has(>#tab-bot){display:flex!important;flex-wrap:nowrap!important;gap:4px!important;margin-bottom:14px!important;padding:4px;background:var(--s2);border:1px solid var(--ln);border-radius:14px;overflow-x:auto;scrollbar-width:none}
 div:has(>#tab-bot) .pill{flex:1 0 auto;padding:9px 14px;border-radius:10px;font-size:13px;font-weight:600;background:none;color:var(--mut)}
 div:has(>#tab-bot) .pill.on{background:var(--seg);color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.3)}
-.pane{max-height:420px}
-.it{position:relative;align-items:flex-start;padding:13px 0;border:0}
-.it:not(:last-child)::before{content:"";position:absolute;left:15px;top:47px;bottom:-11px;width:2px;border-radius:2px;background:var(--ln)}
+.pane{max-height:460px}
+.it{position:relative;align-items:flex-start;padding:12px 0;border:0}
+.it:not(:last-child)::before{content:"";position:absolute;left:15px;top:46px;bottom:-10px;width:2px;border-radius:2px;background:var(--ln)}
 .it>div{padding-top:2px}
-.k-item,.k-item:last-child{margin:12px 0;padding:14px 16px;background:var(--s2);border:1px solid var(--ln);border-radius:16px}
 .k-badge{padding:3px 9px;border-radius:99px;font-size:11.5px;text-transform:none}
 .empty{padding:40px 12px}
 .empty .ic{box-sizing:content-box;width:30px;height:30px;padding:14px;margin-bottom:12px;border-radius:50%;background:var(--s2)}
 .dbs{width:max-content;max-width:100%;margin-top:18px;padding:8px 14px;background:var(--s2);border:1px solid var(--ln);border-radius:99px}
+/* Logbook: lb-item in design-upgrade */
+.lb-item{background:var(--s1);border-color:var(--ln)}
+.lb-item:hover{border-color:var(--ln2)}
+.lb-header:hover{background:var(--s2)}
+.lb-body{border-top-color:var(--ln)}
+/* WA status row */
+.wa-status-row{border-color:var(--ln)}
+/* #log pane override for logbook flex gap */
+#pk-logs.pane{max-height:460px}
 
 /* Navigasi, dialog, login */
 .nav{max-width:400px;padding:5px;border-radius:22px}
