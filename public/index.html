@@ -18,7 +18,6 @@ small{display:block;color:var(--mut);font-size:.8rem;line-height:1.45}
 @keyframes sp{to{transform:rotate(360deg)}}
 @keyframes pop{0%{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
 @keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
-@keyframes halo{50%{box-shadow:0 0 0 16px color-mix(in srgb,currentColor 3%,transparent)}}
 @keyframes blink{50%{opacity:.3}}
 @keyframes cf{50%{transform:translate(calc(var(--x)*.6),var(--y))}to{transform:translate(var(--x),160px) rotate(540deg);opacity:0}}
 
@@ -109,16 +108,30 @@ textarea{resize:vertical;min-height:76px}
 .hero[data-s=warn]{--t:color-mix(in srgb,var(--w) 20%,transparent)}
 .hero[data-s=err]{--t:color-mix(in srgb,var(--e) 20%,transparent)}
 .date{margin:0;color:var(--mut);font-size:.85rem;font-weight:500}
-.st{display:grid;gap:18px;justify-items:start}
-.bd{display:grid;place-items:center;width:64px;height:64px;border-radius:50%;background:var(--s2);color:var(--mut);box-shadow:0 0 0 8px color-mix(in srgb,currentColor 10%,transparent)}
-.bd .ic{display:none;width:30px;height:30px}
+.st{display:grid;gap:12px;justify-items:start}
+.bd{--k:var(--mut);position:relative;display:grid;place-items:center;width:76px;height:76px;margin:10px;border-radius:50%;background:var(--s2);color:var(--mut)}
+.bd .ic{display:none;width:38px;height:38px;stroke-width:2.6}
 .hero[data-s=""] .il{display:block;animation:sp 1s linear infinite}
 .hero[data-s=ok] .io,.hero[data-s=warn] .iw,.hero[data-s=err] .ie{display:block}
-.hero[data-s=ok] .bd{background:var(--pr);color:var(--onp);animation:pop .5s var(--bn)}
-.hero[data-s=warn] .bd{background:var(--w);color:#241800;animation:halo 2.4s ease-in-out infinite}
-.hero[data-s=err] .bd{background:var(--e);color:#2a0606;animation:shake .5s}
-.hero h1{margin:0;font-size:2rem;font-weight:800;line-height:1.1;letter-spacing:-.035em}
-.hero .st p{margin:8px 0 0;color:var(--mut);font-size:.9rem}
+.hero[data-s=ok] .bd,.hero[data-s=warn] .bd,.hero[data-s=err] .bd{background:linear-gradient(145deg,color-mix(in srgb,var(--k) 68%,#fff),var(--k) 72%);box-shadow:0 0 44px color-mix(in srgb,var(--k) 38%,transparent),inset 0 1px 0 rgba(255,255,255,.35)}
+.hero[data-s=ok] .bd{--k:var(--pr);color:var(--onp);animation:pop .5s var(--bn)}
+.hero[data-s=warn] .bd{--k:var(--w);color:#241800}
+.hero[data-s=err] .bd{--k:var(--e);color:#2a0606;animation:shake .5s}
+.rg{position:absolute;top:-10px;left:-10px;width:96px;height:96px;transform:rotate(-90deg);fill:none;stroke-width:2.5;stroke-linecap:round;overflow:visible}
+.rt{stroke:color-mix(in srgb,var(--k) 18%,transparent)}
+.rf{stroke:var(--k);stroke-dasharray:1;stroke-dashoffset:1;opacity:0}
+.hero[data-s=ok] .rf{animation:ring 1.1s .15s cubic-bezier(.4,0,.2,1) both}
+.hero[data-s=warn] .rf{opacity:1;stroke-dashoffset:.68}
+.hero[data-s=err] .rf{opacity:1;stroke-dashoffset:0}
+.hero[data-s=ok] .io path{stroke-dasharray:1;animation:draw .5s .85s ease-out both}
+.bd::after{content:"";position:absolute;inset:0;border-radius:50%;border:2px solid var(--k);opacity:0;pointer-events:none}
+.hero[data-s=ok] .bd::after{animation:ripple 1.4s 1.1s ease-out}
+.hero[data-s=warn] .bd::after{animation:ripple 2.6s ease-out infinite}
+@keyframes ring{from{stroke-dashoffset:1;opacity:0}8%{opacity:1}to{stroke-dashoffset:0;opacity:1}}
+@keyframes draw{from{stroke-dashoffset:1;opacity:0}15%{opacity:1}to{stroke-dashoffset:0;opacity:1}}
+@keyframes ripple{from{opacity:.55;transform:scale(1)}to{opacity:0;transform:scale(1.75)}}
+.hero h1{margin:0;font-size:2.25rem;font-weight:800;line-height:1.05;letter-spacing:-.04em;text-wrap:balance}
+.hero .st p{margin:10px 0 0;color:var(--mut);font-size:.95rem;max-width:30ch}
 .meta{list-style:none;margin:0;padding:0}
 .meta li{display:flex;align-items:center;gap:14px;padding:14px 0;border-top:1px solid var(--ln)}
 .meta li:last-child{padding-bottom:0}
@@ -222,7 +235,7 @@ dialog footer{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}
 .sv{bottom:24px}
 }
 @media(max-width:380px){.g2{grid-template-columns:minmax(0,1fr)}}
-@media(prefers-reduced-motion:reduce){*,::before,::after{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
+@media(prefers-reduced-motion:reduce){*,::before,::after{animation:none!important;transition:none!important}html{scroll-behavior:auto}.hero[data-s=ok] .rf{stroke-dashoffset:0;opacity:1}}
 </style></head><body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
 <symbol id="i-logo" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M16 2v4M8 2v4M3 10h18m-12 5.5 2 2 4-4"/></symbol>
@@ -276,7 +289,7 @@ dialog footer{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}
 <section class="card hero" id="hero" data-s="">
 <div class="hh"><p class="date" id="dt"></p><button type="button" class="ib" id="rf" aria-label="Perbarui status"><svg class="ic"><use href="#i-refresh"/></svg></button></div>
 <div class="st">
-<div class="bd"><svg class="ic il"><use href="#i-loader"/></svg><svg class="ic io"><use href="#i-check-circle"/></svg><svg class="ic iw"><use href="#i-clock"/></svg><svg class="ic ie"><use href="#i-alert"/></svg></div>
+<div class="bd"><svg class="rg" viewBox="0 0 100 100" aria-hidden="true"><circle class="rt" cx="50" cy="50" r="47"/><circle class="rf" cx="50" cy="50" r="47" pathLength="1"/></svg><svg class="ic il"><use href="#i-loader"/></svg><svg class="ic io" viewBox="0 0 24 24"><path pathLength="1" d="m6.5 12.5 3.8 3.8 7.2-8.3"/></svg><svg class="ic iw" viewBox="0 0 24 24"><path d="M12 6.5V12l3.6 2.2"/></svg><svg class="ic ie" viewBox="0 0 24 24"><path d="M12 7v6.2M12 16.8v.1"/></svg></div>
 <div aria-live="polite"><h1 id="ht">Memeriksa status…</h1><p id="hd"></p></div>
 </div>
 <div>
@@ -431,8 +444,8 @@ function status(){
     if(res.need_login){expire();return}
     $('#db').dataset.s=res.db_connected?'ok':'off';
     $('#dbt').textContent=res.db_connected?'Database terhubung':'Database belum terhubung'+(res.db_message?': '+res.db_message:'');
-    const line=(res.output||'').split('\n').find(l=>l.includes('Status:'))||'';
-    if(res.is_attended)hero('ok','Sudah absen hari ini',line.trim());
+    
+    if(res.is_attended)hero('ok','Sudah absen hari ini','Presensi hari ini sudah tercatat. Sampai jumpa besok.');
     else hero('warn','Belum absen hari ini','Absen otomatis berjalan pukul '+CRON+' WIB, atau kirim sekarang.');
     prof(res.profile);
     const p=res.preferences||{},env=res.env||{},pick=(a,b,c)=>a!=null?a:(b!=null&&b!==''?b:c);
