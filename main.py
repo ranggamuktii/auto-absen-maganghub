@@ -442,7 +442,7 @@ def app(environ, start_response):
                 "message": "Silakan login menggunakan akun Kemnaker untuk melihat status presensi.",
                 "env": {
                     "location": settings.location,
-                    "clock_in_time": "15:00",
+                    "clock_in_time": "13:30",
                     "activity_log": settings.activity_log,
                     "lesson_learned": settings.lesson_learned,
                     "obstacles": settings.obstacles
@@ -530,7 +530,7 @@ def app(environ, start_response):
                 "location": (user_pref.get("user_location") if user_pref else None) or settings.location,
                 "latitude": (user_pref.get("user_latitude") if user_pref else None) or settings.latitude,
                 "longitude": (user_pref.get("user_longitude") if user_pref else None) or settings.longitude,
-                "clock_in_time": "15:00",
+                "clock_in_time": "13:30",
                 "activity_log": (user_pref.get("user_activity_log") if user_pref else None) or settings.activity_log,
                 "lesson_learned": (user_pref.get("user_lesson_learned") if user_pref else None) or settings.lesson_learned,
                 "obstacles": (user_pref.get("user_obstacles") if user_pref else None) or settings.obstacles,
