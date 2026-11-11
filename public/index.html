@@ -5,7 +5,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
-:root{color-scheme:dark light;--bg:#0b100f;--s1:#111816;--s2:#18211e;--ln:#232e2a;--ink:#e9f1ed;--mut:#8a9a93;--pr:#34d399;--prh:#6ee7b7;--prb:rgba(52,211,153,.13);--onp:#04180f;--g:var(--pr);--gb:var(--prb);--w:#fbbf24;--wb:rgba(251,191,36,.13);--e:#f87171;--eb:rgba(248,113,113,.13);--bn:cubic-bezier(.3,1.4,.6,1);--f:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--m:ui-monospace,Consolas,monospace}
+:root{color-scheme:dark light;--bg:#0b100f;--s1:#111816;--s2:#18211e;--ln:#232e2a;--ink:#e9f1ed;--mut:#8a9a93;--pr:#34d399;--prh:#6ee7b7;--prb:rgba(52,211,153,.13);--onp:#04180f;--g:var(--pr);--gb:var(--prb);--w:#fbbf24;--wb:rgba(251,191,36,.13);--e:#f87171;--eb:rgba(248,113,113,.13);--bn:cubic-bezier(.34,1.3,.64,1);--f:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--m:ui-monospace,Consolas,monospace}
 @media(prefers-color-scheme:light){:root{--bg:#f6f8f7;--s1:#fff;--s2:#edf2ef;--ln:#dde5e0;--ink:#0d1a14;--mut:#5a6b63;--pr:#047857;--prh:#065f46;--prb:rgba(4,120,87,.1);--onp:#fff;--w:#b45309;--wb:rgba(180,83,9,.1);--e:#dc2626;--eb:rgba(220,38,38,.09)}}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
@@ -23,8 +23,9 @@ small{display:block;color:var(--mut);font-size:.8rem;line-height:1.45}
 @keyframes cf{50%{transform:translate(calc(var(--x)*.6),var(--y))}to{transform:translate(var(--x),160px) rotate(540deg);opacity:0}}
 
 /* Tombol */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font:700 14px/1 var(--f);padding:12px 18px;border-radius:14px;border:1px solid transparent;color:var(--ink);cursor:pointer;transition:background .2s,border-color .2s,transform .15s}
-.btn:active:not(:disabled){transform:scale(.97)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font:700 14px/1 var(--f);padding:12px 18px;border-radius:14px;border:1px solid transparent;color:var(--ink);cursor:pointer;transition:background .2s,border-color .2s,transform .35s var(--bn)}
+.btn:hover:not(:disabled){transform:translateY(-2px)}
+.btn:active:not(:disabled){transform:scale(.96)}
 .btn:disabled{opacity:.4;cursor:not-allowed}
 .pri{background:var(--pr);color:var(--onp)}
 .pri:hover:not(:disabled){background:var(--prh)}
@@ -32,8 +33,9 @@ small{display:block;color:var(--mut);font-size:.8rem;line-height:1.45}
 .gho:hover:not(:disabled){background:var(--s2)}
 .big{width:100%;padding:17px;font-size:16px;border-radius:16px}
 .sm{padding:9px 13px;font-size:13px;border-radius:12px}
-.ib{display:grid;place-items:center;width:38px;height:38px;border-radius:50%;border:0;background:none;color:var(--mut);cursor:pointer;transition:color .2s,background .2s}
-.ib:hover{color:var(--ink);background:var(--s2)}
+.ib{display:grid;place-items:center;width:38px;height:38px;border-radius:50%;border:0;background:none;color:var(--mut);cursor:pointer;transition:color .2s,background .2s,transform .35s var(--bn)}
+.ib:hover{color:var(--ink);background:var(--s2);transform:scale(1.08)}
+.ib:active{transform:scale(.92)}
 
 /* Form */
 .f{display:block;margin-bottom:16px}
@@ -90,7 +92,7 @@ textarea{resize:vertical;min-height:76px}
 .pill:hover{color:var(--pr)}
 
 /* Header dan kerangka */
-.top{position:sticky;top:0;z-index:20;padding-top:env(safe-area-inset-top);background:color-mix(in srgb,var(--bg) 80%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--ln)}
+.top{position:sticky;top:0;z-index:20;padding-top:env(safe-area-inset-top);background:color-mix(in srgb,var(--bg) 80%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid transparent;transition:border-color .3s}
 .top>div{max-width:1040px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;justify-content:space-between}
 .brand,.tr{display:flex;align-items:center;gap:10px}
 .brand{font-weight:800;letter-spacing:-.01em}
@@ -117,7 +119,6 @@ textarea{resize:vertical;min-height:76px}
 .hero[data-s=err] .bd{background:var(--e);color:#2a0606;animation:shake .5s}
 .hero h1{margin:0;font-size:2rem;font-weight:800;line-height:1.1;letter-spacing:-.035em}
 .hero .st p{margin:8px 0 0;color:var(--mut);font-size:.9rem}
-.tools{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
 .meta{list-style:none;margin:0;padding:0}
 .meta li{display:flex;align-items:center;gap:14px;padding:14px 0;border-top:1px solid var(--ln)}
 .meta li:last-child{padding-bottom:0}
@@ -137,9 +138,6 @@ textarea{resize:vertical;min-height:76px}
 .sv .btn{border-radius:99px}
 
 /* Riwayat */
-.tabs{display:flex;gap:22px;border-bottom:1px solid var(--ln);margin-bottom:4px}
-.tabs button{font:600 14px var(--f);padding:10px 0;margin-bottom:-1px;border:0;border-bottom:2px solid transparent;background:none;color:var(--mut);cursor:pointer;transition:color .2s}
-.tabs .on{color:var(--ink);border-color:var(--pr)}
 .pane{max-height:380px;overflow:auto;scrollbar-width:thin;scrollbar-color:var(--ln) transparent;overscroll-behavior:contain}
 .it{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--ln)}
 .it:last-child{border:0}
@@ -152,10 +150,6 @@ textarea{resize:vertical;min-height:76px}
 .ico.e{background:var(--eb);color:var(--e)}
 .empty{text-align:center;color:var(--mut);padding:32px 8px}
 .empty .ic{width:28px;height:28px;margin-bottom:6px}
-.term{margin:0;font:12.5px/1.65 var(--m);white-space:pre-wrap;word-break:break-word;color:var(--ink)}
-.term .ok{color:var(--g)}
-.term .bad{color:var(--e)}
-#pc{background:var(--s1);border-radius:16px;padding:14px;margin-top:12px}
 .dbs{display:flex;align-items:center;gap:8px;margin:20px 0 0;font-size:13px;color:var(--mut)}
 .dbs::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--mut)}
 .dbs[data-s=ok]::before{background:var(--g)}
@@ -173,7 +167,6 @@ dialog[open]{animation:pop .3s var(--bn)}
 dialog::backdrop{background:rgba(0,0,0,.6);backdrop-filter:blur(3px)}
 dialog form{margin:0}
 dialog p{margin:0}
-dialog .term{background:var(--bg);border-radius:14px;padding:12px;max-height:45vh;overflow:auto;margin-top:12px}
 dialog footer{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}
 .dh{display:flex;align-items:center;gap:12px;margin-bottom:10px}
 .dh .tile{background:var(--prb);color:var(--pr)}
@@ -182,6 +175,43 @@ dialog footer{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}
 .toast.show{transform:translate(-50%,0);opacity:1}
 .toast .ic{color:var(--g)}
 .toast[data-t=err] .ic{color:var(--e)}
+
+/* Jam picker */
+.tp{position:relative;flex:none}
+.tpb{display:inline-flex;align-items:center;gap:8px;font:700 16px/1 var(--f);font-variant-numeric:tabular-nums;color:var(--ink);background:var(--s1);border:1px solid var(--ln);border-radius:14px;padding:12px 14px;cursor:pointer;transition:border-color .2s,box-shadow .2s,transform .35s var(--bn)}
+.tpb:hover{border-color:var(--mut)}
+.tpb:active{transform:scale(.96)}
+.tpb[aria-expanded=true]{border-color:var(--pr);box-shadow:0 0 0 4px var(--prb)}
+.tpb .ic{width:18px;height:18px;color:var(--mut)}
+.tpm{position:absolute;z-index:30;right:0;top:calc(100% + 8px);width:264px;padding:14px;background:var(--s2);border:1px solid var(--ln);border-radius:20px;box-shadow:0 16px 40px rgba(0,0,0,.4);transform-origin:100% 0;animation:drop .38s var(--bn);scroll-margin-bottom:110px}
+.tpm small{margin:0 0 6px 4px}
+.tpq{display:flex;gap:6px;margin-bottom:12px}
+.tpq button{flex:1;border:1px solid var(--ln)!important}
+.tpg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tpc{position:relative;display:grid;align-content:start;gap:2px;max-height:196px;overflow:auto;scrollbar-width:none;overscroll-behavior:contain}
+.tpm button{font:600 14px var(--f);font-variant-numeric:tabular-nums;padding:9px 0;border:0;border-radius:10px;background:none;color:var(--ink);cursor:pointer;transition:background .2s,color .2s,transform .3s var(--bn)}
+.tpm button:hover:not(:disabled){background:var(--prb)}
+.tpm button:active:not(:disabled){transform:scale(.92)}
+.tpm button:disabled{opacity:.3;cursor:not-allowed}
+.tpm button.on,.tpm button.on:hover:not(:disabled){background:var(--pr);color:var(--onp)}
+
+/* Motion: pantulan tipis dan animasi scroll */
+@keyframes rise{from{opacity:0;transform:translateY(14px)}}
+@keyframes drop{from{opacity:0;transform:translateY(-8px) scale(.94)}}
+@keyframes hop{40%{transform:translateY(-4px) scale(1.08)}}
+.rv{transition:opacity .55s ease,transform .75s var(--bn)}
+.pre{opacity:0;transform:translateY(26px) scale(.985)}
+.hero>:not(.cf){animation:rise .7s var(--bn) both}
+.hero>:nth-child(2){animation-delay:.07s}
+.hero>:nth-child(3){animation-delay:.14s}
+.hero>:nth-child(4){animation-delay:.21s}
+.it{animation:rise .55s var(--bn) both;animation-delay:calc(var(--i,0)*45ms)}
+.nav a.on .ic{animation:hop .5s var(--bn)}
+.pg{position:absolute;left:0;bottom:-1px;width:100%;height:2px;background:var(--pr);transform:scaleX(0);transform-origin:0 50%}
+.top.sc{border-bottom-color:var(--ln)}
+.hh{display:flex;align-items:center;justify-content:space-between}
+.hh .ib{margin:-8px -8px -8px 0}
+.ld .ic{animation:sp .8s linear infinite}
 
 /* Desktop: status tetap terlihat di kiri, pengaturan dan riwayat di kanan */
 @media(min-width:880px){
@@ -202,7 +232,6 @@ dialog footer{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}
 <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.2v.1"/></symbol>
 <symbol id="i-loader" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-6.2-8.55"/></symbol>
 <symbol id="i-send" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4ZM22 2 11 13"/></symbol>
-<symbol id="i-flask" viewBox="0 0 24 24"><path d="M10 2v7.5a2 2 0 0 1-.2.9L4.7 20.5a1 1 0 0 0 .9 1.5h12.8a1 1 0 0 0 .9-1.5l-5.1-10.1a2 2 0 0 1-.2-.9V2M8.5 2h7M7 16h10"/></symbol>
 <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 15-6.7L21 8M21 3v5h-5M21 12a9 9 0 0 1-15 6.7L3 16M3 21v-5h5"/></symbol>
 <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></symbol>
 <symbol id="i-login" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></symbol>
@@ -240,19 +269,18 @@ dialog footer{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}
 <header class="top"><div>
 <div class="brand"><span class="logo"><svg class="ic"><use href="#i-logo"/></svg></span>Auto Absen</div>
 <div class="tr"><span class="nm" id="nm"></span><span class="av" id="av">?</span><button class="ib" id="out" aria-label="Keluar"><svg class="ic"><use href="#i-logout"/></svg></button></div>
-</div></header>
+</div><i class="pg" id="pg"></i></header>
 
 <div class="shell">
 <aside class="rail" id="home">
 <section class="card hero" id="hero" data-s="">
-<p class="date" id="dt"></p>
+<div class="hh"><p class="date" id="dt"></p><button type="button" class="ib" id="rf" aria-label="Perbarui status"><svg class="ic"><use href="#i-refresh"/></svg></button></div>
 <div class="st">
 <div class="bd"><svg class="ic il"><use href="#i-loader"/></svg><svg class="ic io"><use href="#i-check-circle"/></svg><svg class="ic iw"><use href="#i-clock"/></svg><svg class="ic ie"><use href="#i-alert"/></svg></div>
 <div aria-live="polite"><h1 id="ht">Memeriksa status…</h1><p id="hd"></p></div>
 </div>
 <div>
 <button class="btn pri big" id="run"><svg class="ic"><use href="#i-send"/></svg>Absen sekarang</button>
-<div class="tools" style="margin-top:8px"><button class="btn gho sm" id="dry"><svg class="ic"><use href="#i-flask"/></svg>Simulasi</button><button class="btn gho sm" id="rf"><svg class="ic"><use href="#i-refresh"/></svg>Perbarui</button></div>
 </div>
 <ul class="meta">
 <li id="mt" hidden><span class="tile"><svg class="ic"><use href="#i-user"/></svg></span><div><small>Penempatan</small><b id="vm"></b></div></li>
@@ -266,23 +294,28 @@ dialog footer{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}
 <main class="main">
 <form id="fs" novalidate>
 <section id="set">
-<h2 class="sh"><span class="tile"><svg class="ic"><use href="#i-sliders"/></svg></span>Pengaturan</h2>
+<h2 class="sh rv"><span class="tile"><svg class="ic"><use href="#i-sliders"/></svg></span>Pengaturan</h2>
 <div class="card">
-<div class="grp">
+<div class="grp rv">
 <h3 class="gh"><svg class="ic"><use href="#i-pin"/></svg>Lokasi presensi<button type="button" class="btn gho sm" id="gps"><svg class="ic"><use href="#i-locate"/></svg>Deteksi GPS</button></h3>
 <label class="f"><span>Nama lokasi</span><input id="il" maxlength="120" placeholder="Contoh: Karawang"></label>
 <div class="g2"><label class="f"><span>Latitude</span><input class="mono" id="ia" inputmode="decimal" placeholder="-6.370891"></label><label class="f"><span>Longitude</span><input class="mono" id="io" inputmode="decimal" placeholder="107.272352"></label></div>
 </div>
-<div class="grp">
+<div class="grp rv">
 <h3 class="gh"><svg class="ic"><use href="#i-note"/></svg>Catatan harian</h3>
 <label class="f"><span>Aktivitas hari ini</span><textarea id="a1" rows="3" placeholder="Apa yang kamu kerjakan hari ini?"></textarea></label>
 <label class="f"><span>Yang dipelajari</span><textarea id="a2" rows="2" placeholder="Hal baru yang kamu pelajari"></textarea></label>
 <label class="f"><span>Kendala</span><textarea id="a3" rows="2" placeholder="Hambatan yang kamu temui"></textarea></label>
 </div>
-<div class="grp">
+<div class="grp rv">
 <h3 class="gh"><svg class="ic"><use href="#i-repeat"/></svg>Absen otomatis</h3>
 <label class="sw"><span><b>Kirim presensi tiap hari</b><small>Bot mengambil alih jika Anda belum absen.</small></span><input type="checkbox" id="au" checked><i class="tk"></i></label>
-<div class="row"><label for="it"><b>Jam pengambilalihan</b><small>Aman 13:00 sampai 20:00 WIB. Disarankan 15:00 sampai 17:00.</small></label><input type="time" id="it" min="13:00" max="20:00" value="13:30"></div>
+<div class="row"><div><b id="tl">Jam pengambilalihan</b><small>Aman 13:00 sampai 20:00 WIB. Disarankan 15:00 sampai 17:00.</small></div>
+<div class="tp" id="tp"><input type="hidden" id="it" value="13:30"><button type="button" class="tpb" id="tpb" aria-haspopup="dialog" aria-expanded="false" aria-labelledby="tl tpv"><svg class="ic"><use href="#i-clock"/></svg><span id="tpv">13:30</span></button>
+<div class="tpm" id="tpm" role="dialog" aria-label="Pilih jam" hidden>
+<small>Disarankan</small><div class="tpq" id="tpq"></div>
+<div class="tpg"><div><small>Jam</small><div class="tpc" id="tph"></div></div><div><small>Menit</small><div class="tpc" id="tpn"></div></div></div>
+</div></div></div>
 </div>
 </div>
 </section>
@@ -290,11 +323,9 @@ dialog footer{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}
 </form>
 
 <section id="log">
-<h2 class="sh"><span class="tile"><svg class="ic"><use href="#i-list"/></svg></span>Riwayat<button type="button" class="ib" id="rl" aria-label="Muat ulang"><svg class="ic"><use href="#i-refresh"/></svg></button></h2>
-<div class="card">
-<div class="tabs"><button type="button" class="on" data-t="h">Eksekusi</button><button type="button" data-t="c">Log API</button></div>
+<h2 class="sh rv"><span class="tile"><svg class="ic"><use href="#i-list"/></svg></span>Riwayat<button type="button" class="ib" id="rl" aria-label="Muat ulang"><svg class="ic"><use href="#i-refresh"/></svg></button></h2>
+<div class="card rv">
 <div class="pane" id="ph"></div>
-<div class="pane" id="pc" hidden><pre class="term" id="lc">Memuat log…</pre></div>
 </div>
 <p class="dbs" id="db" data-s=""><span id="dbt">Memeriksa database…</span></p>
 </section>
@@ -310,7 +341,7 @@ dialog footer{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}
 
 <dialog id="dg"><form method="dialog">
 <div class="dh"><span class="tile"><svg class="ic"><use id="dgi" href="#i-send"/></svg></span><h3 id="dtt"></h3></div>
-<p id="dbd" style="color:var(--mut)"></p><pre class="term" id="dp" hidden></pre>
+<p id="dbd" style="color:var(--mut)"></p>
 <footer><button value="cancel" class="btn gho" id="dc">Batal</button><button value="ok" class="btn pri" id="dok">Lanjutkan</button></footer>
 </form></dialog>
 <div class="toast" id="ts" role="status"><svg class="ic"><use id="ti" href="#i-check"/></svg><span id="tm"></span></div>
@@ -336,12 +367,11 @@ function toast(m,t){const e=$('#ts');$('#tm').textContent=m;$('#ti').setAttribut
 function busy(b,on,l){if(on){b.dataset.h=b.innerHTML;b.innerHTML=ic('loader','spin')+'<span>'+l+'</span>'}else if(b.dataset.h!==undefined)b.innerHTML=b.dataset.h;b.disabled=on}
 function hero(s,t,d){$('#hero').dataset.s=s;$('#ht').textContent=t;$('#hd').textContent=d||''}
 const autoTxt=on=>on?'Aktif, '+CRON+' WIB':'Nonaktif';
-function rlog(t){const b=$('#lc');b.textContent='';(t||'').split('\n').forEach(l=>{const d=document.createElement('div');d.textContent=l;if(/\[OK\]|berhasil|success/i.test(l))d.className='ok';else if(/error|gagal|fail|traceback|exception/i.test(l))d.className='bad';b.append(d)})}
 
 const dg=$('#dg');
 const ask=o=>new Promise(r=>{
   $('#dtt').textContent=o.title;$('#dbd').textContent=o.body||'';$('#dbd').hidden=!o.body;
-  $('#dp').hidden=!o.pre;$('#dp').textContent=o.pre||'';$('#dok').textContent=o.ok;$('#dc').hidden=!!o.info;
+  $('#dok').textContent=o.ok;
   $('#dgi').setAttribute('href','#i-'+(o.icon||'send'));dg.returnValue='';
   dg.addEventListener('close',()=>r(dg.returnValue==='ok'),{once:true});dg.showModal()});
 dg.onclick=e=>{if(e.target===dg)dg.close()};
@@ -361,7 +391,7 @@ function data(){
   else if(h<13||h*60+m>1200)e='Jam absen bot harus antara 13:00 dan 20:00 WIB.';
   if(e){toast(e,'err');return null}
   return{...r,latitude:a,longitude:o}}
-function fill(v){$('#il').value=v.location;$('#ia').value=v.latitude;$('#io').value=v.longitude;$('#it').value=v.clock_in_time||'13:30';$('#a1').value=v.activity_log;$('#a2').value=v.lesson_learned;$('#a3').value=v.obstacles;$('#au').checked=v.auto_absen;saved=JSON.stringify(raw());sync()}
+function fill(v){$('#il').value=v.location;$('#ia').value=v.latitude;$('#io').value=v.longitude;setT(v.clock_in_time||'13:30');$('#a1').value=v.activity_log;$('#a2').value=v.lesson_learned;$('#a3').value=v.obstacles;$('#au').checked=v.auto_absen;saved=JSON.stringify(raw());sync()}
 $('#fs').addEventListener('input',sync);$('#fs').addEventListener('change',sync);
 
 /* Akun dan sesi */
@@ -374,9 +404,9 @@ function prof(p){
   if(p.photo_url){a.textContent='';const i=new Image();i.src=p.photo_url;i.alt=n;i.referrerPolicy='no-referrer';i.onerror=()=>{i.remove();a.textContent=(n||'?')[0].toUpperCase()};a.append(i)}
   else if(n)a.textContent=n[0].toUpperCase();
   if(p.mitra_name){$('#vm').textContent=p.mitra_name+(p.position?' / '+p.position:'');$('#mt').hidden=false}}
-function dash(u,p){$('#vl').hidden=true;$('#vd').hidden=false;$('#nm').textContent=u;$('#av').textContent=(u||'?')[0].toUpperCase();prof(p);status()}
+function dash(u,p){$('#vl').hidden=true;$('#vd').hidden=false;$('#nm').textContent=u;$('#av').textContent=(u||'?')[0].toUpperCase();prof(p);status();requestAnimationFrame(reveal)}
 function login(m){$('#vd').hidden=true;$('#vl').hidden=false;setErr(m);$('#lp').value='';pills();$('#lu').focus()}
-function clear(){auth=null;localStorage.removeItem(AK);sessionStorage.removeItem(AK);$('#fs').reset();saved=null;logs=[];rlog('Memuat log…');hero('','Memeriksa status…','');$('#av').textContent='?';$('#nm').textContent='';$('#mt').hidden=true;$('#sv').dataset.d=0}
+function clear(){auth=null;localStorage.removeItem(AK);sessionStorage.removeItem(AK);$('#fs').reset();saved=null;logs=[];hero('','Memeriksa status…','');$('#av').textContent='?';$('#nm').textContent='';$('#mt').hidden=true;$('#sv').dataset.d=0}
 function expire(){clear();login('Sesi berakhir. Silakan masuk kembali.')}
 
 $('#fl').addEventListener('submit',e=>{
@@ -396,7 +426,7 @@ $('#out').onclick=async()=>{
   clear();login();toast('Anda sudah keluar.')};
 
 /* Status, level, riwayat */
-function status(keep){
+function status(){
   return api('status').then(res=>{
     if(res.need_login){expire();return}
     $('#db').dataset.s=res.db_connected?'ok':'off';
@@ -409,21 +439,19 @@ function status(keep){
     const v={location:p.user_location||env.location||DEF.location,latitude:pick(p.user_latitude,env.latitude,DEF.latitude),longitude:pick(p.user_longitude,env.longitude,DEF.longitude),clock_in_time:p.user_clock_in_time||p.clock_in_time||'13:30',activity_log:p.user_activity_log||env.activity_log||'',lesson_learned:p.user_lesson_learned||env.lesson_learned||'',obstacles:p.user_obstacles||env.obstacles||'',auto_absen:pick(p.user_auto_absen,env.auto_absen,true)!==false};
     $('#vlc').textContent=v.location;$('#va').textContent=autoTxt(v.auto_absen);
     if(saved===null||!dirty())fill(v);
-    if(res.output&&!keep)rlog(res.output);
     return loadLogs();
-  }).catch(err=>{if(err.code===401)return;const m=err.output||err.message||'Gagal terhubung ke API.';hero('err','Status tidak terbaca',m);if(!keep)rlog(m)})}
+  }).catch(err=>{if(err.code===401)return;const m=err.output||err.message||'Gagal terhubung ke API.';hero('err','Status tidak terbaca',m)})}
 
 async function loadLogs(){
   try{const r=await api('logs');logs=r&&r.logs||[]}catch(e){if(e.code===401)return;logs=[]}
-  $('#ph').innerHTML=logs.length?logs.map(l=>{
+  $('#ph').innerHTML=logs.length?logs.map((l,i)=>{
     const m=l.message||'',ok=l.status==='SUCCESS'||/berhasil|success/i.test(m),w=/sudah absen|dilewati/i.test(m),
       c=ok?'ok':w?'w':'e',tx=ok?'Berhasil':w?'Dilewati':'Gagal',ts=String(l.created_at||l.date||'').replace('T',' ').slice(0,16);
-    return `<div class="it"><span class="ico ${c}">${ic(ok?'check-circle':w?'clock':'alert')}</span><div><b title="${esc(m)}">${esc(m.split('\n').filter(Boolean)[0]||'Eksekusi selesai')}</b><small>${tx}, ${esc(ts)} WIB</small></div></div>`}).join('')
+    return `<div class="it" style="--i:${Math.min(i,8)}"><span class="ico ${c}">${ic(ok?'check-circle':w?'clock':'alert')}</span><div><b title="${esc(m)}">${esc(m.split('\n').filter(Boolean)[0]||'Eksekusi selesai')}</b><small>${tx}, ${esc(ts)} WIB</small></div></div>`}).join('')
     :`<div class="empty">${ic('list')}<div><b>Belum ada riwayat</b></div><small>Hasil absen akan muncul di sini setelah cron ${CRON} WIB berjalan atau Anda menekan Absen sekarang.</small></div>`}
 
-$('#rf').onclick=()=>{const b=$('#rf');busy(b,true,'Memeriksa…');status().finally(()=>{busy(b,false);toast('Status diperbarui')})};
-$('#rl').onclick=()=>status(true);
-$$('.tabs button').forEach(b=>b.onclick=()=>{$$('.tabs button').forEach(x=>x.classList.toggle('on',x===b));$('#ph').hidden=b.dataset.t!=='h';$('#pc').hidden=b.dataset.t!=='c'});
+$('#rf').onclick=()=>{const b=$('#rf');b.disabled=true;b.classList.add('ld');status().finally(()=>{b.disabled=false;b.classList.remove('ld');toast('Status diperbarui')})};
+$('#rl').onclick=()=>status();
 
 /* GPS */
 $('#gps').onclick=()=>{
@@ -444,14 +472,9 @@ $('#run').onclick=async()=>{
   const d=data();if(!d)return;
   if(!await ask({title:'Kirim presensi sekarang?',body:`Lokasi: ${d.location} (${d.latitude}, ${d.longitude}). Data pada form saat ini yang akan dikirim.`,ok:'Kirim presensi'}))return;
   const b=$('#run');busy(b,true,'Mengirim…');
-  api('trigger',{method:'POST',body:JSON.stringify(d)}).then(r=>{toast(r.message||'Absen berhasil diproses.');if(r.output)rlog(r.output);burst()})
-    .catch(err=>{if(err.code===401)return;toast(err.message||'Gagal menjalankan presensi.','err');if(err.output)rlog(err.output)})
-    .finally(()=>{busy(b,false);status(true)})};
-
-$('#dry').onclick=()=>{
-  const d=data();if(!d)return;const b=$('#dry');busy(b,true,'Menyiapkan…');
-  api('dry_run',{method:'POST',body:JSON.stringify(d)}).then(r=>ask({title:'Hasil simulasi payload absen',pre:r.output||'Tidak ada data.',ok:'Tutup',info:true,icon:'flask'}))
-    .catch(err=>{if(err.code!==401)toast('Gagal mengambil data simulasi: '+err.message,'err')}).finally(()=>busy(b,false))};
+  api('trigger',{method:'POST',body:JSON.stringify(d)}).then(r=>{toast(r.message||'Absen berhasil diproses.');burst()})
+    .catch(err=>{if(err.code===401)return;toast(err.message||'Gagal menjalankan presensi.','err')})
+    .finally(()=>{busy(b,false);status()})};
 
 window.addEventListener('beforeunload',e=>{if(dirty()){e.preventDefault();e.returnValue=''}});
 
@@ -459,6 +482,32 @@ window.addEventListener('beforeunload',e=>{if(dirty()){e.preventDefault();e.retu
 if('IntersectionObserver' in window){
   const spy=new IntersectionObserver(es=>es.forEach(x=>{if(x.isIntersecting)$$('.nav a').forEach(a=>a.classList.toggle('on',a.hash==='#'+x.target.id))}),{rootMargin:'-40% 0px -50% 0px'});
   ['#home','#set','#log'].forEach(s=>spy.observe($(s)))}
+
+/* Jam picker: jam 13-20, menit per 5 */
+const pad=n=>String(n).padStart(2,'0'),tpm=$('#tpm'),tpb=$('#tpb');let tH=13,tM=30;
+$('#tpq').innerHTML=['15:00','16:00','17:00'].map(t=>`<button type="button" data-q="${t}">${t}</button>`).join('');
+$('#tph').innerHTML=[13,14,15,16,17,18,19,20].map(h=>`<button type="button" data-hr="${h}">${pad(h)}</button>`).join('');
+$('#tpn').innerHTML=Array.from({length:12},(_,i)=>`<button type="button" data-mn="${i*5}">${pad(i*5)}</button>`).join('');
+function setT(v){const[h,m]=v.split(':').map(Number);tH=h;tM=m;$('#it').value=v;$('#tpv').textContent=v;
+  $$('#tpm button').forEach(b=>{const d=b.dataset;b.classList.toggle('on',d.q?d.q===v:d.hr?+d.hr===tH:+d.mn===tM);if(d.mn)b.disabled=tH===20&&+d.mn>0})}
+function tpo(on){tpm.hidden=!on;tpb.setAttribute('aria-expanded',on);if(!on)return;
+  $$('#tpm .tpc').forEach(c=>{const o=c.querySelector('.on');if(o)c.scrollTop=o.offsetTop-(c.clientHeight-o.offsetHeight)/2});
+  tpm.scrollIntoView({block:'nearest',behavior:'smooth'})}
+tpb.onclick=()=>tpo(tpm.hidden);
+tpm.addEventListener('click',e=>{const b=e.target.closest('button');if(!b||b.disabled)return;const d=b.dataset;
+  if(d.q)setT(d.q);else if(d.hr){const h=+d.hr;setT(pad(h)+':'+pad(h===20?0:tM))}else setT(pad(tH)+':'+pad(+d.mn));sync()});
+document.addEventListener('click',e=>{if(!tpm.hidden&&!e.target.closest('#tp'))tpo(false)});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!tpm.hidden){tpo(false);tpb.focus()}});
+setT('13:30');
+
+/* Animasi scroll: kartu muncul dengan pantulan tipis, garis progres di header */
+let rvo;
+function reveal(){
+  if(!('IntersectionObserver' in window))return;
+  rvo=rvo||new IntersectionObserver(es=>es.forEach(x=>{if(x.isIntersecting){x.target.classList.remove('pre');rvo.unobserve(x.target)}}),{threshold:.1});
+  $$('.rv:not(.seen)').forEach(x=>{x.classList.add('seen');if(x.getBoundingClientRect().top>innerHeight*.92){x.classList.add('pre');rvo.observe(x)}})}
+const hd=$('.top'),pg=$('#pg');let tk=0;
+addEventListener('scroll',()=>{if(tk)return;tk=requestAnimationFrame(()=>{tk=0;const m=document.documentElement.scrollHeight-innerHeight,y=scrollY;pg.style.transform='scaleX('+(m>0?Math.min(1,y/m):0)+')';hd.classList.toggle('sc',y>8)})},{passive:true});
 
 /* Mulai */
 try{const s=localStorage.getItem(AK)||sessionStorage.getItem(AK);if(s){auth=JSON.parse(s);dash(auth.username)}else login()}catch(e){login()}
