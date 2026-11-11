@@ -138,6 +138,7 @@ def init_db() -> bool:
             ALTER TABLE tb_user ADD COLUMN IF NOT EXISTS user_photo_url TEXT;
             ALTER TABLE tb_user ADD COLUMN IF NOT EXISTS user_mitra VARCHAR(200);
             ALTER TABLE tb_user ADD COLUMN IF NOT EXISTS user_position VARCHAR(200);
+            ALTER TABLE tb_user ADD COLUMN IF NOT EXISTS user_clock_in_time VARCHAR(10) DEFAULT '13:30';
         """)
 
         conn.commit()
@@ -150,6 +151,25 @@ def init_db() -> bool:
         conn.close()
 
 
+def validate_clock_in_time(val: Optional[str]) -> str:
+    """Validate and enforce safe clock-in window between 13:00 and 20:00 WIB."""
+    if not val or not isinstance(val, str) or ":" not in val:
+        return "13:30"
+    try:
+        parts = val.strip().split(":")
+        h = int(parts[0])
+        m = int(parts[1]) if len(parts) > 1 else 0
+        total_min = h * 60 + m
+        # Clamp between 13:00 (780 min) and 20:00 (1200 min)
+        if total_min < 780:
+            return "13:00"
+        if total_min > 1200:
+            return "20:00"
+        return f"{h:02d}:{m:02d}"
+    except (ValueError, IndexError):
+        return "13:30"
+
+
 def save_or_update_user(
     username: str,
     password: str,
@@ -160,13 +180,15 @@ def save_or_update_user(
     lesson_learned: str = "",
     obstacles: str = "",
     auto_absen: bool = True,
+    clock_in_time: str = "13:30",
 ) -> bool:
-    """Save or update user settings with AES-256 encrypted password."""
+    """Save or update user settings with AES-256 encrypted password and validated clock-in time."""
     conn = get_connection()
     if not conn:
         return False
 
     stored_password = encrypt_password(password)
+    safe_clock_in_time = validate_clock_in_time(clock_in_time)
 
     try:
         cur = conn.cursor()
@@ -176,8 +198,8 @@ def save_or_update_user(
                 user_username, user_password, user_location,
                 user_latitude, user_longitude, user_activity_log,
                 user_lesson_learned, user_obstacles, user_auto_absen,
-                user_updated_at
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP)
+                user_clock_in_time, user_updated_at
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP)
             ON CONFLICT (user_username) DO UPDATE SET
                 user_password = EXCLUDED.user_password,
                 user_location = EXCLUDED.user_location,
@@ -187,6 +209,7 @@ def save_or_update_user(
                 user_lesson_learned = EXCLUDED.user_lesson_learned,
                 user_obstacles = EXCLUDED.user_obstacles,
                 user_auto_absen = EXCLUDED.user_auto_absen,
+                user_clock_in_time = EXCLUDED.user_clock_in_time,
                 user_updated_at = CURRENT_TIMESTAMP;
             """,
             (
@@ -199,6 +222,7 @@ def save_or_update_user(
                 lesson_learned,
                 obstacles,
                 auto_absen,
+                safe_clock_in_time,
             ),
         )
         conn.commit()
@@ -261,7 +285,8 @@ def get_user(username: str) -> Optional[Dict[str, Any]]:
                        user_latitude, user_longitude, user_activity_log,
                        user_lesson_learned, user_obstacles, user_auto_absen,
                        user_last_absen_date, user_last_absen_status, user_last_absen_log,
-                       user_fullname, user_photo_url, user_mitra, user_position
+                       user_fullname, user_photo_url, user_mitra, user_position,
+                       COALESCE(user_clock_in_time, '13:30')
                 FROM tb_user
                 WHERE user_username = %s
                 LIMIT 1;
@@ -293,9 +318,10 @@ def get_user(username: str) -> Optional[Dict[str, Any]]:
                 "user_photo_url": row[14] or "",
                 "user_mitra": row[15] or "",
                 "user_position": row[16] or "",
+                "user_clock_in_time": row[17] or "13:30",
             }
         except Exception:
-            # Fallback if profile columns don't exist yet
+            # Fallback if profile or clock_in_time columns don't exist yet
             conn.rollback()
             cur = conn.cursor()
             cur.execute(
@@ -335,6 +361,7 @@ def get_user(username: str) -> Optional[Dict[str, Any]]:
                 "user_photo_url": "",
                 "user_mitra": "",
                 "user_position": "",
+                "user_clock_in_time": "13:30",
             }
     except Exception as e:
         print(f"[DB] get_user error: {e}")
@@ -344,40 +371,74 @@ def get_user(username: str) -> Optional[Dict[str, Any]]:
 
 
 def get_active_auto_absen_users() -> List[Dict[str, Any]]:
-    """Get all users who have enabled auto-absen with decrypted passwords."""
+    """Get all users who have enabled auto-absen with decrypted passwords and clock-in time."""
     conn = get_connection()
     if not conn:
         return []
 
     try:
         cur = conn.cursor()
-        cur.execute(
-            """
-            SELECT user_id, user_username, user_password, user_location,
-                   user_latitude, user_longitude, user_activity_log,
-                   user_lesson_learned, user_obstacles, user_last_absen_date
-            FROM tb_user
-            WHERE user_auto_absen = TRUE;
-            """
-        )
-        rows = cur.fetchall()
-        cur.close()
-        users = []
-        for row in rows:
-            raw_pwd = decrypt_password(row[2])
-            users.append({
-                "user_id": row[0],
-                "user_username": row[1],
-                "user_password": raw_pwd,
-                "user_location": row[3],
-                "user_latitude": float(row[4]) if row[4] is not None else -6.370891,
-                "user_longitude": float(row[5]) if row[5] is not None else 107.272352,
-                "user_activity_log": row[6] or "",
-                "user_lesson_learned": row[7] or "",
-                "user_obstacles": row[8] or "",
-                "user_last_absen_date": str(row[9]) if row[9] else None,
-            })
-        return users
+        try:
+            cur.execute(
+                """
+                SELECT user_id, user_username, user_password, user_location,
+                       user_latitude, user_longitude, user_activity_log,
+                       user_lesson_learned, user_obstacles, user_last_absen_date,
+                       COALESCE(user_clock_in_time, '13:30')
+                FROM tb_user
+                WHERE user_auto_absen = TRUE;
+                """
+            )
+            rows = cur.fetchall()
+            cur.close()
+            users = []
+            for row in rows:
+                raw_pwd = decrypt_password(row[2])
+                users.append({
+                    "user_id": row[0],
+                    "user_username": row[1],
+                    "user_password": raw_pwd,
+                    "user_location": row[3],
+                    "user_latitude": float(row[4]) if row[4] is not None else -6.370891,
+                    "user_longitude": float(row[5]) if row[5] is not None else 107.272352,
+                    "user_activity_log": row[6] or "",
+                    "user_lesson_learned": row[7] or "",
+                    "user_obstacles": row[8] or "",
+                    "user_last_absen_date": str(row[9]) if row[9] else None,
+                    "user_clock_in_time": row[10] or "13:30",
+                })
+            return users
+        except Exception:
+            conn.rollback()
+            cur = conn.cursor()
+            cur.execute(
+                """
+                SELECT user_id, user_username, user_password, user_location,
+                       user_latitude, user_longitude, user_activity_log,
+                       user_lesson_learned, user_obstacles, user_last_absen_date
+                FROM tb_user
+                WHERE user_auto_absen = TRUE;
+                """
+            )
+            rows = cur.fetchall()
+            cur.close()
+            users = []
+            for row in rows:
+                raw_pwd = decrypt_password(row[2])
+                users.append({
+                    "user_id": row[0],
+                    "user_username": row[1],
+                    "user_password": raw_pwd,
+                    "user_location": row[3],
+                    "user_latitude": float(row[4]) if row[4] is not None else -6.370891,
+                    "user_longitude": float(row[5]) if row[5] is not None else 107.272352,
+                    "user_activity_log": row[6] or "",
+                    "user_lesson_learned": row[7] or "",
+                    "user_obstacles": row[8] or "",
+                    "user_last_absen_date": str(row[9]) if row[9] else None,
+                    "user_clock_in_time": "13:30",
+                })
+            return users
     except Exception as e:
         print(f"[DB] get_active_auto_absen_users error: {e}")
         return []

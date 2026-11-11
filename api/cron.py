@@ -42,8 +42,48 @@ class handler(BaseHTTPRequestHandler):
 
         try:
             with redirect_stdout(buffer), redirect_stderr(buffer):
-                svc = AttendanceService()
-                exit_code = cmd_absen(svc)
+                from app.db import get_db_url, get_active_auto_absen_users, record_attendance_result
+                active_users = get_active_auto_absen_users() if get_db_url() else []
+
+                if active_users:
+                    current_time_str = now_wib().strftime("%H:%M")
+                    today = today_str()
+                    processed_any = False
+
+                    for u in active_users:
+                        u_time = u.get("user_clock_in_time") or "13:30"
+                        username = u["user_username"]
+                        
+                        # Jalankan jika sudah memasuki jam target user dan belum absen hari ini
+                        if current_time_str >= u_time and u.get("user_last_absen_date") != today:
+                            processed_any = True
+                            print(f"[CRON] Memproses auto-absen untuk user: {username} (Jadwal: {u_time} WIB)")
+                            try:
+                                svc = AttendanceService(
+                                    username=username,
+                                    password=u["user_password"],
+                                    location=u.get("user_location"),
+                                    latitude=u.get("user_latitude"),
+                                    longitude=u.get("user_longitude"),
+                                    activity_log=u.get("user_activity_log"),
+                                    lesson_learned=u.get("user_lesson_learned"),
+                                    obstacles=u.get("user_obstacles"),
+                                )
+                                code = cmd_absen(svc)
+                                status_str = "SUCCESS" if code == 0 else "FAILED"
+                                msg = f"Auto-absen {'berhasil' if code == 0 else 'gagal'} dieksekusi pada {current_time_str} WIB"
+                                record_attendance_result(username, today, status_str, msg)
+                            except Exception as user_err:
+                                print(f"[CRON] Error memproses {username}: {user_err}")
+                                record_attendance_result(username, today, "FAILED", str(user_err))
+
+                    if not processed_any:
+                        print(f"[CRON] Belum ada user yang mencapai jadwal target atau semua user sudah absen ({current_time_str} WIB).")
+                    exit_code = 0
+                else:
+                    # Fallback single-user dari environment variables
+                    svc = AttendanceService()
+                    exit_code = cmd_absen(svc)
         except Exception as e:
             error_msg = str(e)
             buffer.write(f"\n[EXCEPTION] {error_msg}")

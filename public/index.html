@@ -417,11 +417,24 @@
                         <label class="switch">
                             <span class="sw-text">
                                 <strong>Kirim presensi otomatis setiap hari</strong>
-                                <span class="hint">Dijalankan Vercel Cron pukul 13:30 WIB.</span>
+                                <span class="hint">Bot mengambil alih jika Anda belum absen mandiri.</span>
                             </span>
                             <input type="checkbox" id="check_auto_absen" checked>
                             <span class="track" aria-hidden="true"></span>
                         </label>
+                        <div class="field" style="margin-top: 14px; border-top: 1px solid var(--line); padding-top: 14px;">
+                            <label for="input_clock_in_time" style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px;">
+                                <strong>Jam Cadangan Pengambilalihan</strong>
+                                <span style="font-size:0.75rem; background:rgba(40,167,69,0.12); color:#28a745; padding:2px 8px; border-radius:12px; font-weight:600;">Batas aman: 13:00 – 20:00 WIB</span>
+                            </label>
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <input type="time" id="input_clock_in_time" min="13:00" max="20:00" value="13:30" class="input" style="max-width:160px; font-weight:600;">
+                                <span style="font-size:0.85rem; color:var(--text-muted);">WIB</span>
+                            </div>
+                            <span class="hint" style="display:block; margin-top:6px; font-size:0.8rem; color:var(--text-muted); line-height:1.4;">
+                                ⚠️ <em>Disarankan antara jam 15:00 – 17:00 (menjelang jam pulang). Hindari mendekati 23:59 karena risiko pemeliharaan server Kemnaker & keterlambatan antrean.</em>
+                            </span>
+                        </div>
                     </div>
                 </section>
 
@@ -587,6 +600,7 @@
                 location: $('#input_location').value.trim(),
                 latitude: $('#input_latitude').value.trim().replace(',', '.'),
                 longitude: $('#input_longitude').value.trim().replace(',', '.'),
+                clock_in_time: $('#input_clock_in_time').value || '13:30',
                 activity_log: $('#activity_log').value.trim(),
                 lesson_learned: $('#lesson_learned').value.trim(),
                 obstacles: $('#obstacles').value.trim(),
@@ -608,6 +622,13 @@
                 if (!r.location) err = 'Isi nama lokasi presensi.';
                 else if (r.latitude === '' || r.longitude === '' || !isFinite(lat) || !isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180)
                     err = 'Koordinat tidak valid. Latitude -90 sampai 90, longitude -180 sampai 180.';
+                else if (r.clock_in_time) {
+                    const parts = r.clock_in_time.split(':');
+                    const h = parseInt(parts[0], 10);
+                    if (h < 13 || h > 20) {
+                        err = 'Batas aman jam absen bot adalah antara pukul 13:00 s.d. 20:00 WIB.';
+                    }
+                }
                 if (err) { toast(err, 'err'); return null; }
                 return { ...r, latitude: lat, longitude: lng };
             }
@@ -616,6 +637,7 @@
                 $('#input_location').value = v.location;
                 $('#input_latitude').value = v.latitude;
                 $('#input_longitude').value = v.longitude;
+                $('#input_clock_in_time').value = v.clock_in_time || '13:30';
                 $('#activity_log').value = v.activity_log;
                 $('#lesson_learned').value = v.lesson_learned;
                 $('#obstacles').value = v.obstacles;

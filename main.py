@@ -151,6 +151,7 @@ def app(environ, start_response):
                             lesson_learned=settings.lesson_learned or "",
                             obstacles=settings.obstacles or "",
                             auto_absen=True,
+                            clock_in_time="13:30",
                         )
                     else:
                         # Update password in case it changed
@@ -164,6 +165,7 @@ def app(environ, start_response):
                             lesson_learned=existing.get("user_lesson_learned", ""),
                             obstacles=existing.get("user_obstacles", ""),
                             auto_absen=existing.get("user_auto_absen", True),
+                            clock_in_time=existing.get("user_clock_in_time", "13:30"),
                         )
 
                     if profile and not profile.get("error"):
@@ -217,6 +219,7 @@ def app(environ, start_response):
             les = body_data.get("lesson_learned", "")
             obs = body_data.get("obstacles", "")
             auto = bool(body_data.get("auto_absen", True))
+            clock_time = body_data.get("clock_in_time", "13:30")
 
             ok = save_or_update_user(
                 username=user,
@@ -228,6 +231,7 @@ def app(environ, start_response):
                 lesson_learned=les,
                 obstacles=obs,
                 auto_absen=auto,
+                clock_in_time=clock_time,
             )
             updated = get_user(user)
             start_response("200 OK", [("Content-Type", "application/json; charset=utf-8")])
@@ -442,7 +446,7 @@ def app(environ, start_response):
                 "message": "Silakan login menggunakan akun Kemnaker untuk melihat status presensi.",
                 "env": {
                     "location": settings.location,
-                    "clock_in_time": "13:30",
+                    "clock_in_time": (user_pref.get("user_clock_in_time") if user_pref else None) or "13:30",
                     "activity_log": settings.activity_log,
                     "lesson_learned": settings.lesson_learned,
                     "obstacles": settings.obstacles
@@ -530,7 +534,7 @@ def app(environ, start_response):
                 "location": (user_pref.get("user_location") if user_pref else None) or settings.location,
                 "latitude": (user_pref.get("user_latitude") if user_pref else None) or settings.latitude,
                 "longitude": (user_pref.get("user_longitude") if user_pref else None) or settings.longitude,
-                "clock_in_time": "13:30",
+                "clock_in_time": (user_pref.get("user_clock_in_time") if user_pref else None) or "13:30",
                 "activity_log": (user_pref.get("user_activity_log") if user_pref else None) or settings.activity_log,
                 "lesson_learned": (user_pref.get("user_lesson_learned") if user_pref else None) or settings.lesson_learned,
                 "obstacles": (user_pref.get("user_obstacles") if user_pref else None) or settings.obstacles,
