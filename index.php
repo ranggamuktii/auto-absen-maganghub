@@ -796,16 +796,25 @@ $locNow = $env['location'] . ($env['latitude'] !== '' && $env['longitude'] !== '
                 </div>
                 <form class="panel" id="form-activity">
                     <div class="field">
-                        <label for="activity_log">Aktivitas hari ini</label>
-                        <textarea id="activity_log" name="activity_log" rows="4" placeholder="Apa yang kamu kerjakan hari ini?"><?= $h($env['activity_log']) ?></textarea>
+                        <label for="activity_log" style="display:flex;justify-content:space-between;align-items:center">
+                            <span>Aktivitas hari ini</span>
+                            <small id="php-c-a1" style="font-weight:600;font-size:12px;color:var(--warn)">0/5000 (minimal 100 karakter)</small>
+                        </label>
+                        <textarea id="activity_log" name="activity_log" rows="4" maxlength="5000" placeholder="Apa yang kamu kerjakan hari ini? (Minimal 100 karakter)"><?= $h($env['activity_log']) ?></textarea>
                     </div>
                     <div class="field">
-                        <label for="lesson_learned">Yang dipelajari</label>
-                        <textarea id="lesson_learned" name="lesson_learned" rows="3" placeholder="Hal baru yang kamu pelajari"><?= $h($env['lesson_learned']) ?></textarea>
+                        <label for="lesson_learned" style="display:flex;justify-content:space-between;align-items:center">
+                            <span>Yang dipelajari</span>
+                            <small id="php-c-a2" style="font-weight:500;font-size:12px;color:var(--muted)">0/5000</small>
+                        </label>
+                        <textarea id="lesson_learned" name="lesson_learned" rows="3" maxlength="5000" placeholder="Hal baru yang kamu pelajari"><?= $h($env['lesson_learned']) ?></textarea>
                     </div>
                     <div class="field">
-                        <label for="obstacles">Kendala</label>
-                        <textarea id="obstacles" name="obstacles" rows="3" placeholder="Hambatan yang kamu temui"><?= $h($env['obstacles']) ?></textarea>
+                        <label for="obstacles" style="display:flex;justify-content:space-between;align-items:center">
+                            <span>Kendala</span>
+                            <small id="php-c-a3" style="font-weight:500;font-size:12px;color:var(--muted)">0/5000</small>
+                        </label>
+                        <textarea id="obstacles" name="obstacles" rows="3" maxlength="5000" placeholder="Hambatan yang kamu temui"><?= $h($env['obstacles']) ?></textarea>
                     </div>
                     <div class="foot">
                         <div class="field">
@@ -815,6 +824,52 @@ $locNow = $env['location'] . ($env['latitude'] !== '' && $env['longitude'] !== '
                         <button type="submit" class="btn btn-primary" id="btn-save-log" disabled>Simpan catatan</button>
                     </div>
                 </form>
+            </section>
+
+            <section class="section">
+                <div class="section-head">
+                    <h2>Notifikasi WhatsApp</h2>
+                    <span class="hint">Kirim ringkasan otomatis ke WhatsApp</span>
+                </div>
+                <div class="panel">
+                    <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-weight:600;margin-bottom:14px">
+                        <input type="checkbox" id="php-check-wa" style="width:18px;height:18px;cursor:pointer">
+                        <span>Aktifkan Notifikasi WhatsApp</span>
+                    </label>
+
+                    <div id="php-wa-panel" style="opacity:0.5;transition:opacity .2s">
+                        <div class="field">
+                            <label for="php-wa-number" style="display:flex;justify-content:space-between;align-items:center">
+                                <span>Nomor WhatsApp Penerima</span>
+                                <span class="hint" id="php-wa-badge" style="display:inline-block;padding:2px 8px;border-radius:6px;background:var(--warn-bg,#fef3c7);color:var(--warn,#b45309);font-size:11.5px;font-weight:600">Belum Terverifikasi</span>
+                            </label>
+                            <input type="tel" id="php-wa-number" placeholder="Contoh: 081234567890 atau +62812...">
+                        </div>
+
+                        <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap">
+                            <button type="button" class="btn btn-ghost btn-sm" id="btn-php-wa-verify">Pilih Konsep / Verifikasi</button>
+                            <button type="button" class="btn btn-ghost btn-sm" id="btn-php-wa-test">Tes Kirim Pesan</button>
+                        </div>
+
+                        <div style="border-top:1px solid var(--line);padding-top:14px">
+                            <span style="display:block;font-size:13.5px;font-weight:600;margin-bottom:10px">Pilihan Notifikasi:</span>
+                            <div style="display:grid;gap:8px">
+                                <label style="display:flex;align-items:center;gap:8px;font-size:13.5px;cursor:pointer">
+                                    <input type="checkbox" id="php-wa-success" checked>
+                                    <span>Presensi berhasil dicatat (Jam, koordinat &amp; catatan harian)</span>
+                                </label>
+                                <label style="display:flex;align-items:center;gap:8px;font-size:13.5px;cursor:pointer">
+                                    <input type="checkbox" id="php-wa-reminder" checked>
+                                    <span>Pengingat jam pulang / pengambilalihan bot</span>
+                                </label>
+                                <label style="display:flex;align-items:center;gap:8px;font-size:13.5px;cursor:pointer">
+                                    <input type="checkbox" id="php-wa-error" checked>
+                                    <span>Peringatan instan jika gagal absen</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </section>
 
             <section class="section">
@@ -842,6 +897,31 @@ $locNow = $env['location'] . ($env['latitude'] !== '' && $env['longitude'] !== '
                     <button type="submit" value="ok" class="btn btn-primary">Kirim presensi</button>
                 </footer>
             </form>
+        </dialog>
+
+        <dialog id="modalWa">
+            <header>Verifikasi Nomor WhatsApp</header>
+            <div class="dlg-body" style="font-size:13.5px;line-height:1.6">
+                <p style="margin:0 0 12px">Pilih konsep alur integrasi nomor WhatsApp untuk menerima notifikasi presensi:</p>
+                <div style="background:var(--field);border:1px solid var(--line);border-radius:10px;padding:12px;display:grid;gap:10px;margin-bottom:12px">
+                    <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer">
+                        <input type="radio" name="php_wa_method" value="bot" checked style="margin-top:3px">
+                        <span><strong>Konsep 1: Gabung ke Bot WhatsApp (Sandbox / Webhook)</strong><br><small style="color:var(--muted)">Pengguna mengirim chat kata kunci ke nomor Bot sistem presensi.</small></span>
+                    </label>
+                    <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer">
+                        <input type="radio" name="php_wa_method" value="otp" style="margin-top:3px">
+                        <span><strong>Konsep 2: Kode Verifikasi OTP 6-Digit</strong><br><small style="color:var(--muted)">Sistem mengirimkan kode verifikasi OTP via WhatsApp gateway.</small></span>
+                    </label>
+                    <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer">
+                        <input type="radio" name="php_wa_method" value="direct" style="margin-top:3px">
+                        <span><strong>Konsep 3: Langsung Nomor Aktif (Tanpa OTP)</strong><br><small style="color:var(--muted)">Hanya menyimpan nomor tujuan, pesan broadcast langsung dikirim.</small></span>
+                    </label>
+                </div>
+            </div>
+            <footer>
+                <button type="button" class="btn btn-ghost" id="btn-close-wa">Batal</button>
+                <button type="button" class="btn btn-primary" id="btn-sim-verify">Simulasi Verifikasi Sukses</button>
+            </footer>
         </dialog>
 
         <div class="toast" id="toast" role="status"></div>
@@ -913,8 +993,22 @@ $locNow = $env['location'] . ($env['latitude'] !== '' && $env['longitude'] !== '
                     return api('status').then(res => {
                         if (!res.status) throw new Error('status');
                         const line = (res.output || '').split('\n').find(l => l.includes('Status:')) || '';
-                        if (res.is_attended) setHero('ok', 'Sudah absen hari ini', line.trim());
-                        else setHero('warn', 'Belum absen hari ini', 'Absen otomatis berjalan pukul ' + (res.env.clock_in_time || '15:00') + ' WIB, atau kirim sekarang.');
+                        const btnRun = $('#btn-run-absen');
+                        if (res.is_attended) {
+                            setHero('ok', 'Sudah absen hari ini', line.trim());
+                            if (btnRun) {
+                                btnRun.disabled = true;
+                                btnRun.textContent = 'Sudah absen hari ini';
+                                btnRun.title = 'Presensi hari ini sudah tercatat';
+                            }
+                        } else {
+                            setHero('warn', 'Belum absen hari ini', 'Absen otomatis berjalan pukul ' + (res.env.clock_in_time || '15:00') + ' WIB, atau kirim sekarang.');
+                            if (btnRun) {
+                                btnRun.disabled = false;
+                                btnRun.textContent = 'Absen sekarang';
+                                btnRun.title = '';
+                            }
+                        }
                         applyEnv(res.env);
                     }).catch(err => {
                         if (err.message !== '401') setHero('err', 'Status tidak terbaca', 'Tidak bisa menjalankan main.py. Periksa path Python dan server lokal.');
@@ -1066,12 +1160,49 @@ $locNow = $env['location'] . ($env['latitude'] !== '' && $env['longitude'] !== '
                     saveBtn = $('#btn-save-log');
                 const snapshot = () => new URLSearchParams(new FormData(form)).toString();
                 let saved = snapshot();
+                function updatePhpCounters() {
+                    const l1 = ($('#activity_log').value || '').trim().length;
+                    const c1 = $('#php-c-a1');
+                    if (c1) {
+                        if (l1 === 0) {
+                            c1.textContent = '0/5000 (minimal 100 karakter)';
+                            c1.style.color = 'var(--warn)';
+                        } else if (l1 < 100) {
+                            c1.textContent = `${l1}/5000 (kurang ${100 - l1} karakter)`;
+                            c1.style.color = 'var(--warn)';
+                        } else if (l1 > 5000) {
+                            c1.textContent = `${l1}/5000 (melebihi batas)`;
+                            c1.style.color = 'var(--err)';
+                        } else {
+                            c1.textContent = `${l1}/5000 (memenuhi syarat)`;
+                            c1.style.color = 'var(--ok)';
+                        }
+                    }
+                    const l2 = ($('#lesson_learned').value || '').trim().length;
+                    const c2 = $('#php-c-a2');
+                    if (c2) c2.textContent = `${l2}/5000`;
+                    const l3 = ($('#obstacles').value || '').trim().length;
+                    const c3 = $('#php-c-a3');
+                    if (c3) c3.textContent = `${l3}/5000`;
+                }
+
                 form.addEventListener('input', () => {
                     saveBtn.disabled = snapshot() === saved;
+                    updatePhpCounters();
                 });
+                updatePhpCounters();
 
                 form.addEventListener('submit', e => {
                     e.preventDefault();
+                    const act = ($('#activity_log').value || '').trim();
+                    if (act && act.length < 100) {
+                        toast(`Aktivitas hari ini minimal 100 karakter (saat ini ${act.length} karakter).`, 'err');
+                        return;
+                    }
+                    if (act && act.length > 5000) {
+                        toast('Aktivitas hari ini maksimal 5000 karakter.', 'err');
+                        return;
+                    }
                     busy(saveBtn, true, 'Menyimpan…');
                     api('save_log', {
                             method: 'POST',
@@ -1104,6 +1235,7 @@ $locNow = $env['location'] . ($env['latitude'] !== '' && $env['longitude'] !== '
                 });
 
                 $('#btn-run-absen').addEventListener('click', async e => {
+                    if ($('#btn-run-absen').disabled) return;
                     if (!(await confirmAbsen())) return;
                     const b = e.currentTarget;
                     busy(b, true, 'Mengirim…');
@@ -1135,9 +1267,43 @@ $locNow = $env['location'] . ($env['latitude'] !== '' && $env['longitude'] !== '
                         .finally(() => busy(b, false));
                 });
                 $('#btn-close-dry').addEventListener('click', () => dlg.close());
-                [dlg, dlgC].forEach(d => d.addEventListener('click', e => {
+                const dlgWa = $('#modalWa');
+                [dlg, dlgC, dlgWa].filter(Boolean).forEach(d => d.addEventListener('click', e => {
                     if (e.target === d) d.close();
                 }));
+
+                // ---------- Notifikasi WhatsApp UI ----------
+                const chkWa = $('#php-check-wa'), panelWa = $('#php-wa-panel');
+                if (chkWa && panelWa) {
+                    chkWa.addEventListener('change', () => {
+                        panelWa.style.opacity = chkWa.checked ? '1' : '0.5';
+                    });
+                }
+                if ($('#btn-php-wa-verify') && dlgWa) {
+                    $('#btn-php-wa-verify').addEventListener('click', () => dlgWa.showModal());
+                }
+                if ($('#btn-close-wa') && dlgWa) {
+                    $('#btn-close-wa').addEventListener('click', () => dlgWa.close());
+                }
+                if ($('#btn-sim-verify')) {
+                    $('#btn-sim-verify').addEventListener('click', () => {
+                        const badge = $('#php-wa-badge');
+                        if (badge) {
+                            badge.style.background = 'var(--ok-bg, #d1fae5)';
+                            badge.style.color = 'var(--ok, #059669)';
+                            badge.textContent = 'Terverifikasi (Aktif)';
+                        }
+                        if (dlgWa) dlgWa.close();
+                        toast('Nomor WhatsApp berhasil diverifikasi!');
+                    });
+                }
+                if ($('#btn-php-wa-test')) {
+                    $('#btn-php-wa-test').addEventListener('click', () => {
+                        const num = ($('#php-wa-number').value || '').trim();
+                        if (!num) return toast('Masukkan nomor WhatsApp terlebih dahulu.', 'err');
+                        toast('[Simulasi UI] Pesan uji coba dikirim ke ' + num);
+                    });
+                }
             })();
         </script>
     <?php endif; ?>

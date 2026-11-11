@@ -761,3 +761,111 @@ def test_holiday_service_returns_none_when_no_credentials(monkeypatch, capsys):
     # Verify find_holiday with None does not raise or emit any warning
     assert commands.find_holiday(hs, "2026-08-17") is None
     assert "[WARN]" not in capsys.readouterr().out
+
+
+def test_attendance_service_rich_profile(monkeypatch):
+    class FakeClient:
+        def get(self, path, params=None):
+            if path == "/users/me":
+                return {
+                    "data": {
+                        "id": "e1ef7ae0-336d-4900-8951-3b6363ec3e91",
+                        "name": "Rangga Mukti Daniswara",
+                        "email": "daniswara.ranggamukti@gmail.com",
+                        "job_role": "IT Staff",
+                        "internship_company": "Asian Isuzu Casting Center",
+                        "internship_location_latitude": -6.3227303,
+                        "internship_location_longitude": 107.3375791,
+                        "mentor_name": "TAUFIQ HIDAYATULLAH",
+                        "internship_start_date": "2026-09-21T00:00:00+07:00",
+                        "internship_end_date": "2027-03-20T23:59:59+07:00",
+                    }
+                }
+            raise AssertionError(f"Unexpected path: {path}")
+
+    svc = AttendanceService(username="u", password="p")
+    svc._client = FakeClient()
+    prof = svc.get_profile()
+
+    assert prof["participant_id"] == "e1ef7ae0-336d-4900-8951-3b6363ec3e91"
+    assert prof["name"] == "Rangga Mukti Daniswara"
+    assert prof["job_role"] == "IT Staff"
+    assert prof["mitra_name"] == "Asian Isuzu Casting Center"
+    assert prof["company_latitude"] == -6.3227303
+    assert prof["company_longitude"] == 107.3375791
+    assert prof["mentor_name"] == "TAUFIQ HIDAYATULLAH"
+
+
+def test_attendance_service_get_daily_logs_and_attendances(monkeypatch):
+    class FakeClient:
+        def get(self, path, params=None):
+            if path == "/daily-logs":
+                return {
+                    "data": [
+                        {
+                            "id": 14096822,
+                            "date": "2026-10-30",
+                            "activity_log": "Membuat proposal project LLM",
+                            "state": "APPROVED",
+                        }
+                    ]
+                }
+            if path == "/attendances":
+                return {
+                    "data": [
+                        {
+                            "id": 15464566,
+                            "date": "2026-11-11",
+                            "status": "PRESENT",
+                            "approval_status": "SUBMITTED",
+                        }
+                    ]
+                }
+            if path == "/system/time":
+                return {"data": {"datetime": "2026-11-11T06:30:57.776277129Z"}}
+            raise AssertionError(f"Unexpected path: {path}")
+
+    svc = AttendanceService(username="u", password="p")
+    svc._client = FakeClient()
+
+    logs = svc.get_daily_logs(participant_id="abc")
+    assert len(logs) == 1
+    assert logs[0]["id"] == 14096822
+    assert logs[0]["state"] == "APPROVED"
+
+    att = svc.get_attendances(participant_id="abc")
+    assert len(att) == 1
+    assert att[0]["status"] == "PRESENT"
+
+    st = svc.get_system_time()
+    assert "datetime" in st
+
+
+def test_api_daily_logs_endpoint(monkeypatch):
+    import json
+    from main import app
+
+    monkeypatch.setattr(
+        AttendanceService,
+        "get_daily_logs",
+        lambda self, participant_id=None, limit=25: [{"id": 1, "date": "2026-10-30", "activity_log": "Test"}],
+    )
+
+    environ = {
+        "PATH_INFO": "/api/daily_logs",
+        "REQUEST_METHOD": "GET",
+        "HTTP_X_AUTH_USERNAME": "testuser",
+        "HTTP_X_AUTH_PASSWORD": "secretpassword",
+    }
+    status_code = []
+    headers = []
+
+    def start_response(status, h):
+        status_code.append(status)
+        headers.extend(h)
+
+    res = app(environ, start_response)
+    data = json.loads(res[0].decode("utf-8"))
+    assert data["status"] is True
+    assert len(data["logs"]) == 1
+    assert data["logs"][0]["activity_log"] == "Test"

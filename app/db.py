@@ -139,6 +139,14 @@ def init_db() -> bool:
             ALTER TABLE tb_user ADD COLUMN IF NOT EXISTS user_mitra VARCHAR(200);
             ALTER TABLE tb_user ADD COLUMN IF NOT EXISTS user_position VARCHAR(200);
             ALTER TABLE tb_user ADD COLUMN IF NOT EXISTS user_clock_in_time VARCHAR(10) DEFAULT '13:30';
+            ALTER TABLE tb_user ADD COLUMN IF NOT EXISTS user_mentor_name VARCHAR(200);
+            ALTER TABLE tb_user ADD COLUMN IF NOT EXISTS user_mentor_email VARCHAR(200);
+            ALTER TABLE tb_user ADD COLUMN IF NOT EXISTS user_company_latitude NUMERIC(10, 6);
+            ALTER TABLE tb_user ADD COLUMN IF NOT EXISTS user_company_longitude NUMERIC(10, 6);
+            ALTER TABLE tb_user ADD COLUMN IF NOT EXISTS user_company_address TEXT;
+            ALTER TABLE tb_user ADD COLUMN IF NOT EXISTS user_internship_start VARCHAR(50);
+            ALTER TABLE tb_user ADD COLUMN IF NOT EXISTS user_internship_end VARCHAR(50);
+            ALTER TABLE tb_user ADD COLUMN IF NOT EXISTS user_participant_id VARCHAR(100);
         """)
 
         conn.commit()
@@ -241,6 +249,14 @@ def update_user_profile(
     photo_url: str = "",
     mitra: str = "",
     position: str = "",
+    mentor_name: str = "",
+    mentor_email: str = "",
+    company_latitude: Optional[float] = None,
+    company_longitude: Optional[float] = None,
+    company_address: str = "",
+    start_date: str = "",
+    end_date: str = "",
+    participant_id: str = "",
 ) -> bool:
     """Update profile information for an existing user."""
     conn = get_connection()
@@ -255,10 +271,23 @@ def update_user_profile(
                 user_photo_url = COALESCE(NULLIF(%s, ''), user_photo_url),
                 user_mitra = COALESCE(NULLIF(%s, ''), user_mitra),
                 user_position = COALESCE(NULLIF(%s, ''), user_position),
+                user_mentor_name = COALESCE(NULLIF(%s, ''), user_mentor_name),
+                user_mentor_email = COALESCE(NULLIF(%s, ''), user_mentor_email),
+                user_company_latitude = COALESCE(%s, user_company_latitude),
+                user_company_longitude = COALESCE(%s, user_company_longitude),
+                user_company_address = COALESCE(NULLIF(%s, ''), user_company_address),
+                user_internship_start = COALESCE(NULLIF(%s, ''), user_internship_start),
+                user_internship_end = COALESCE(NULLIF(%s, ''), user_internship_end),
+                user_participant_id = COALESCE(NULLIF(%s, ''), user_participant_id),
                 user_updated_at = CURRENT_TIMESTAMP
             WHERE user_username = %s;
             """,
-            (fullname, photo_url, mitra, position, username),
+            (
+                fullname, photo_url, mitra, position,
+                mentor_name, mentor_email, company_latitude, company_longitude,
+                company_address, start_date, end_date, participant_id,
+                username,
+            ),
         )
         conn.commit()
         cur.close()
@@ -279,6 +308,62 @@ def get_user(username: str) -> Optional[Dict[str, Any]]:
     try:
         cur = conn.cursor()
         try:
+            cur.execute(
+                """
+                SELECT user_id, user_username, user_password, user_location,
+                       user_latitude, user_longitude, user_activity_log,
+                       user_lesson_learned, user_obstacles, user_auto_absen,
+                       user_last_absen_date, user_last_absen_status, user_last_absen_log,
+                       user_fullname, user_photo_url, user_mitra, user_position,
+                       COALESCE(user_clock_in_time, '13:30'),
+                       user_mentor_name, user_mentor_email, user_company_latitude,
+                       user_company_longitude, user_company_address, user_internship_start,
+                       user_internship_end, user_participant_id
+                FROM tb_user
+                WHERE user_username = %s
+                LIMIT 1;
+                """,
+                (username,),
+            )
+            row = cur.fetchone()
+            cur.close()
+            if not row:
+                return None
+
+            raw_pwd = decrypt_password(row[2])
+
+            return {
+                "user_id": row[0],
+                "user_username": row[1],
+                "user_password": raw_pwd,
+                "user_location": row[3],
+                "user_latitude": float(row[4]) if row[4] is not None else -6.370891,
+                "user_longitude": float(row[5]) if row[5] is not None else 107.272352,
+                "user_activity_log": row[6] or "",
+                "user_lesson_learned": row[7] or "",
+                "user_obstacles": row[8] or "",
+                "user_auto_absen": bool(row[9]),
+                "user_last_absen_date": str(row[10]) if row[10] else None,
+                "user_last_absen_status": row[11] or "",
+                "user_last_absen_log": row[12] or "",
+                "user_fullname": row[13] or "",
+                "user_photo_url": row[14] or "",
+                "user_mitra": row[15] or "",
+                "user_position": row[16] or "",
+                "user_clock_in_time": row[17] or "13:30",
+                "user_mentor_name": row[18] or "",
+                "user_mentor_email": row[19] or "",
+                "user_company_latitude": float(row[20]) if row[20] is not None else None,
+                "user_company_longitude": float(row[21]) if row[21] is not None else None,
+                "user_company_address": row[22] or "",
+                "user_internship_start": row[23] or "",
+                "user_internship_end": row[24] or "",
+                "user_participant_id": row[25] or "",
+            }
+        except Exception:
+            # Fallback if profile or clock_in_time columns don't exist yet
+            conn.rollback()
+            cur = conn.cursor()
             cur.execute(
                 """
                 SELECT user_id, user_username, user_password, user_location,

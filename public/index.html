@@ -89,6 +89,14 @@ textarea{resize:vertical;min-height:76px}
 .pills:empty{display:none}
 .pill{font:12.5px var(--f);padding:5px 10px;border-radius:99px;background:var(--s2);border:0;color:var(--mut);cursor:pointer;transition:color .2s}
 .pill:hover{color:var(--pr)}
+.pill.on{background:var(--pr);color:var(--onp);font-weight:700}
+.k-item{padding:14px 0;border-bottom:1px solid var(--ln)}
+.k-item:last-child{border:0}
+.k-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
+.k-badge{font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;text-transform:uppercase}
+.k-badge.ok{background:var(--gb);color:var(--g)}
+.k-badge.w{background:var(--wb);color:var(--w)}
+.k-body{font-size:13px;line-height:1.5;color:var(--ink);margin:4px 0}
 
 /* Header dan kerangka */
 .top{position:sticky;top:0;z-index:20;padding-top:env(safe-area-inset-top);background:color-mix(in srgb,var(--bg) 80%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid transparent;transition:border-color .3s}
@@ -260,6 +268,9 @@ dialog footer{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}
 <symbol id="i-home" viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM9 22V12h6v10"/></symbol>
 <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></symbol>
 <symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></symbol>
+<symbol id="i-wa" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></symbol>
+<symbol id="i-phone" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></symbol>
+<symbol id="i-bell" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/></symbol>
 </svg>
 
 <!-- LOGIN -->
@@ -280,7 +291,7 @@ dialog footer{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}
 <!-- DASHBOARD -->
 <div id="vd" hidden>
 <header class="top"><div>
-<div class="brand"><span class="logo"><svg class="ic"><use href="#i-logo"/></svg></span>Auto Absen</div>
+<div class="brand"><span class="logo"><svg class="ic"><use href="#i-logo"/></svg></span>Auto Absen MagangHub</div>
 <div class="tr"><span class="nm" id="nm"></span><span class="av" id="av">?</span><button class="ib" id="out" aria-label="Keluar"><svg class="ic"><use href="#i-logout"/></svg></button></div>
 </div><i class="pg" id="pg"></i></header>
 
@@ -297,6 +308,8 @@ dialog footer{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}
 </div>
 <ul class="meta">
 <li id="mt" hidden><span class="tile"><svg class="ic"><use href="#i-user"/></svg></span><div><small>Penempatan</small><b id="vm"></b></div></li>
+<li id="mtr" hidden><span class="tile"><svg class="ic"><use href="#i-user"/></svg></span><div><small>Pembimbing / Mentor</small><b id="vmt"></b></div></li>
+<li id="mpr" hidden><span class="tile"><svg class="ic"><use href="#i-clock"/></svg></span><div><small>Masa Magang</small><b id="vpr"></b></div></li>
 <li><span class="tile"><svg class="ic"><use href="#i-pin"/></svg></span><div><small>Lokasi presensi</small><b id="vlc">—</b></div></li>
 <li><span class="tile"><svg class="ic"><use href="#i-repeat"/></svg></span><div><small>Absen otomatis</small><b id="va">—</b></div></li>
 </ul>
@@ -310,15 +323,20 @@ dialog footer{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}
 <h2 class="sh rv"><span class="tile"><svg class="ic"><use href="#i-sliders"/></svg></span>Pengaturan</h2>
 <div class="card">
 <div class="grp rv">
-<h3 class="gh"><svg class="ic"><use href="#i-pin"/></svg>Lokasi presensi<button type="button" class="btn gho sm" id="gps"><svg class="ic"><use href="#i-locate"/></svg>Deteksi GPS</button></h3>
+<h3 class="gh"><svg class="ic"><use href="#i-pin"/></svg>Lokasi presensi
+  <span style="margin-left:auto;display:inline-flex;gap:6px">
+    <button type="button" class="btn gho sm" id="btn-office" style="display:none"><svg class="ic"><use href="#i-pin"/></svg>Titik Kantor</button>
+    <button type="button" class="btn gho sm" id="gps"><svg class="ic"><use href="#i-locate"/></svg>Deteksi GPS</button>
+  </span>
+</h3>
 <label class="f"><span>Nama lokasi</span><input id="il" maxlength="120" placeholder="Contoh: Karawang"></label>
 <div class="g2"><label class="f"><span>Latitude</span><input class="mono" id="ia" inputmode="decimal" placeholder="-6.370891"></label><label class="f"><span>Longitude</span><input class="mono" id="io" inputmode="decimal" placeholder="107.272352"></label></div>
 </div>
 <div class="grp rv">
 <h3 class="gh"><svg class="ic"><use href="#i-note"/></svg>Catatan harian</h3>
-<label class="f"><span>Aktivitas hari ini</span><textarea id="a1" rows="3" placeholder="Apa yang kamu kerjakan hari ini?"></textarea></label>
-<label class="f"><span>Yang dipelajari</span><textarea id="a2" rows="2" placeholder="Hal baru yang kamu pelajari"></textarea></label>
-<label class="f"><span>Kendala</span><textarea id="a3" rows="2" placeholder="Hambatan yang kamu temui"></textarea></label>
+<label class="f"><span style="display:flex;justify-content:space-between;align-items:center"><span>Aktivitas hari ini</span><small id="c-a1" style="font-weight:600;font-size:12px;color:var(--w)">0/5000 (minimal 100 karakter)</small></span><textarea id="a1" rows="3" maxlength="5000" placeholder="Apa yang kamu kerjakan hari ini? (Minimal 100 karakter)"></textarea></label>
+<label class="f"><span style="display:flex;justify-content:space-between;align-items:center"><span>Yang dipelajari</span><small id="c-a2" style="font-weight:500;font-size:12px;color:var(--mut)">0/5000</small></span><textarea id="a2" rows="2" maxlength="5000" placeholder="Hal baru yang kamu pelajari"></textarea></label>
+<label class="f"><span style="display:flex;justify-content:space-between;align-items:center"><span>Kendala</span><small id="c-a3" style="font-weight:500;font-size:12px;color:var(--mut)">0/5000</small></span><textarea id="a3" rows="2" maxlength="5000" placeholder="Hambatan yang kamu temui"></textarea></label>
 </div>
 <div class="grp rv">
 <h3 class="gh"><svg class="ic"><use href="#i-repeat"/></svg>Absen otomatis</h3>
@@ -330,6 +348,56 @@ dialog footer{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}
 <div class="tpg"><div><small>Jam</small><div class="tpc" id="tph"></div></div><div><small>Menit</small><div class="tpc" id="tpn"></div></div></div>
 </div></div></div>
 </div>
+<div class="grp rv">
+<h3 class="gh"><svg class="ic"><use href="#i-wa"/></svg>Notifikasi WhatsApp
+  <span style="margin-left:auto;display:inline-flex;gap:6px">
+    <button type="button" class="btn gho sm" id="btn-wa-test" style="font-size:12px;padding:6px 12px"><svg class="ic" style="width:14px;height:14px"><use href="#i-send"/></svg>Tes Pesan</button>
+  </span>
+</h3>
+<label class="sw">
+  <span>
+    <b>Kirim laporan ke WhatsApp</b>
+    <small>Kirim ringkasan otomatis setiap kali absen berhasil atau terdapat kendala ke nomor WhatsApp Anda.</small>
+  </span>
+  <input type="checkbox" id="check_wa">
+  <i class="tk"></i>
+</label>
+
+<div id="wa-panel" style="margin-top:14px;transition:opacity .2s">
+  <label class="f">
+    <span style="display:flex;justify-content:space-between;align-items:center">
+      <span>Nomor WhatsApp Penerima</span>
+      <button type="button" class="pill" id="btn-wa-fill-profile" style="display:none;font-size:11px;padding:2px 8px">Pakai nomor akun</button>
+    </span>
+    <div class="in">
+      <svg class="ic"><use href="#i-phone"/></svg>
+      <input type="tel" id="wa_number" placeholder="Contoh: 081234567890 atau +62812...">
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;flex-wrap:wrap;gap:6px">
+      <span class="k-badge w" id="wa-status-badge">Belum Terverifikasi</span>
+      <button type="button" class="btn gho sm" id="btn-wa-verify" style="padding:4px 10px;font-size:11.5px">
+        <svg class="ic" style="width:13px;height:13px"><use href="#i-check"/></svg>Verifikasi Nomor
+      </button>
+    </div>
+  </label>
+
+  <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--ln)">
+    <span style="display:block;font-size:.85rem;font-weight:600;margin-bottom:10px">Pilihan notifikasi yang dikirim</span>
+    <label class="chk">
+      <input type="checkbox" id="wa_notif_success" checked>
+      <span>Presensi berhasil<small>Menerima bukti jam, lokasi, dan ringkasan aktivitas harian.</small></span>
+    </label>
+    <label class="chk">
+      <input type="checkbox" id="wa_notif_reminder" checked>
+      <span>Pengingat jam pulang / pengambilalihan<small>Peringatan sebelum jam pengambilalihan bot jika Anda belum absen manual.</small></span>
+    </label>
+    <label class="chk">
+      <input type="checkbox" id="wa_notif_error" checked>
+      <span>Peringatan darurat jika gagal<small>Pemberitahuan instan jika server Kemnaker down atau kredensial bermasalah.</small></span>
+    </label>
+  </div>
+</div>
+</div>
 </div>
 </section>
 <div class="sv" id="sv" data-d="0"><span><i></i>Perubahan belum disimpan</span><button class="btn pri" id="sb" disabled><svg class="ic"><use href="#i-save"/></svg>Simpan</button></div>
@@ -337,8 +405,15 @@ dialog footer{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}
 
 <section id="log">
 <h2 class="sh rv"><span class="tile"><svg class="ic"><use href="#i-list"/></svg></span>Riwayat<button type="button" class="ib" id="rl" aria-label="Muat ulang"><svg class="ic"><use href="#i-refresh"/></svg></button></h2>
+<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">
+  <button type="button" class="pill on" id="tab-bot">Eksekusi Bot</button>
+  <button type="button" class="pill" id="tab-k-logs">Logbook MagangHub</button>
+  <button type="button" class="pill" id="tab-k-att">Presensi MagangHub</button>
+</div>
 <div class="card rv">
 <div class="pane" id="ph"></div>
+<div class="pane" id="pk-logs" hidden></div>
+<div class="pane" id="pk-att" hidden></div>
 </div>
 <p class="dbs" id="db" data-s=""><span id="dbt">Memeriksa database…</span></p>
 </section>
@@ -356,6 +431,33 @@ dialog footer{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}
 <div class="dh"><span class="tile"><svg class="ic"><use id="dgi" href="#i-send"/></svg></span><h3 id="dtt"></h3></div>
 <p id="dbd" style="color:var(--mut)"></p>
 <footer><button value="cancel" class="btn gho" id="dc">Batal</button><button value="ok" class="btn pri" id="dok">Lanjutkan</button></footer>
+</form></dialog>
+
+<dialog id="dg-wa"><form method="dialog">
+<div class="dh"><span class="tile" style="background:var(--prb);color:var(--pr)"><svg class="ic"><use href="#i-wa"/></svg></span><h3>Verifikasi Nomor WhatsApp</h3></div>
+<p style="color:var(--mut);font-size:13.5px;line-height:1.5;margin:8px 0 14px">
+  Pilih konsep alur sambungan nomor WhatsApp untuk menerima notifikasi presensi otomatis:
+</p>
+<div style="background:var(--s2);border:1px solid var(--ln);border-radius:14px;padding:14px;margin-bottom:14px;font-size:13px;line-height:1.6">
+  <div style="display:grid;gap:10px">
+    <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer">
+      <input type="radio" name="wa_method" value="bot" checked style="margin-top:3px">
+      <span><strong>Konsep 1: Gabung ke Bot WhatsApp (Sandbox / Webhook)</strong><br><small style="color:var(--mut)">Kirim chat <code style="font-family:var(--m);background:var(--s1);padding:1px 5px;border-radius:4px">START ABSEN</code> ke nomor bot presensi untuk mengaktifkan sesi.</small></span>
+    </label>
+    <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer">
+      <input type="radio" name="wa_method" value="otp" style="margin-top:3px">
+      <span><strong>Konsep 2: Kode Verifikasi OTP</strong><br><small style="color:var(--mut)">Sistem mengirimkan 6 digit kode OTP ke nomor WhatsApp Anda untuk dicocokkan di dashboard.</small></span>
+    </label>
+    <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer">
+      <input type="radio" name="wa_method" value="direct" style="margin-top:3px">
+      <span><strong>Konsep 3: Langsung Daftar Nomor (Tanpa OTP)</strong><br><small style="color:var(--mut)">Cukup masukkan nomor aktif WhatsApp tanpa perlu proses verifikasi tambahan.</small></span>
+    </label>
+  </div>
+</div>
+<footer>
+  <button value="cancel" class="btn gho" id="wa-dlg-close">Tutup</button>
+  <button type="button" class="btn pri" id="btn-wa-simulate-verify">Simulasi Verifikasi Sukses</button>
+</footer>
 </form></dialog>
 <div class="toast" id="ts" role="status"><svg class="ic"><use id="ti" href="#i-check"/></svg><span id="tm"></span></div>
 
@@ -394,18 +496,45 @@ function burst(){const h=$('#hero');for(let i=0;i<24;i++){const s=document.creat
   h.append(s);setTimeout(()=>s.remove(),1400)}}
 
 /* Form */
-const raw=()=>({location:$('#il').value.trim(),latitude:$('#ia').value.trim().replace(',','.'),longitude:$('#io').value.trim().replace(',','.'),clock_in_time:$('#it').value||'13:30',activity_log:$('#a1').value.trim(),lesson_learned:$('#a2').value.trim(),obstacles:$('#a3').value.trim(),auto_absen:$('#au').checked});
+const raw=()=>({location:$('#il').value.trim(),latitude:$('#ia').value.trim().replace(',','.'),longitude:$('#io').value.trim().replace(',','.'),clock_in_time:$('#it').value||'13:30',activity_log:$('#a1').value.trim(),lesson_learned:$('#a2').value.trim(),obstacles:$('#a3').value.trim(),auto_absen:$('#au').checked,wa_notify:$('#check_wa')?$('#check_wa').checked:false,wa_number:$('#wa_number')?$('#wa_number').value.trim():'',wa_success:$('#wa_notif_success')?$('#wa_notif_success').checked:true,wa_reminder:$('#wa_notif_reminder')?$('#wa_notif_reminder').checked:true,wa_error:$('#wa_notif_error')?$('#wa_notif_error').checked:true});
 const dirty=()=>saved!==null&&JSON.stringify(raw())!==saved;
 function sync(){const d=dirty();$('#sb').disabled=!d;$('#sv').dataset.d=d?1:0}
+function updateCounters(){
+  const len1=($('#a1').value||'').trim().length,c1=$('#c-a1');
+  if(c1){
+    if(len1===0){c1.textContent='0/5000 (minimal 100 karakter)';c1.style.color='var(--w)'}
+    else if(len1<100){c1.textContent=`${len1}/5000 (kurang ${100-len1} karakter)`;c1.style.color='var(--w)'}
+    else if(len1>5000){c1.textContent=`${len1}/5000 (melebihi batas)`;c1.style.color='var(--e)'}
+    else{c1.textContent=`${len1}/5000 (memenuhi syarat)`;c1.style.color='var(--pr)'}
+  }
+  const len2=($('#a2').value||'').trim().length,c2=$('#c-a2');
+  if(c2){c2.textContent=`${len2}/5000`;c2.style.color=len2>5000?'var(--e)':'var(--mut)'}
+  const len3=($('#a3').value||'').trim().length,c3=$('#c-a3');
+  if(c3){c3.textContent=`${len3}/5000`;c3.style.color=len3>5000?'var(--e)':'var(--mut)'}
+}
 function data(){
   const r=raw(),a=+r.latitude,o=+r.longitude,[h,m]=r.clock_in_time.split(':').map(Number);let e='';
   if(!r.location)e='Isi nama lokasi presensi.';
   else if(r.latitude===''||r.longitude===''||!isFinite(a)||!isFinite(o)||Math.abs(a)>90||Math.abs(o)>180)e='Koordinat tidak valid. Latitude -90 sampai 90, longitude -180 sampai 180.';
   else if(h<13||h*60+m>1200)e='Jam absen bot harus antara 13:00 dan 20:00 WIB.';
+  else if(r.activity_log&&r.activity_log.length<100)e=`Aktivitas hari ini minimal 100 karakter (saat ini ${r.activity_log.length} karakter).`;
+  else if(r.activity_log&&r.activity_log.length>5000)e='Aktivitas hari ini maksimal 5000 karakter.';
   if(e){toast(e,'err');return null}
   return{...r,latitude:a,longitude:o}}
-function fill(v){$('#il').value=v.location;$('#ia').value=v.latitude;$('#io').value=v.longitude;setT(v.clock_in_time||'13:30');$('#a1').value=v.activity_log;$('#a2').value=v.lesson_learned;$('#a3').value=v.obstacles;$('#au').checked=v.auto_absen;saved=JSON.stringify(raw());sync()}
-$('#fs').addEventListener('input',sync);$('#fs').addEventListener('change',sync);
+function fill(v){
+  $('#il').value=v.location;$('#ia').value=v.latitude;$('#io').value=v.longitude;setT(v.clock_in_time||'13:30');$('#a1').value=v.activity_log;$('#a2').value=v.lesson_learned;$('#a3').value=v.obstacles;$('#au').checked=v.auto_absen;
+  if($('#check_wa')){
+    $('#check_wa').checked=!!v.wa_notify;
+    if($('#wa_number'))$('#wa_number').value=v.wa_number||'';
+    if($('#wa_notif_success'))$('#wa_notif_success').checked=v.wa_success!==false;
+    if($('#wa_notif_reminder'))$('#wa_notif_reminder').checked=v.wa_reminder!==false;
+    if($('#wa_notif_error'))$('#wa_notif_error').checked=v.wa_error!==false;
+    const wp=$('#wa-panel');if(wp)wp.style.opacity=$('#check_wa').checked?'1':'0.5';
+  }
+  saved=JSON.stringify(raw());sync();updateCounters();
+}
+$('#fs').addEventListener('input',()=>{sync();updateCounters()});
+$('#fs').addEventListener('change',()=>{sync();updateCounters()});
 
 /* Akun dan sesi */
 function pills(){const b=$('#pills');b.innerHTML='';try{JSON.parse(localStorage.getItem(SK)||'[]').forEach(u=>{const p=document.createElement('button');p.type='button';p.className='pill';p.textContent=u;p.onclick=()=>{$('#lu').value=u;$('#lp').focus()};b.append(p)})}catch(e){}}
@@ -416,10 +545,45 @@ function prof(p){
   if(n){$('#nm').textContent=n;a.title=n}
   if(p.photo_url){a.textContent='';const i=new Image();i.src=p.photo_url;i.alt=n;i.referrerPolicy='no-referrer';i.onerror=()=>{i.remove();a.textContent=(n||'?')[0].toUpperCase()};a.append(i)}
   else if(n)a.textContent=n[0].toUpperCase();
-  if(p.mitra_name){$('#vm').textContent=p.mitra_name+(p.position?' / '+p.position:'');$('#mt').hidden=false}}
+  if(p.mitra_name){$('#vm').textContent=p.mitra_name+(p.position?' / '+p.position:'');$('#mt').hidden=false}
+  if(p.mentor_name){$('#vmt').textContent=p.mentor_name;$('#mtr').hidden=false}
+  if(p.internship_start_date&&p.internship_end_date){
+    try{
+      const st=new Date(p.internship_start_date),ed=new Date(p.internship_end_date),now=new Date();
+      const tot=Math.max(1,Math.round((ed-st)/864e5)),elp=Math.max(0,Math.min(tot,Math.round((now-st)/864e5))),pct=Math.round(elp/tot*100);
+      $('#vpr').textContent=`Hari ke-${elp} dari ${tot} (${pct}%)`+(p.internship_batch_name?` · Batch ${p.internship_batch_name}`:'');
+      $('#mpr').hidden=false;
+    }catch(e){}
+  }
+  if(p.company_latitude&&p.company_longitude){
+    const bo=$('#btn-office');
+    if(bo){
+      bo.style.display='inline-flex';
+      bo.title=`Gunakan koordinat resmi kantor (${p.company_latitude}, ${p.company_longitude})`;
+      bo.onclick=()=>{
+        $('#il').value=p.mitra_name||'Kantor Magang';
+        $('#ia').value=(+p.company_latitude).toFixed(6);
+        $('#io').value=(+p.company_longitude).toFixed(6);
+        sync();
+        toast('Koordinat kantor resmi diterapkan.');
+      };
+    }
+  }
+  if(p.phone){
+    const bw=$('#btn-wa-fill-profile');
+    if(bw){
+      bw.style.display='inline-flex';
+      bw.title=`Gunakan nomor profil (${p.phone})`;
+      bw.onclick=()=>{
+        const wn=$('#wa_number');
+        if(wn){wn.value=p.phone;sync();toast('Nomor WhatsApp diisi dari profil Kemnaker.')}
+      };
+    }
+  }
+}
 function dash(u,p){$('#vl').hidden=true;$('#vd').hidden=false;$('#nm').textContent=u;$('#av').textContent=(u||'?')[0].toUpperCase();prof(p);status();requestAnimationFrame(reveal)}
 function login(m){$('#vd').hidden=true;$('#vl').hidden=false;setErr(m);$('#lp').value='';pills();$('#lu').focus()}
-function clear(){auth=null;localStorage.removeItem(AK);sessionStorage.removeItem(AK);$('#fs').reset();saved=null;logs=[];hero('','Memeriksa status…','');$('#av').textContent='?';$('#nm').textContent='';$('#mt').hidden=true;$('#sv').dataset.d=0}
+function clear(){auth=null;localStorage.removeItem(AK);sessionStorage.removeItem(AK);$('#fs').reset();saved=null;logs=[];hero('','Memeriksa status…','');$('#av').textContent='?';$('#nm').textContent='';$('#mt').hidden=true;$('#mtr').hidden=true;$('#mpr').hidden=true;$('#sv').dataset.d=0;const b=$('#run');if(b){b.disabled=false;b.innerHTML=ic('send')+'<span>Absen sekarang</span>';b.title=''}}
 function expire(){clear();login('Sesi berakhir. Silakan masuk kembali.')}
 
 $('#fl').addEventListener('submit',e=>{
@@ -445,15 +609,27 @@ function status(){
     $('#db').dataset.s=res.db_connected?'ok':'off';
     $('#dbt').textContent=res.db_connected?'Database terhubung':'Database belum terhubung'+(res.db_message?': '+res.db_message:'');
     
-    if(res.is_attended)hero('ok','Sudah absen hari ini','Presensi hari ini sudah tercatat. Sampai jumpa besok.');
-    else hero('warn','Belum absen hari ini','Absen otomatis berjalan pukul '+CRON+' WIB, atau kirim sekarang.');
+    const bRun=$('#run');
+    if(res.is_attended){
+      hero('ok','Sudah absen hari ini','Presensi hari ini sudah tercatat. Sampai jumpa besok.');
+      if(bRun){bRun.disabled=true;bRun.innerHTML=ic('check-circle')+'<span>Sudah absen hari ini</span>';bRun.title='Presensi hari ini sudah tercatat'}
+    }else{
+      hero('warn','Belum absen hari ini','Absen otomatis berjalan pukul '+CRON+' WIB, atau kirim sekarang.');
+      if(bRun){bRun.disabled=false;bRun.innerHTML=ic('send')+'<span>Absen sekarang</span>';bRun.title=''}
+    }
     prof(res.profile);
     const p=res.preferences||{},env=res.env||{},pick=(a,b,c)=>a!=null?a:(b!=null&&b!==''?b:c);
-    const v={location:p.user_location||env.location||DEF.location,latitude:pick(p.user_latitude,env.latitude,DEF.latitude),longitude:pick(p.user_longitude,env.longitude,DEF.longitude),clock_in_time:p.user_clock_in_time||p.clock_in_time||'13:30',activity_log:p.user_activity_log||env.activity_log||'',lesson_learned:p.user_lesson_learned||env.lesson_learned||'',obstacles:p.user_obstacles||env.obstacles||'',auto_absen:pick(p.user_auto_absen,env.auto_absen,true)!==false};
+    const v={location:p.user_location||env.location||DEF.location,latitude:pick(p.user_latitude,env.latitude,DEF.latitude),longitude:pick(p.user_longitude,env.longitude,DEF.longitude),clock_in_time:p.user_clock_in_time||p.clock_in_time||'13:30',activity_log:p.user_activity_log||env.activity_log||'',lesson_learned:p.user_lesson_learned||env.lesson_learned||'',obstacles:p.user_obstacles||env.obstacles||'',auto_absen:pick(p.user_auto_absen,env.auto_absen,true)!==false,wa_notify:pick(p.user_wa_notify,false,false),wa_number:p.user_wa_number||'',wa_success:pick(p.user_wa_success,true,true),wa_reminder:pick(p.user_wa_reminder,true,true),wa_error:pick(p.user_wa_error,true,true)};
     $('#vlc').textContent=v.location;$('#va').textContent=autoTxt(v.auto_absen);
     if(saved===null||!dirty())fill(v);
     return loadLogs();
   }).catch(err=>{if(err.code===401)return;const m=err.output||err.message||'Gagal terhubung ke API.';hero('err','Status tidak terbaca',m)})}
+
+let kemLogs=[],kemAtts=[],curTab='bot';
+const swTab=t=>{curTab=t;$('#tab-bot').classList.toggle('on',t==='bot');$('#tab-k-logs').classList.toggle('on',t==='k-logs');$('#tab-k-att').classList.toggle('on',t==='k-att');
+  $('#ph').hidden=t!=='bot';$('#pk-logs').hidden=t!=='k-logs';$('#pk-att').hidden=t!=='k-att';
+  if(t==='k-logs'&&!kemLogs.length)loadKemLogs();if(t==='k-att'&&!kemAtts.length)loadKemAtts()};
+$('#tab-bot').onclick=()=>swTab('bot');$('#tab-k-logs').onclick=()=>swTab('k-logs');$('#tab-k-att').onclick=()=>swTab('k-att');
 
 async function loadLogs(){
   try{const r=await api('logs');logs=r&&r.logs||[]}catch(e){if(e.code===401)return;logs=[]}
@@ -463,8 +639,38 @@ async function loadLogs(){
     return `<div class="it" style="--i:${Math.min(i,8)}"><span class="ico ${c}">${ic(ok?'check-circle':w?'clock':'alert')}</span><div><b title="${esc(m)}">${esc(m.split('\n').filter(Boolean)[0]||'Eksekusi selesai')}</b><small>${tx}, ${esc(ts)} WIB</small></div></div>`}).join('')
     :`<div class="empty">${ic('list')}<div><b>Belum ada riwayat</b></div><small>Hasil absen akan muncul di sini setelah cron ${CRON} WIB berjalan atau Anda menekan Absen sekarang.</small></div>`}
 
+async function loadKemLogs(){
+  const bx=$('#pk-logs');bx.innerHTML='<div class="empty"><svg class="ic spin"><use href="#i-loader"/></svg><div>Memuat logbook Kemnaker…</div></div>';
+  try{
+    const r=await api('daily_logs');kemLogs=r&&r.logs||[];
+    if(!kemLogs.length){bx.innerHTML=`<div class="empty">${ic('note')}<div><b>Belum ada logbook resmi</b></div></div>`;return}
+    bx.innerHTML=kemLogs.map((l,i)=>{
+      const isOk=l.state==='APPROVED',bCls=isOk?'ok':'w',bTxt=isOk?'Approved':(l.state||'Submitted');
+      return `<div class="k-item"><div class="k-head"><b>${esc(l.date)}</b><span class="k-badge ${bCls}">${esc(bTxt)}</span></div><div class="k-body"><strong>Aktivitas:</strong> ${esc(l.activity_log||'—')}</div>${l.lesson_learned?`<div class="k-body" style="color:var(--mut)"><strong>Dipahami:</strong> ${esc(l.lesson_learned)}</div>`:''}${l.obstacles?`<div class="k-body" style="color:var(--mut)"><strong>Kendala:</strong> ${esc(l.obstacles)}</div>`:''}<button type="button" class="btn gho sm" style="margin-top:8px;padding:6px 12px;font-size:12px" data-idx="${i}"><svg class="ic" style="width:14px;height:14px"><use href="#i-note"/></svg>Gunakan Teks Ini</button></div>`}).join('');
+    bx.querySelectorAll('button[data-idx]').forEach(b=>{
+      b.onclick=()=>{
+        const item=kemLogs[+b.dataset.idx];if(!item)return;
+        $('#a1').value=item.activity_log||'';$('#a2').value=item.lesson_learned||'';$('#a3').value=item.obstacles||'';
+        sync();updateCounters();toast('Catatan harian disalin ke form!');
+        const el=document.getElementById('set');if(el)el.scrollIntoView({behavior:'smooth'})};
+    });
+  }catch(e){bx.innerHTML=`<div class="empty"><div>Gagal memuat logbook: ${esc(e.message)}</div></div>`}
+}
+
+async function loadKemAtts(){
+  const bx=$('#pk-att');bx.innerHTML='<div class="empty"><svg class="ic spin"><use href="#i-loader"/></svg><div>Memuat presensi Kemnaker…</div></div>';
+  try{
+    const r=await api('attendances');kemAtts=r&&r.attendances||[];
+    if(!kemAtts.length){bx.innerHTML=`<div class="empty">${ic('clock')}<div><b>Belum ada data presensi resmi</b></div></div>`;return}
+    bx.innerHTML=kemAtts.map(a=>{
+      const isOk=a.approval_status==='APPROVED',bCls=isOk?'ok':'w',bTxt=isOk?'Approved':(a.approval_status||'Submitted');
+      const jam=String(a.created_at||'').slice(11,19);
+      return `<div class="k-item"><div class="k-head"><b>${esc(a.date)}${jam?' · '+esc(jam)+' WIB':''}</b><span class="k-badge ${bCls}">${esc(bTxt)}</span></div><small style="color:var(--mut)">Status: <strong>${esc(a.status||'PRESENT')}</strong>${a.latitude?` · Koordinat: ${Number(a.latitude).toFixed(4)}, ${Number(a.longitude).toFixed(4)}`:''}</small></div>`}).join('');
+  }catch(e){bx.innerHTML=`<div class="empty"><div>Gagal memuat presensi: ${esc(e.message)}</div></div>`}
+}
+
 $('#rf').onclick=()=>{const b=$('#rf');b.disabled=true;b.classList.add('ld');status().finally(()=>{b.disabled=false;b.classList.remove('ld');toast('Status diperbarui')})};
-$('#rl').onclick=()=>status();
+$('#rl').onclick=()=>{if(curTab==='k-logs')return loadKemLogs();if(curTab==='k-att')return loadKemAtts();return status()};
 
 /* GPS */
 $('#gps').onclick=()=>{
@@ -475,6 +681,51 @@ $('#gps').onclick=()=>{
     sync();toast('Koordinat terdeteksi. Jangan lupa simpan.');busy(b,false)
   },e=>{busy(b,false);toast({1:'Izin lokasi ditolak. Aktifkan izin lokasi untuk situs ini.',2:'Posisi tidak tersedia. Coba lagi dengan sinyal lebih baik.',3:'Waktu pencarian GPS habis.'}[e.code]||'Gagal mendeteksi lokasi.','err')},{enableHighAccuracy:true,timeout:10000})};
 
+/* Notifikasi WhatsApp UI */
+const chkWa=$('#check_wa'),wp=$('#wa-panel'),dgWa=$('#dg-wa');
+if(chkWa&&wp){
+  chkWa.addEventListener('change',()=>{
+    wp.style.opacity=chkWa.checked?'1':'0.5';
+    sync();
+  });
+}
+const btnWaVerify=$('#btn-wa-verify');
+if(btnWaVerify&&dgWa){
+  btnWaVerify.onclick=()=>dgWa.showModal();
+}
+const btnWaClose=$('#wa-dlg-close');
+if(btnWaClose&&dgWa){
+  btnWaClose.onclick=()=>dgWa.close();
+}
+if(dgWa){
+  dgWa.addEventListener('click',e=>{if(e.target===dgWa)dgWa.close()});
+}
+const btnWaSim=$('#btn-wa-simulate-verify');
+if(btnWaSim){
+  btnWaSim.onclick=()=>{
+    const badge=$('#wa-status-badge');
+    if(badge){
+      badge.className='k-badge ok';
+      badge.textContent='Terverifikasi (Aktif)';
+    }
+    if(dgWa)dgWa.close();
+    toast('Nomor WhatsApp berhasil diverifikasi!');
+    sync();
+  };
+}
+const btnWaTest=$('#btn-wa-test');
+if(btnWaTest){
+  btnWaTest.onclick=()=>{
+    const num=($('#wa_number').value||'').trim();
+    if(!num){
+      toast('Masukkan nomor WhatsApp penerima terlebih dahulu.','err');
+      $('#wa_number').focus();
+      return;
+    }
+    toast(`[Simulasi UI] Pesan uji coba dikirim ke ${num}.`);
+  };
+}
+
 /* Simpan, absen, simulasi */
 $('#fs').addEventListener('submit',e=>{
   e.preventDefault();const d=data();if(!d)return;const b=$('#sb');busy(b,true,'Menyimpan…');
@@ -482,6 +733,7 @@ $('#fs').addEventListener('submit',e=>{
     .catch(err=>{if(err.code!==401)toast('Gagal menyimpan: '+err.message,'err')}).finally(()=>{busy(b,false);sync()})});
 
 $('#run').onclick=async()=>{
+  if($('#run').disabled)return;
   const d=data();if(!d)return;
   if(!await ask({title:'Kirim presensi sekarang?',body:`Lokasi: ${d.location} (${d.latitude}, ${d.longitude}). Data pada form saat ini yang akan dikirim.`,ok:'Kirim presensi'}))return;
   const b=$('#run');busy(b,true,'Mengirim…');
@@ -525,4 +777,86 @@ addEventListener('scroll',()=>{if(tk)return;tk=requestAnimationFrame(()=>{tk=0;c
 /* Mulai */
 try{const s=localStorage.getItem(AK)||sessionStorage.getItem(AK);if(s){auth=JSON.parse(s);dash(auth.username)}else login()}catch(e){login()}
 })();
-</script></body></html>
+</script>\n\n<style id="design-upgrade">
+/* Palet: hijau zamrud dipertahankan, permukaan dibuat lebih berlapis */
+:root{--bg:#090d0c;--s1:#101715;--s2:#16201d;--ln:#1f2b27;--ln2:#2c3b36;--ink:#eaf2ee;--mut:#8a9b94;--pr:#3fd99a;--prh:#7bebb9;--prb:rgba(63,217,154,.12);--onp:#03160d;--seg:#22302b;--sh:0 1px 0 rgba(255,255,255,.04) inset,0 24px 48px -28px rgba(0,0,0,.7)}
+@media(prefers-color-scheme:light){:root{--bg:#f2f6f4;--s1:#fff;--s2:#eef3f0;--ln:#e1e9e5;--ln2:#cdd9d3;--ink:#0b1712;--mut:#576961;--pr:#0b7a58;--prh:#075f44;--prb:rgba(11,122,88,.1);--onp:#fff;--seg:#fff;--sh:0 1px 2px rgba(15,40,30,.06),0 24px 44px -30px rgba(15,40,30,.3)}}
+
+/* Header */
+.top{background:color-mix(in srgb,var(--bg) 78%,transparent)}
+.brand{font-size:.95rem}
+.logo{border-radius:11px}
+.av{box-shadow:0 0 0 2px var(--bg),0 0 0 3.5px var(--pr)}
+
+/* Hero: status + jam jadi satu-satunya titik fokus */
+.hero{gap:22px;border:1px solid var(--ln2);box-shadow:var(--sh)}
+.hero h1{font-size:2rem;letter-spacing:-.035em}
+.hero .st p{max-width:34ch}
+.hh{align-items:flex-start}
+.date{font-weight:600}
+.clk{margin-top:4px;font:800 1.7rem/1.1 var(--f);letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.clk i{font-style:normal;font-weight:600;color:var(--mut)}
+.clk span{margin-left:8px;font-size:.72rem;font-weight:700;letter-spacing:.02em;color:var(--mut)}
+.pri{box-shadow:0 10px 24px -12px var(--pr)}
+.pri:disabled{box-shadow:none}
+.big{padding:16px;font-size:15.5px}
+#run:disabled{opacity:1;background:var(--s2);color:var(--mut);border-color:var(--ln)}
+.tile{width:38px;height:38px;border-radius:12px;border:1px solid var(--ln)}
+.meta li{padding:13px 0}
+.meta small{margin-bottom:1px}
+
+/* Pengaturan: satu permukaan, dipisah garis tipis antar kelompok */
+.main{gap:44px}
+#set>.card,#log>.card{background:var(--s1);border:1px solid var(--ln);border-radius:22px;padding:4px 24px;box-shadow:var(--sh)}
+#log>.card{padding:6px 20px}
+.grp,.grp+.grp{margin:0;padding:26px 0}
+.grp+.grp{border-top:1px solid var(--ln)}
+.sh{font-size:1.45rem;margin-bottom:18px}
+.sh .tile{background:var(--prb);color:var(--pr);border-color:transparent}
+.gh{gap:12px;margin-bottom:20px}
+.gh>.ic:first-child{box-sizing:content-box;width:16px;height:16px;padding:8px;border-radius:11px;background:var(--prb);color:var(--pr)}
+
+/* Input */
+:is(input:not([type=checkbox],[type=radio]),textarea){background:var(--s2);border-color:var(--ln);padding:13px 14px}
+:is(input:not([type=checkbox],[type=radio]),textarea):hover{border-color:var(--ln2)}
+:is(input:not([type=checkbox],[type=radio]),textarea):focus{background:var(--s1);border-color:var(--pr)}
+input[type=radio]{width:auto;accent-color:var(--pr)}
+.tpb{background:var(--s2)}
+
+/* Riwayat: tab segmented + garis waktu */
+div:has(>#tab-bot){display:flex!important;flex-wrap:nowrap!important;gap:4px!important;margin-bottom:14px!important;padding:4px;background:var(--s2);border:1px solid var(--ln);border-radius:14px;overflow-x:auto;scrollbar-width:none}
+div:has(>#tab-bot) .pill{flex:1 0 auto;padding:9px 14px;border-radius:10px;font-size:13px;font-weight:600;background:none;color:var(--mut)}
+div:has(>#tab-bot) .pill.on{background:var(--seg);color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.pane{max-height:420px}
+.it{position:relative;align-items:flex-start;padding:13px 0;border:0}
+.it:not(:last-child)::before{content:"";position:absolute;left:15px;top:47px;bottom:-11px;width:2px;border-radius:2px;background:var(--ln)}
+.it>div{padding-top:2px}
+.k-item,.k-item:last-child{margin:12px 0;padding:14px 16px;background:var(--s2);border:1px solid var(--ln);border-radius:16px}
+.k-badge{padding:3px 9px;border-radius:99px;font-size:11.5px;text-transform:none}
+.empty{padding:40px 12px}
+.empty .ic{box-sizing:content-box;width:30px;height:30px;padding:14px;margin-bottom:12px;border-radius:50%;background:var(--s2)}
+.dbs{width:max-content;max-width:100%;margin-top:18px;padding:8px 14px;background:var(--s2);border:1px solid var(--ln);border-radius:99px}
+
+/* Navigasi, dialog, login */
+.nav{max-width:400px;padding:5px;border-radius:22px}
+.nav a{padding:9px 4px 8px;border-radius:17px}
+.sv{border-color:var(--ln2);box-shadow:0 18px 40px -12px rgba(0,0,0,.5)}
+dialog{border-radius:26px;box-shadow:0 30px 80px -20px rgba(0,0,0,.7)}
+dialog::backdrop{backdrop-filter:blur(6px)}
+.login{padding-top:12vh}
+.login h1{font-size:2.1rem}
+.login .card{padding:26px;border-radius:26px;box-shadow:var(--sh)}
+.logo.big{border-radius:20px;box-shadow:0 18px 40px -14px var(--pr)}
+
+@media(min-width:880px){.shell{grid-template-columns:380px minmax(0,1fr);gap:48px}}
+</style>
+<script>
+/* Jam WIB langsung di kartu status */
+(()=>{const d=document.getElementById('dt');if(!d)return;
+const w=document.createElement('div'),c=document.createElement('div');c.className='clk';c.setAttribute('aria-hidden','true');
+d.replaceWith(w);w.append(d,c);
+const f=new Intl.DateTimeFormat('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false,timeZone:'Asia/Jakarta'});
+const t=()=>{const p=Object.fromEntries(f.formatToParts(new Date()).map(x=>[x.type,x.value]));c.innerHTML=`${p.hour}:${p.minute}<i>:${p.second}</i><span>WIB</span>`};
+t();setInterval(t,1000)})();
+</script>
+</body></html>

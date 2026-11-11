@@ -175,6 +175,14 @@ def app(environ, start_response):
                             photo_url=profile.get("photo_url", ""),
                             mitra=profile.get("mitra_name", ""),
                             position=profile.get("position", ""),
+                            mentor_name=profile.get("mentor_name", ""),
+                            mentor_email=profile.get("mentor_email", ""),
+                            company_latitude=profile.get("company_latitude"),
+                            company_longitude=profile.get("company_longitude"),
+                            company_address=profile.get("company_address", ""),
+                            start_date=profile.get("internship_start_date", ""),
+                            end_date=profile.get("internship_end_date", ""),
+                            participant_id=profile.get("participant_id", ""),
                         )
                     preferences = get_user(user)
             except Exception as dbe:
@@ -490,12 +498,21 @@ def app(environ, start_response):
 
         # Profile from DB cache or fresh from /users/me
         profile_data = None
-        if user_pref and (user_pref.get("user_fullname") or user_pref.get("user_photo_url") or user_pref.get("user_mitra")):
+        if user_pref and user_pref.get("user_fullname") and user_pref.get("user_company_latitude") is not None:
             profile_data = {
+                "participant_id": user_pref.get("user_participant_id", ""),
                 "name": user_pref.get("user_fullname", ""),
                 "photo_url": user_pref.get("user_photo_url", ""),
                 "mitra_name": user_pref.get("user_mitra", ""),
                 "position": user_pref.get("user_position", ""),
+                "job_role": user_pref.get("user_position", ""),
+                "mentor_name": user_pref.get("user_mentor_name", ""),
+                "mentor_email": user_pref.get("user_mentor_email", ""),
+                "company_address": user_pref.get("user_company_address", ""),
+                "company_latitude": user_pref.get("user_company_latitude"),
+                "company_longitude": user_pref.get("user_company_longitude"),
+                "internship_start_date": user_pref.get("user_internship_start", ""),
+                "internship_end_date": user_pref.get("user_internship_end", ""),
             }
         else:
             try:
@@ -513,6 +530,14 @@ def app(environ, start_response):
                                 photo_url=p.get("photo_url", ""),
                                 mitra=p.get("mitra_name", ""),
                                 position=p.get("position", ""),
+                                mentor_name=p.get("mentor_name", ""),
+                                mentor_email=p.get("mentor_email", ""),
+                                company_latitude=p.get("company_latitude"),
+                                company_longitude=p.get("company_longitude"),
+                                company_address=p.get("company_address", ""),
+                                start_date=p.get("internship_start_date", ""),
+                                end_date=p.get("internship_end_date", ""),
+                                participant_id=p.get("participant_id", ""),
                             )
                     except Exception:
                         pass
@@ -565,6 +590,14 @@ def app(environ, start_response):
                         photo_url=profile.get("photo_url", ""),
                         mitra=profile.get("mitra_name", ""),
                         position=profile.get("position", ""),
+                        mentor_name=profile.get("mentor_name", ""),
+                        mentor_email=profile.get("mentor_email", ""),
+                        company_latitude=profile.get("company_latitude"),
+                        company_longitude=profile.get("company_longitude"),
+                        company_address=profile.get("company_address", ""),
+                        start_date=profile.get("internship_start_date", ""),
+                        end_date=profile.get("internship_end_date", ""),
+                        participant_id=profile.get("participant_id", ""),
                     )
             except Exception as dbe:
                 print(f"[DB] Profile cache warning: {dbe}")
@@ -595,6 +628,53 @@ def app(environ, start_response):
 
         start_response("200 OK", [("Content-Type", "application/json; charset=utf-8")])
         return [json.dumps({"status": True, "logs": logs}, ensure_ascii=False, indent=2).encode("utf-8")]
+
+    # 10. Kemnaker Daily Logs Endpoint (/api/daily_logs or /api/daily-logs)
+    if path in ("/api/daily_logs", "/api/daily-logs", "/api/kemnaker_logs"):
+        user, pwd = _get_credentials(environ)
+        if not user or not pwd:
+            start_response("200 OK", [("Content-Type", "application/json; charset=utf-8")])
+            return [json.dumps({"status": False, "logs": [], "message": "Belum terautentikasi."}).encode("utf-8")]
+
+        try:
+            from app.models.attendance import AttendanceService
+            svc = AttendanceService(username=user, password=pwd)
+            logs = svc.get_daily_logs(limit=25)
+            start_response("200 OK", [("Content-Type", "application/json; charset=utf-8")])
+            return [json.dumps({"status": True, "logs": logs}, ensure_ascii=False, indent=2).encode("utf-8")]
+        except Exception as e:
+            start_response("200 OK", [("Content-Type", "application/json; charset=utf-8")])
+            return [json.dumps({"status": False, "logs": [], "message": str(e)}).encode("utf-8")]
+
+    # 11. Kemnaker Attendances Endpoint (/api/attendances)
+    if path in ("/api/attendances", "/api/kemnaker_attendances"):
+        user, pwd = _get_credentials(environ)
+        if not user or not pwd:
+            start_response("200 OK", [("Content-Type", "application/json; charset=utf-8")])
+            return [json.dumps({"status": False, "attendances": [], "message": "Belum terautentikasi."}).encode("utf-8")]
+
+        try:
+            from app.models.attendance import AttendanceService
+            svc = AttendanceService(username=user, password=pwd)
+            attendances = svc.get_attendances()
+            start_response("200 OK", [("Content-Type", "application/json; charset=utf-8")])
+            return [json.dumps({"status": True, "attendances": attendances}, ensure_ascii=False, indent=2).encode("utf-8")]
+        except Exception as e:
+            start_response("200 OK", [("Content-Type", "application/json; charset=utf-8")])
+            return [json.dumps({"status": False, "attendances": [], "message": str(e)}).encode("utf-8")]
+
+    # 12. Kemnaker System Time Endpoint (/api/system_time)
+    if path in ("/api/system_time", "/api/system-time"):
+        try:
+            from app.models.attendance import AttendanceService
+            user, pwd = _get_credentials(environ)
+            svc = AttendanceService(username=user, password=pwd)
+            stime = svc.get_system_time()
+            start_response("200 OK", [("Content-Type", "application/json; charset=utf-8")])
+            return [json.dumps({"status": True, "data": stime}, ensure_ascii=False, indent=2).encode("utf-8")]
+        except Exception as e:
+            start_response("200 OK", [("Content-Type", "application/json; charset=utf-8")])
+            return [json.dumps({"status": False, "message": str(e)}).encode("utf-8")]
 
     # 9. Serve static HTML for root
     html_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "public", "index.html")
