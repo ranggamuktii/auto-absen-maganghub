@@ -2,7 +2,7 @@
 
 import os
 import ssl
-from datetime import date
+from datetime import date, datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import urlparse, unquote
 
@@ -449,7 +449,13 @@ def get_recent_logs(username: str, limit: int = 15) -> List[Dict[str, Any]]:
         cur.close()
         logs = []
         for r in rows:
-            created_str = str(r[5]) if r[5] else ""
+            created_val = r[5]
+            if isinstance(created_val, datetime):
+                # Neon Postgres TIMESTAMP disimpan dalam UTC, konversi ke WIB (+7 jam)
+                wib_time = created_val + timedelta(hours=7)
+                created_str = wib_time.strftime("%Y-%m-%d %H:%M:%S")
+            else:
+                created_str = str(created_val) if created_val else ""
             logs.append({
                 "log_id": r[0],
                 "username": r[1],
