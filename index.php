@@ -847,7 +847,7 @@ $locNow = $env['location'] . ($env['latitude'] !== '' && $env['longitude'] !== '
                         </div>
 
                         <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap">
-                            <button type="button" class="btn btn-ghost btn-sm" id="btn-php-wa-verify">Pilih Konsep / Verifikasi</button>
+                            <button type="button" class="btn btn-ghost btn-sm" id="btn-php-wa-verify">Verifikasi Nomor (OTP)</button>
                             <button type="button" class="btn btn-ghost btn-sm" id="btn-php-wa-test">Tes Kirim Pesan</button>
                         </div>
 
@@ -900,27 +900,25 @@ $locNow = $env['location'] . ($env['latitude'] !== '' && $env['longitude'] !== '
         </dialog>
 
         <dialog id="modalWa">
-            <header>Verifikasi Nomor WhatsApp</header>
+            <header>Verifikasi OTP WhatsApp</header>
             <div class="dlg-body" style="font-size:13.5px;line-height:1.6">
-                <p style="margin:0 0 12px">Pilih konsep alur integrasi nomor WhatsApp untuk menerima notifikasi presensi:</p>
-                <div style="background:var(--field);border:1px solid var(--line);border-radius:10px;padding:12px;display:grid;gap:10px;margin-bottom:12px">
-                    <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer">
-                        <input type="radio" name="php_wa_method" value="bot" checked style="margin-top:3px">
-                        <span><strong>Konsep 1: Gabung ke Bot WhatsApp (Sandbox / Webhook)</strong><br><small style="color:var(--muted)">Pengguna mengirim chat kata kunci ke nomor Bot sistem presensi.</small></span>
-                    </label>
-                    <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer">
-                        <input type="radio" name="php_wa_method" value="otp" style="margin-top:3px">
-                        <span><strong>Konsep 2: Kode Verifikasi OTP 6-Digit</strong><br><small style="color:var(--muted)">Sistem mengirimkan kode verifikasi OTP via WhatsApp gateway.</small></span>
-                    </label>
-                    <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer">
-                        <input type="radio" name="php_wa_method" value="direct" style="margin-top:3px">
-                        <span><strong>Konsep 3: Langsung Nomor Aktif (Tanpa OTP)</strong><br><small style="color:var(--muted)">Hanya menyimpan nomor tujuan, pesan broadcast langsung dikirim.</small></span>
-                    </label>
+                <p style="margin:0 0 6px">Masukkan 6 digit kode OTP yang dikirimkan ke nomor WhatsApp:</p>
+                <div style="font-size:15px;font-weight:700;margin-bottom:14px;color:var(--ink)" id="php-otp-phone-preview">08...</div>
+                <div style="background:var(--field);border:1px solid var(--line);border-radius:10px;padding:16px;text-align:center;margin-bottom:12px">
+                    <label for="php-otp-input" style="display:block;font-size:12px;color:var(--muted);margin-bottom:8px">KODE VERIFIKASI (6 DIGIT)</label>
+                    <div style="display:flex;justify-content:center;margin-bottom:10px">
+                        <input type="text" id="php-otp-input" maxlength="6" inputmode="numeric" placeholder="• • • • • •" autocomplete="one-time-code" style="font-family:monospace;font-size:24px;letter-spacing:8px;text-align:center;width:210px;font-weight:700;padding:8px;border:2px solid var(--line);border-radius:8px">
+                    </div>
+                    <div style="font-size:12.5px;color:var(--muted);display:flex;align-items:center;justify-content:center;gap:6px">
+                        <span>Tidak menerima kode?</span>
+                        <button type="button" class="btn btn-ghost btn-sm" id="btn-php-resend-otp" style="padding:2px 8px;font-size:12px">Kirim Ulang</button>
+                    </div>
                 </div>
+                <p class="hint" style="text-align:center;margin:0 0 8px;font-size:12px">Simulasi UI: Masukkan 6 angka atau tekan tombol Verifikasi OTP.</p>
             </div>
             <footer>
                 <button type="button" class="btn btn-ghost" id="btn-close-wa">Batal</button>
-                <button type="button" class="btn btn-primary" id="btn-sim-verify">Simulasi Verifikasi Sukses</button>
+                <button type="button" class="btn btn-primary" id="btn-sim-verify">Verifikasi OTP</button>
             </footer>
         </dialog>
 
@@ -1280,13 +1278,36 @@ $locNow = $env['location'] . ($env['latitude'] !== '' && $env['longitude'] !== '
                     });
                 }
                 if ($('#btn-php-wa-verify') && dlgWa) {
-                    $('#btn-php-wa-verify').addEventListener('click', () => dlgWa.showModal());
+                    $('#btn-php-wa-verify').addEventListener('click', () => {
+                        const num = ($('#php-wa-number').value || '').trim();
+                        if (!num) return toast('Masukkan nomor WhatsApp terlebih dahulu.', 'err');
+                        const prev = $('#php-otp-phone-preview'), otpIn = $('#php-otp-input');
+                        if (prev) prev.textContent = num;
+                        if (otpIn) {
+                            otpIn.value = '';
+                            setTimeout(() => otpIn.focus(), 60);
+                        }
+                        dlgWa.showModal();
+                    });
                 }
                 if ($('#btn-close-wa') && dlgWa) {
                     $('#btn-close-wa').addEventListener('click', () => dlgWa.close());
                 }
+                if ($('#btn-php-resend-otp')) {
+                    $('#btn-php-resend-otp').addEventListener('click', () => {
+                        const num = ($('#php-wa-number').value || '').trim() || 'nomor tujuan';
+                        toast('Kode OTP baru telah dikirimkan ke WhatsApp ' + num);
+                    });
+                }
                 if ($('#btn-sim-verify')) {
                     $('#btn-sim-verify').addEventListener('click', () => {
+                        const otpIn = $('#php-otp-input'), num = ($('#php-wa-number').value || '').trim();
+                        const val = otpIn ? otpIn.value.trim() : '';
+                        if (val && val.length < 6) {
+                            toast('Masukkan 6 digit kode OTP verifikasi.', 'err');
+                            otpIn.focus();
+                            return;
+                        }
                         const badge = $('#php-wa-badge');
                         if (badge) {
                             badge.style.background = 'var(--ok-bg, #d1fae5)';
@@ -1294,7 +1315,7 @@ $locNow = $env['location'] . ($env['latitude'] !== '' && $env['longitude'] !== '
                             badge.textContent = 'Terverifikasi (Aktif)';
                         }
                         if (dlgWa) dlgWa.close();
-                        toast('Nomor WhatsApp berhasil diverifikasi!');
+                        toast('Nomor WhatsApp ' + (num || '') + ' berhasil diverifikasi!');
                     });
                 }
                 if ($('#btn-php-wa-test')) {

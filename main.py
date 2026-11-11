@@ -321,6 +321,12 @@ def app(environ, start_response):
 
         out = buffer.getvalue().strip()
         is_ok = (code == 0)
+        is_skip = (
+            "[SKIP]" in (out or "")
+            or "dilewati" in (out or "").lower()
+            or "sudah absen" in (out or "").lower()
+        )
+        status_str = "SKIPPED" if (is_ok and is_skip) else ("SUCCESS" if is_ok else "FAILED")
 
         # Record result in database if available
         try:
@@ -329,7 +335,7 @@ def app(environ, start_response):
                 record_attendance_result(
                     username=user,
                     absen_date=today_str(),
-                    status="SUCCESS" if is_ok else "FAILED",
+                    status=status_str,
                     message=out or err_msg or "",
                 )
         except Exception:
@@ -388,7 +394,12 @@ def app(environ, start_response):
                     buffer.write(f"\n[EXCEPTION] {e}")
 
                 out = buffer.getvalue().strip()
-                status_str = "SUCCESS" if code == 0 else "FAILED"
+                is_skip = (
+                    "[SKIP]" in (out or "")
+                    or "dilewati" in (out or "").lower()
+                    or "sudah absen" in (out or "").lower()
+                )
+                status_str = "SKIPPED" if (code == 0 and is_skip) else ("SUCCESS" if code == 0 else "FAILED")
                 try:
                     record_attendance_result(uname, today_str(), status_str, out)
                 except Exception:
