@@ -9,8 +9,8 @@ class Settings(BaseSettings):
 
     siapkerja_username: str = ""
     siapkerja_password: str = ""
-    hari_libur: str = "Sabtu,Minggu"
-    libur_nasional: bool = True
+    hari_libur: str = ""
+    libur_nasional: bool = False
     reminder_times: str = "16:00,21:00"
     latitude: str = "-6.370891"
     longitude: str = "107.272352"
