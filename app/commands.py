@@ -87,18 +87,16 @@ def find_holiday(holidays: HolidayService | None, date: str) -> Holiday | None:
 
 def skip_reason(svc: AttendanceService | None = None) -> str | None:
     """Return why today is skipped, or None when today is a workday."""
-    # Aturan hari libur dinonaktifkan agar tetap bisa absen di hari libur / akhir pekan
+    if should_skip():
+        return "Hari ini libur"
+    try:
+        hs = holiday_service(svc)
+    except TypeError:
+        hs = holiday_service()
+    holiday = find_holiday(hs, today_str())
+    if holiday:
+        return f"{holiday.date} hari libur: {holiday.name}"
     return None
-    # if should_skip():
-    #     return "Hari ini libur"
-    # try:
-    #     hs = holiday_service(svc)
-    # except TypeError:
-    #     hs = holiday_service()
-    # holiday = find_holiday(hs, today_str())
-    # if holiday:
-    #     return f"{holiday.date} hari libur: {holiday.name}"
-    # return None
 
 
 def validate_env(svc: AttendanceService | None = None) -> bool:
