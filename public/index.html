@@ -136,8 +136,13 @@ textarea{resize:vertical;min-height:76px}
 .lb-copy-all:hover:not(:disabled){background:var(--pr);color:var(--onp)}
 .lb-use-btn{background:var(--s2);border:1px solid var(--ln);color:var(--ink);font-weight:600}
 .lb-use-btn:hover:not(:disabled){background:var(--ln)}
-.lb-btn-reject{background:var(--eb);color:var(--e);border:1px solid rgba(239,68,68,.3);font-weight:600;cursor:pointer;transition:all .2s}
+.lb-btn-reject{background:var(--eb);color:var(--e);border:1px solid rgba(239,68,68,.3);font-weight:700;cursor:pointer;transition:all .2s}
 .lb-btn-reject:hover:not(:disabled){background:var(--e);color:#fff}
+.lb-btn-header-reject{padding:4px 10px;font-size:11.5px;font-weight:700;border-radius:8px;background:var(--eb);color:var(--e);border:1px solid rgba(239,68,68,.3);display:inline-flex;align-items:center;gap:4px;cursor:pointer;margin-left:auto;transition:all .15s ease}
+.lb-btn-header-reject:hover:not(:disabled){background:var(--e);color:#fff}
+.lb-top-reject-btn{font-size:12px;padding:5px 12px;background:var(--eb);color:var(--e);border:1px solid rgba(239,68,68,.3);border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-weight:700;transition:all .15s ease}
+.lb-top-reject-btn:hover:not(:disabled){background:var(--e);color:#fff}
+.lb-tag-rejected{font-size:11px;font-weight:700;color:var(--e);padding:2px 7px;border-radius:6px;background:var(--eb);margin-left:auto}
 .lb-rejected-notice{font-size:12px;color:var(--e);display:inline-flex;align-items:center;gap:6px;font-weight:600;padding:6px 12px;border-radius:8px;background:var(--eb)}
 .lb-approved-notice{font-size:12px;color:var(--g);display:inline-flex;align-items:center;gap:6px;font-weight:600;padding:6px 12px;border-radius:8px;background:var(--gb)}
 .k-badge.sub{background:var(--prb);color:var(--pr)}
@@ -720,7 +725,15 @@ async function loadKemLogs(){
     const r=await api('daily_logs');kemLogs=r&&r.logs||[];
     if(!kemLogs.length){bx.innerHTML=`<div class="empty">${ic('note')}<div><b>Belum ada logbook resmi</b></div><small>Data logbook harian dari Kemnaker akan tampil di sini.</small></div>`;return}
     
-    const summaryHeader=`<div class="lb-summary-bar"><span><svg class="ic" style="width:14px;height:14px;vertical-align:-2px"><use href="#i-note"/></svg> Laporan MagangHub Resmi</span><span class="lb-count-pill">${kemLogs.length} Entri</span></div>`;
+    const summaryHeader=`<div class="lb-summary-bar">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span><svg class="ic" style="width:14px;height:14px;vertical-align:-2px"><use href="#i-note"/></svg> Laporan MagangHub Resmi</span>
+        <span class="lb-count-pill">${kemLogs.length} Entri</span>
+      </div>
+      <button type="button" class="btn lb-top-reject-btn" id="btn-open-manual-reject" title="Batalkan presensi tanggal tertentu secara manual">
+        <svg class="ic" style="width:13px;height:13px"><use href="#i-alert"/></svg> Batalkan Presensi (Pilih Tanggal)
+      </button>
+    </div>`;
     
     const cards=kemLogs.map((l,i)=>{
       const rawState=(l.state||l.approval_status||'SUBMITTED').toUpperCase();
@@ -732,6 +745,7 @@ async function loadKemLogs(){
       const cardCls=isOk?'is-approved':isRej?'is-rejected':isRev?'is-revision':'is-submitted';
       const isWk=checkIsWeekend(l.date);
       const dateFormatted=formatLogDate(l.date);
+      const attId=esc(l.attendance_id||(l.attendance&&l.attendance.id)||l.id||'');
       
       const reviewerAlert=l.reviewer_notes?`<div class="lb-reviewer-alert"><svg class="ic"><use href="#i-alert"/></svg><div><b>Catatan Mentor:</b> ${esc(l.reviewer_notes)}</div></div>`:'';
 
@@ -750,6 +764,10 @@ async function loadKemLogs(){
             ${isWk?'<span class="lb-tag-weekend">Akhir Pekan</span>':''}
           </div>
           <span class="k-badge ${bCls}">${esc(bTxt)}</span>
+          ${!isRej?`
+          <button type="button" class="btn lb-btn-header-reject" data-reject-date="${esc(l.date)}" data-reject-id="${attId}" title="Tolak / Batalkan Absen Tanggal ${esc(l.date)}">
+            <svg class="ic" style="width:12px;height:12px"><use href="#i-alert"/></svg><span>Tolak</span>
+          </button>`:`<span class="lb-tag-rejected">Ditolak</span>`}
           <svg class="lb-chevron ic"><use href="#i-chevron-down"/></svg>
         </div>
         <div class="lb-body">
@@ -761,11 +779,10 @@ async function loadKemLogs(){
             <button type="button" class="btn gho lb-use-btn" data-use="${i}">
               ${ic('note','')}<span>Pakai di Form</span>
             </button>
-            ${!isOk&&!isRej?`
-            <button type="button" class="btn lb-btn-reject" data-reject-date="${esc(l.date)}" data-reject-id="${esc(l.id||'')}">
-              <svg class="ic" style="width:14px;height:14px"><use href="#i-alert"/></svg><span>Tolak / Batalkan</span>
-            </button>`:''}
-            ${isRej?`<span class="lb-rejected-notice"><svg class="ic" style="width:13px;height:13px"><use href="#i-alert"/></svg> Presensi Ditolak</span>`:''}
+            ${!isRej?`
+            <button type="button" class="btn lb-btn-reject" data-reject-date="${esc(l.date)}" data-reject-id="${attId}">
+              <svg class="ic" style="width:14px;height:14px"><use href="#i-alert"/></svg><span>✕ Tolak / Batalkan Presensi Ini</span>
+            </button>`:`<span class="lb-rejected-notice"><svg class="ic" style="width:13px;height:13px"><use href="#i-alert"/></svg> Presensi Telah Dibatalkan / Ditolak (REJECTED)</span>`}
             ${isOk?`<span class="lb-approved-notice"><svg class="ic" style="width:13px;height:13px"><use href="#i-check"/></svg> Presensi Disetujui</span>`:''}
           </div>
         </div>
@@ -775,7 +792,8 @@ async function loadKemLogs(){
 
     /* toggle expand */
     bx.querySelectorAll('.lb-item').forEach(card=>{
-      card.querySelector('.lb-header').addEventListener('click',()=>{
+      card.querySelector('.lb-header').addEventListener('click',e=>{
+        if(e.target.closest('button'))return;
         const isOpen=card.classList.contains('open');
         bx.querySelectorAll('.lb-item.open').forEach(c=>c.classList.remove('open'));
         if(!isOpen)card.classList.add('open');
@@ -825,6 +843,36 @@ async function loadKemLogs(){
         });
       });
     });
+    /* manual reject by date button on top */
+    const topRej=bx.querySelector('#btn-open-manual-reject');
+    if(topRej){
+      topRej.addEventListener('click',async()=>{
+        const targetDate=prompt('Masukkan tanggal presensi yang ingin ditolak / dibatalkan (format: YYYY-MM-DD):','2026-11-15');
+        if(!targetDate)return;
+        const cleanDate=targetDate.trim();
+        if(!/^\d{4}-\d{2}-\d{2}$/.test(cleanDate)){
+          return toast('Format tanggal harus YYYY-MM-DD (contoh: 2026-11-15)','err');
+        }
+        if(!await ask({
+          title:'Batalkan Presensi?',
+          body:`Kirim sinyal penolakan untuk presensi tanggal ${cleanDate} ke Kemnaker?`,
+          ok:'Ya, Batalkan',
+          icon:'alert'
+        }))return;
+        busy(topRej,true,'Memproses…');
+        api('reject_attendance',{
+          method:'POST',
+          body:JSON.stringify({date:cleanDate})
+        }).then(r=>{
+          toast(r&&r.message||'Status berhasil diubah menjadi REJECTED!');
+          loadKemLogs();
+        }).catch(err=>{
+          toast(err.message||'Gagal menolak absen.','err');
+        }).finally(()=>{
+          busy(topRej,false);
+        });
+      });
+    }
     /* auto-open first item */
     const first=bx.querySelector('.lb-item');if(first)first.classList.add('open');
   }catch(e){bx.innerHTML=`<div class="empty"><div>Gagal memuat logbook: ${esc(e.message)}</div></div>`}

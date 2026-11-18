@@ -429,6 +429,16 @@ $locNow = $env['location'] . ($env['latitude'] !== '' && $env['longitude'] !== '
             border-color: var(--ink);
         }
 
+        .btn-danger {
+            background: #dc2626;
+            color: #ffffff;
+            border-color: #dc2626;
+        }
+
+        .btn-danger:not(:disabled):hover {
+            opacity: .88;
+        }
+
         /* Sections */
         .section {
             margin-top: 48px;
@@ -882,6 +892,33 @@ $locNow = $env['location'] . ($env['latitude'] !== '' && $env['longitude'] !== '
                             </div>
                         </div>
                     </div>
+                </div>
+            </section>
+
+            <section class="section" id="section-reject">
+                <div class="section-head">
+                    <h2 style="color:#dc2626">Tolak / Batalkan Presensi (Weekend / Libur)</h2>
+                    <span class="hint">Kirim sinyal REJECTED ke API Kemnaker untuk membatalkan presensi salah jadwal</span>
+                </div>
+                <div class="panel" style="border-left:4px solid #dc2626">
+                    <p style="margin:0 0 16px;font-size:14px;color:var(--muted);line-height:1.6">
+                        Jika Anda tidak sengaja melakukan presensi pada hari Sabtu / Minggu (misal 15 November 2026), Anda dapat membatalkan presensi tersebut di sini. Status presensi di MagangHub akan langsung diubah menjadi <strong>REJECTED</strong>.
+                    </p>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:16px">
+                        <div class="field" style="margin:0">
+                            <label for="php-reject-date">Tanggal Presensi yang Dibatalkan</label>
+                            <input type="date" id="php-reject-date" value="2026-11-15">
+                        </div>
+                        <div class="field" style="margin:0">
+                            <label for="php-reject-reason">Alasan / Catatan Penolakan</label>
+                            <input type="text" id="php-reject-reason" value="Dibatalkan oleh peserta (salah jadwal weekend/libur)">
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+                        <button type="button" class="btn btn-danger" id="btn-php-reject">✕ Tolak / Batalkan Presensi Ini</button>
+                        <span id="php-reject-status" style="font-size:13.5px;font-weight:600"></span>
+                    </div>
+                    <pre class="term" id="php-reject-console" style="margin-top:14px;display:none"></pre>
                 </div>
             </section>
 
@@ -1340,6 +1377,66 @@ $locNow = $env['location'] . ($env['latitude'] !== '' && $env['longitude'] !== '
                         const num = ($('#php-wa-number').value || '').trim();
                         if (!num) return toast('Masukkan nomor WhatsApp terlebih dahulu.', 'err');
                         toast('[Simulasi UI] Pesan uji coba dikirim ke ' + num);
+                    });
+                }
+
+                // ---------- Tolak / Batalkan Presensi ----------
+                const btnReject = $('#btn-php-reject');
+                if (btnReject) {
+                    btnReject.addEventListener('click', () => {
+                        const targetDate = ($('#php-reject-date').value || '').trim();
+                        const reason = ($('#php-reject-reason').value || '').trim();
+                        if (!targetDate) return toast('Pilih tanggal presensi yang ingin ditolak.', 'err');
+
+                        if (!confirm('Kirim sinyal penolakan ke Kemnaker untuk membatalkan presensi tanggal ' + targetDate + '?')) return;
+
+                        busy(btnReject, true, 'Memproses…');
+                        const st = $('#php-reject-status');
+                        const con = $('#php-reject-console');
+                        if (st) {
+                            st.style.color = 'var(--muted)';
+                            st.textContent = 'Menghubungi API Kemnaker…';
+                        }
+                        if (con) con.style.display = 'none';
+
+                        const fd = new FormData();
+                        fd.append('date', targetDate);
+                        fd.append('reason', reason || 'Dibatalkan oleh peserta (salah jadwal weekend/libur)');
+
+                        fetch('index.php?api=reject_attendance', {
+                            method: 'POST',
+                            body: fd
+                        })
+                        .then(r => r.json())
+                        .then(res => {
+                            if (res.status) {
+                                toast(res.message || 'Presensi berhasil ditolak!', '');
+                                if (st) {
+                                    st.style.color = 'var(--ok, #059669)';
+                                    st.textContent = '✓ ' + (res.message || 'Berhasil diubah menjadi REJECTED');
+                                }
+                            } else {
+                                toast(res.message || 'Gagal menolak presensi.', 'err');
+                                if (st) {
+                                    st.style.color = 'var(--err, #ef4444)';
+                                    st.textContent = '✕ ' + (res.message || 'Gagal');
+                                }
+                            }
+                            if (con && res.output) {
+                                con.style.display = 'block';
+                                con.textContent = res.output;
+                            }
+                        })
+                        .catch(err => {
+                            toast('Terjadi kesalahan koneksi.', 'err');
+                            if (st) {
+                                st.style.color = 'var(--err, #ef4444)';
+                                st.textContent = '✕ Error: ' + err.message;
+                            }
+                        })
+                        .finally(() => {
+                            busy(btnReject, false);
+                        });
                     });
                 }
             })();
