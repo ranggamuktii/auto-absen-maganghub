@@ -105,20 +105,34 @@ textarea{resize:vertical;min-height:76px}
 .wa-status-row b{flex:1;font-size:13px;font-weight:600}
 .wa-status-row .btn{padding:7px 13px;font-size:12.5px;border-radius:10px}
 /* Logbook item redesign */
-.lb-summary-bar{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--s2);border:1px solid var(--ln);border-radius:14px;font-size:12.5px;color:var(--mut);font-weight:600;margin-bottom:8px}
+.lb-summary-bar{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--s2);border:1px solid var(--ln);border-radius:16px;font-size:13px;color:var(--mut);font-weight:600;margin-bottom:12px;flex-wrap:wrap;gap:10px}
 .lb-count-pill{background:var(--s1);padding:3px 10px;border-radius:99px;border:1px solid var(--ln);color:var(--ink);font-weight:700;font-size:11.5px}
-.lb-item{background:var(--s1);border:1px solid var(--ln);border-radius:16px;overflow:hidden;transition:border-color .2s,box-shadow .2s;margin-bottom:10px}
+.lb-filter-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.lb-filter-btn{font:600 12px var(--f);padding:6px 14px;border-radius:99px;background:var(--s2);border:1px solid var(--ln);color:var(--mut);cursor:pointer;transition:all .15s ease}
+.lb-filter-btn:hover{color:var(--ink);border-color:var(--mut)}
+.lb-filter-btn.on{background:var(--pr);color:var(--onp);font-weight:700;border-color:transparent}
+
+.lb-item{display:block;background:var(--s1);border:1px solid var(--ln);border-radius:16px;margin-bottom:12px;transition:border-color .2s,box-shadow .2s;box-sizing:border-box}
 .lb-item:hover{border-color:var(--ln2,var(--mut))}
-.lb-item.is-rejected{border-left:4px solid var(--e)}
-.lb-item.is-approved{border-left:4px solid var(--g)}
-.lb-item.is-submitted{border-left:4px solid var(--pr)}
-.lb-item.is-revision{border-left:4px solid var(--w)}
-.lb-header{display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer;user-select:none;transition:background .2s}
+.lb-item.is-rejected{border-left:5px solid var(--e);background:rgba(239,68,68,.03)}
+.lb-item.is-approved{border-left:5px solid var(--g);background:rgba(16,185,129,.02)}
+.lb-item.is-submitted{border-left:5px solid var(--pr);background:rgba(59,130,246,.02)}
+.lb-item.is-revision{border-left:5px solid var(--w);background:rgba(245,158,11,.03)}
+
+.lb-header{display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;user-select:none;transition:background .2s;border-radius:15px}
 .lb-header:hover{background:var(--s2)}
-.lb-header-info{flex:1;min-width:0;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.lb-date{font-size:.95rem;font-weight:700;color:var(--ink)}
-.lb-tag-weekend{font-size:11px;font-weight:600;padding:2px 7px;border-radius:6px;background:var(--s2);color:var(--mut);border:1px solid var(--ln)}
-.lb-header .k-badge{font-size:11px}
+.lb-date-box{display:grid;place-items:center;min-width:44px;padding:5px 6px;border-radius:10px;background:var(--s2);border:1px solid var(--ln);text-align:center;line-height:1.15;flex-shrink:0}
+.lb-date-day{font-size:16px;font-weight:800;color:var(--ink);font-family:var(--m)}
+.lb-date-mon{font-size:10px;font-weight:700;text-transform:uppercase;color:var(--mut);letter-spacing:.04em}
+.lb-date-box.is-weekend{background:var(--eb);border-color:rgba(239,68,68,.3)}
+.lb-date-box.is-weekend .lb-date-day{color:var(--e)}
+.lb-date-box.is-weekend .lb-date-mon{color:var(--e)}
+
+.lb-header-info{flex:1;min-width:0}
+.lb-date-full{font-size:13.5px;font-weight:700;color:var(--ink)}
+.lb-tag-weekend{font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;background:var(--eb);color:var(--e);border:1px solid rgba(239,68,68,.3)}
+.lb-snippet{font-size:12.5px;color:var(--mut);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:4px;max-width:520px}
+
 .lb-chevron{width:16px;height:16px;flex:none;color:var(--mut);transition:transform .3s var(--bn)}
 .lb-item.open .lb-chevron{transform:rotate(180deg)}
 .lb-body{display:none;padding:14px 16px 16px;border-top:1px solid var(--ln);background:var(--s1)}
@@ -138,11 +152,11 @@ textarea{resize:vertical;min-height:76px}
 .lb-use-btn:hover:not(:disabled){background:var(--ln)}
 .lb-btn-reject{background:var(--eb);color:var(--e);border:1px solid rgba(239,68,68,.3);font-weight:700;cursor:pointer;transition:all .2s}
 .lb-btn-reject:hover:not(:disabled){background:var(--e);color:#fff}
-.lb-btn-header-reject{padding:4px 10px;font-size:11.5px;font-weight:700;border-radius:8px;background:var(--eb);color:var(--e);border:1px solid rgba(239,68,68,.3);display:inline-flex;align-items:center;gap:4px;cursor:pointer;margin-left:auto;transition:all .15s ease}
+.lb-btn-header-reject{padding:5px 12px;font-size:12px;font-weight:700;border-radius:8px;background:var(--eb);color:var(--e);border:1px solid rgba(239,68,68,.3);display:inline-flex;align-items:center;gap:4px;cursor:pointer;transition:all .15s ease}
 .lb-btn-header-reject:hover:not(:disabled){background:var(--e);color:#fff}
-.lb-top-reject-btn{font-size:12px;padding:5px 12px;background:var(--eb);color:var(--e);border:1px solid rgba(239,68,68,.3);border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-weight:700;transition:all .15s ease}
+.lb-top-reject-btn{font-size:12px;padding:6px 14px;background:var(--eb);color:var(--e);border:1px solid rgba(239,68,68,.3);border-radius:10px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-weight:700;transition:all .15s ease}
 .lb-top-reject-btn:hover:not(:disabled){background:var(--e);color:#fff}
-.lb-tag-rejected{font-size:11px;font-weight:700;color:var(--e);padding:2px 7px;border-radius:6px;background:var(--eb);margin-left:auto}
+.lb-tag-rejected{font-size:11.5px;font-weight:700;color:var(--e);padding:3px 8px;border-radius:6px;background:var(--eb)}
 .lb-rejected-notice{font-size:12px;color:var(--e);display:inline-flex;align-items:center;gap:6px;font-weight:600;padding:6px 12px;border-radius:8px;background:var(--eb)}
 .lb-approved-notice{font-size:12px;color:var(--g);display:inline-flex;align-items:center;gap:6px;font-weight:600;padding:6px 12px;border-radius:8px;background:var(--gb)}
 .k-badge.sub{background:var(--prb);color:var(--pr)}
@@ -208,9 +222,8 @@ textarea{resize:vertical;min-height:76px}
 .sv .btn{border-radius:99px}
 
 /* Riwayat */
-.pane{max-height:460px;overflow:auto;scrollbar-width:thin;scrollbar-color:var(--ln) transparent;overscroll-behavior:contain}
-#pk-logs{display:flex;flex-direction:column;gap:10px;padding:4px 2px}
-#pk-logs:empty{display:block}
+.pane{max-height:560px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--ln) transparent;overscroll-behavior:contain}
+#pk-logs{display:block;padding:4px 2px}
 .it{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--ln)}
 .it:last-child{border:0}
 .it>div{min-width:0}
@@ -507,6 +520,44 @@ dialog footer{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}
   <button type="button" class="btn pri" id="btn-wa-simulate-verify">Verifikasi OTP</button>
 </footer>
 </form></dialog>
+
+<dialog id="dg-reject-picker"><form method="dialog" id="form-reject-picker">
+<div class="dh">
+  <span class="tile" style="background:var(--eb);color:var(--e)"><svg class="ic"><use href="#i-alert"/></svg></span>
+  <div>
+    <h3 style="margin:0;font-size:1.1rem;font-weight:700">Batalkan Presensi (API Kemnaker)</h3>
+    <small style="color:var(--mut);font-size:12px">Ubah status presensi menjadi REJECTED di MagangHub</small>
+  </div>
+</div>
+
+<div style="margin:16px 0 10px">
+  <label style="display:block;font-size:11px;font-weight:700;color:var(--mut);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em">PILIH CEPAT TANGGAL WEEKEND</label>
+  <div id="quick-weekend-chips" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+</div>
+
+<div style="display:grid;gap:12px;margin:14px 0 16px">
+  <label class="f" style="margin:0">
+    <span style="font-weight:600">Pilih Tanggal Presensi yang Ingin Ditolak</span>
+    <input type="date" id="m-rej-date" value="2026-11-15" required style="font-family:var(--m);font-weight:600;font-size:14px">
+  </label>
+  <label class="f" style="margin:0">
+    <span style="font-weight:600">Alasan / Catatan Penolakan</span>
+    <input type="text" id="m-rej-reason" value="Dibatalkan oleh peserta (salah jadwal weekend/libur)" required>
+  </label>
+</div>
+
+<div style="padding:10px 14px;background:var(--eb);color:var(--e);border-radius:12px;font-size:12px;line-height:1.55;margin-bottom:18px;display:flex;align-items:flex-start;gap:8px;border:1px solid rgba(239,68,68,.25)">
+  <svg class="ic" style="width:16px;height:16px;flex:none;margin-top:2px"><use href="#i-alert"/></svg>
+  <span>Sistem akan mengirimkan request <b>PUT /attendances</b> ke API Kemnaker dengan approval status <b>REJECTED</b>. Absensi pada tanggal tersebut akan otomatis dibatalkan.</span>
+</div>
+
+<footer>
+  <button type="button" class="btn gho" id="btn-close-reject-dlg">Batal</button>
+  <button type="button" class="btn pri" id="btn-submit-reject-dlg" style="background:#dc2626;color:#fff;border-color:#dc2626;font-weight:700">
+    ✕ Batalkan Presensi Sekarang
+  </button>
+</footer>
+</form></dialog>
 <div class="toast" id="ts" role="status"><svg class="ic"><use id="ti" href="#i-check"/></svg><span id="tm"></span></div>
 
 <script>
@@ -700,182 +751,281 @@ async function loadLogs(){
     </div>`}).join('')
     :`<div class="empty">${ic('list')}<div><b>Belum ada riwayat</b></div><small>Hasil absen akan muncul di sini setelah cron ${CRON} WIB berjalan atau Anda menekan Absen sekarang.</small></div>`}
 
-function formatLogDate(dStr){
-  if(!dStr)return'—';
+function parseLogDateParts(dStr){
+  if(!dStr)return{day:'—',mon:'',full:'—',raw:'',isWeekend:false};
   try{
     const s=dStr.slice(0,10);
     const[y,m,d]=s.split('-').map(Number);
     const dt=new Date(y,m-1,d);
-    return new Intl.DateTimeFormat('id-ID',{weekday:'long',day:'numeric',month:'short',year:'numeric'}).format(dt);
-  }catch(e){return dStr}
-}
-function checkIsWeekend(dStr){
-  if(!dStr)return false;
-  try{
-    const s=dStr.slice(0,10);
-    const[y,m,d]=s.split('-').map(Number);
-    const day=new Date(y,m-1,d).getDay();
-    return day===0||day===6;
-  }catch(e){return false}
+    const day=String(d).padStart(2,'0');
+    const mon=new Intl.DateTimeFormat('id-ID',{month:'short'}).format(dt);
+    const full=new Intl.DateTimeFormat('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(dt);
+    const isWeekend=dt.getDay()===0||dt.getDay()===6;
+    return{day,mon,full,raw:s,isWeekend};
+  }catch(e){
+    return{day:'—',mon:'',full:dStr,raw:dStr,isWeekend:false};
+  }
 }
 
 async function loadKemLogs(){
-  const bx=$('#pk-logs');bx.innerHTML='<div class="empty"><svg class="ic spin"><use href="#i-loader"/></svg><div>Memuat logbook Kemnaker…</div></div>';
+  const bx=$('#pk-logs');
+  bx.innerHTML='<div class="empty"><svg class="ic spin"><use href="#i-loader"/></svg><div>Memuat logbook Kemnaker…</div></div>';
   try{
-    const r=await api('daily_logs');kemLogs=r&&r.logs||[];
-    if(!kemLogs.length){bx.innerHTML=`<div class="empty">${ic('note')}<div><b>Belum ada logbook resmi</b></div><small>Data logbook harian dari Kemnaker akan tampil di sini.</small></div>`;return}
-    
-    const summaryHeader=`<div class="lb-summary-bar">
-      <div style="display:flex;align-items:center;gap:8px">
-        <span><svg class="ic" style="width:14px;height:14px;vertical-align:-2px"><use href="#i-note"/></svg> Laporan MagangHub Resmi</span>
-        <span class="lb-count-pill">${kemLogs.length} Entri</span>
-      </div>
-      <button type="button" class="btn lb-top-reject-btn" id="btn-open-manual-reject" title="Batalkan presensi tanggal tertentu secara manual">
-        <svg class="ic" style="width:13px;height:13px"><use href="#i-alert"/></svg> Batalkan Presensi (Pilih Tanggal)
-      </button>
-    </div>`;
-    
-    const cards=kemLogs.map((l,i)=>{
+    const r=await api('daily_logs');
+    kemLogs=r&&r.logs||[];
+    if(!kemLogs.length){
+      bx.innerHTML=`<div class="empty">${ic('note')}<div><b>Belum ada logbook resmi</b></div><small>Data logbook harian dari Kemnaker akan tampil di sini.</small></div>`;
+      return;
+    }
+
+    let weekendCount=0,submittedCount=0,rejectedCount=0;
+    kemLogs.forEach(l=>{
       const rawState=(l.state||l.approval_status||'SUBMITTED').toUpperCase();
-      const isOk=rawState==='APPROVED';
-      const isRej=rawState==='REJECTED';
-      const isRev=rawState==='NEEDS_REVISION'||rawState==='REVISION_SUBMITTED';
-      const bCls=isOk?'ok':isRej?'e':isRev?'w':'sub';
-      const bTxt=isOk?'Disetujui':isRej?'Ditolak':isRev?'Perlu Revisi':'Menunggu Review';
-      const cardCls=isOk?'is-approved':isRej?'is-rejected':isRev?'is-revision':'is-submitted';
-      const isWk=checkIsWeekend(l.date);
-      const dateFormatted=formatLogDate(l.date);
-      const attId=esc(l.attendance_id||(l.attendance&&l.attendance.id)||l.id||'');
-      
-      const reviewerAlert=l.reviewer_notes?`<div class="lb-reviewer-alert"><svg class="ic"><use href="#i-alert"/></svg><div><b>Catatan Mentor:</b> ${esc(l.reviewer_notes)}</div></div>`:'';
+      const dp=parseLogDateParts(l.date);
+      if(dp.isWeekend)weekendCount++;
+      if(rawState==='REJECTED')rejectedCount++;
+      else if(rawState!=='APPROVED')submittedCount++;
+    });
 
-      const fields=[
-        reviewerAlert,
-        l.activity_log?`<div class="lb-field"><div class="lb-field-label"><svg class="ic"><use href="#i-check"/></svg> Aktivitas Harian</div><div class="lb-field-text">${esc(l.activity_log)}</div></div>`:'',
-        l.lesson_learned?`<div class="lb-field"><div class="lb-field-label"><svg class="ic"><use href="#i-note"/></svg> Yang Dipelajari</div><div class="lb-field-text" style="color:var(--mut)">${esc(l.lesson_learned)}</div></div>`:'',
-        l.obstacles?`<div class="lb-field"><div class="lb-field-label"><svg class="ic"><use href="#i-alert"/></svg> Kendala</div><div class="lb-field-text" style="color:var(--mut)">${esc(l.obstacles)}</div></div>`:''
-      ].filter(Boolean).join('');
+    const summaryHeader=`<div class="lb-summary-bar">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <span style="font-size:14px;font-weight:700;color:var(--ink);display:flex;align-items:center;gap:6px">
+          <svg class="ic" style="width:16px;height:16px;color:var(--pr)"><use href="#i-note"/></svg> Laporan MagangHub Resmi
+        </span>
+        <span class="lb-count-pill">${kemLogs.length} Total Entri</span>
+      </div>
+      <button type="button" class="btn lb-top-reject-btn" id="btn-open-manual-reject" title="Buka formulir pembatalan presensi">
+        <svg class="ic" style="width:14px;height:14px"><use href="#i-alert"/></svg> <span>Tolak Presensi (Pilih Tanggal)</span>
+      </button>
+    </div>
+    <div class="lb-filter-bar">
+      <button type="button" class="lb-filter-btn on" data-filter="all">Semua (${kemLogs.length})</button>
+      <button type="button" class="lb-filter-btn" data-filter="weekend">🚨 Akhir Pekan (${weekendCount})</button>
+      <button type="button" class="lb-filter-btn" data-filter="submitted">⏳ Menunggu Review (${submittedCount})</button>
+      <button type="button" class="lb-filter-btn" data-filter="rejected">✕ Ditolak (${rejectedCount})</button>
+    </div>
+    <div id="lb-cards-container"></div>`;
 
-      return `<div class="lb-item ${cardCls}" data-idx="${i}">
-        <div class="lb-header">
-          <svg class="ic" style="width:16px;height:16px;color:var(--mut)"><use href="#i-note"/></svg>
-          <div class="lb-header-info">
-            <span class="lb-date">${esc(dateFormatted)}</span>
-            ${isWk?'<span class="lb-tag-weekend">Akhir Pekan</span>':''}
+    bx.innerHTML=summaryHeader;
+    const cardsContainer=bx.querySelector('#lb-cards-container');
+
+    function renderCards(filterType='all'){
+      const filtered=kemLogs.map((l,i)=>({log:l,origIdx:i})).filter(({log})=>{
+        const rawState=(log.state||log.approval_status||'SUBMITTED').toUpperCase();
+        const dp=parseLogDateParts(log.date);
+        if(filterType==='weekend')return dp.isWeekend;
+        if(filterType==='submitted')return rawState!=='APPROVED'&&rawState!=='REJECTED';
+        if(filterType==='rejected')return rawState==='REJECTED';
+        return true;
+      });
+
+      if(!filtered.length){
+        cardsContainer.innerHTML=`<div class="empty" style="padding:28px 0">${ic('filter')}<div><b>Tidak ada entri logbook untuk filter ini.</b></div></div>`;
+        return;
+      }
+
+      cardsContainer.innerHTML=filtered.map(({log:l,origIdx:i})=>{
+        const rawState=(l.state||l.approval_status||'SUBMITTED').toUpperCase();
+        const isOk=rawState==='APPROVED';
+        const isRej=rawState==='REJECTED';
+        const isRev=rawState==='NEEDS_REVISION'||rawState==='REVISION_SUBMITTED';
+        const bCls=isOk?'ok':isRej?'e':isRev?'w':'sub';
+        const bTxt=isOk?'Disetujui':isRej?'Ditolak':isRev?'Perlu Revisi':'Menunggu Review';
+        const cardCls=isOk?'is-approved':isRej?'is-rejected':isRev?'is-revision':'is-submitted';
+        const dp=parseLogDateParts(l.date);
+        const attId=esc(l.attendance_id||(l.attendance&&l.attendance.id)||l.id||'');
+        
+        const reviewerAlert=l.reviewer_notes?`<div class="lb-reviewer-alert"><svg class="ic"><use href="#i-alert"/></svg><div><b>Catatan Mentor:</b> ${esc(l.reviewer_notes)}</div></div>`:'';
+
+        const fields=[
+          reviewerAlert,
+          l.activity_log?`<div class="lb-field"><div class="lb-field-label"><svg class="ic"><use href="#i-check"/></svg> Aktivitas Harian</div><div class="lb-field-text">${esc(l.activity_log)}</div></div>`:'',
+          l.lesson_learned?`<div class="lb-field"><div class="lb-field-label"><svg class="ic"><use href="#i-note"/></svg> Yang Dipelajari</div><div class="lb-field-text" style="color:var(--mut)">${esc(l.lesson_learned)}</div></div>`:'',
+          l.obstacles?`<div class="lb-field"><div class="lb-field-label"><svg class="ic"><use href="#i-alert"/></svg> Kendala</div><div class="lb-field-text" style="color:var(--mut)">${esc(l.obstacles)}</div></div>`:''
+        ].filter(Boolean).join('');
+
+        return `<div class="lb-item ${cardCls}" data-idx="${i}">
+          <div class="lb-header">
+            <div class="lb-date-box ${dp.isWeekend?'is-weekend':''}">
+              <span class="lb-date-day">${dp.day}</span>
+              <span class="lb-date-mon">${dp.mon}</span>
+            </div>
+            <div class="lb-header-info">
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                <span class="lb-date-full">${esc(dp.full)}</span>
+                ${dp.isWeekend?'<span class="lb-tag-weekend">🚨 Akhir Pekan</span>':''}
+                <span class="k-badge ${bCls}">${esc(bTxt)}</span>
+              </div>
+              <div class="lb-snippet">${esc(l.activity_log||'Belum ada catatan aktivitas.')}</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;margin-left:auto;flex-shrink:0">
+              ${!isRej?`
+              <button type="button" class="btn lb-btn-header-reject" data-reject-date="${esc(dp.raw)}" data-reject-id="${attId}" title="Tolak / Batalkan Absen Tanggal ${esc(dp.raw)}">
+                <svg class="ic" style="width:13px;height:13px"><use href="#i-alert"/></svg><span>✕ Tolak</span>
+              </button>`:`<span class="lb-tag-rejected">✕ Ditolak</span>`}
+              <svg class="lb-chevron ic"><use href="#i-chevron-down"/></svg>
+            </div>
           </div>
-          <span class="k-badge ${bCls}">${esc(bTxt)}</span>
-          ${!isRej?`
-          <button type="button" class="btn lb-btn-header-reject" data-reject-date="${esc(l.date)}" data-reject-id="${attId}" title="Tolak / Batalkan Absen Tanggal ${esc(l.date)}">
-            <svg class="ic" style="width:12px;height:12px"><use href="#i-alert"/></svg><span>Tolak</span>
-          </button>`:`<span class="lb-tag-rejected">Ditolak</span>`}
-          <svg class="lb-chevron ic"><use href="#i-chevron-down"/></svg>
-        </div>
-        <div class="lb-body">
-          ${fields}
-          <div class="lb-actions">
-            <button type="button" class="btn lb-copy-all" data-idx="${i}">
-              ${ic('copy','')}<span>Salin Laporan</span>
-            </button>
-            <button type="button" class="btn gho lb-use-btn" data-use="${i}">
-              ${ic('note','')}<span>Pakai di Form</span>
-            </button>
-            ${!isRej?`
-            <button type="button" class="btn lb-btn-reject" data-reject-date="${esc(l.date)}" data-reject-id="${attId}">
-              <svg class="ic" style="width:14px;height:14px"><use href="#i-alert"/></svg><span>✕ Tolak / Batalkan Presensi Ini</span>
-            </button>`:`<span class="lb-rejected-notice"><svg class="ic" style="width:13px;height:13px"><use href="#i-alert"/></svg> Presensi Telah Dibatalkan / Ditolak (REJECTED)</span>`}
-            ${isOk?`<span class="lb-approved-notice"><svg class="ic" style="width:13px;height:13px"><use href="#i-check"/></svg> Presensi Disetujui</span>`:''}
+          <div class="lb-body">
+            ${fields}
+            <div class="lb-actions">
+              <button type="button" class="btn lb-copy-all" data-idx="${i}">
+                ${ic('copy','')}<span>Salin Laporan</span>
+              </button>
+              <button type="button" class="btn gho lb-use-btn" data-use="${i}">
+                ${ic('note','')}<span>Pakai di Form</span>
+              </button>
+              ${!isRej?`
+              <button type="button" class="btn lb-btn-reject" data-reject-date="${esc(dp.raw)}" data-reject-id="${attId}">
+                <svg class="ic" style="width:14px;height:14px"><use href="#i-alert"/></svg><span>✕ Tolak / Batalkan Presensi Tanggal Ini</span>
+              </button>`:`<span class="lb-rejected-notice"><svg class="ic" style="width:13px;height:13px"><use href="#i-alert"/></svg> Presensi Telah Dibatalkan / Ditolak (REJECTED)</span>`}
+              ${isOk?`<span class="lb-approved-notice"><svg class="ic" style="width:13px;height:13px"><use href="#i-check"/></svg> Presensi Disetujui</span>`:''}
+            </div>
           </div>
-        </div>
-      </div>`}).join('');
+        </div>`;
+      }).join('');
 
-    bx.innerHTML=summaryHeader+cards;
-
-    /* toggle expand */
-    bx.querySelectorAll('.lb-item').forEach(card=>{
-      card.querySelector('.lb-header').addEventListener('click',e=>{
-        if(e.target.closest('button'))return;
-        const isOpen=card.classList.contains('open');
-        bx.querySelectorAll('.lb-item.open').forEach(c=>c.classList.remove('open'));
-        if(!isOpen)card.classList.add('open');
-      });
-    });
-    /* copy full report */
-    bx.querySelectorAll('button[data-idx]').forEach(b=>{
-      b.addEventListener('click',e=>{
-        e.stopPropagation();
-        const item=kemLogs[+b.dataset.idx];if(!item)return;
-        const txt=`📋 Logbook ${item.date||''}\n\n✅ Aktivitas:\n${item.activity_log||'—'}\n\n📚 Yang Dipelajari:\n${item.lesson_learned||'—'}\n\n⚠️ Kendala:\n${item.obstacles||'—'}`;
-        navigator.clipboard.writeText(txt).then(()=>toast('Laporan disalin ke clipboard!')).catch(()=>toast('Gagal menyalin. Coba lagi.','err'));
-      });
-    });
-    /* use text */
-    bx.querySelectorAll('button[data-use]').forEach(b=>{
-      b.addEventListener('click',e=>{
-        e.stopPropagation();
-        const item=kemLogs[+b.dataset.use];if(!item)return;
-        $('#a1').value=item.activity_log||'';$('#a2').value=item.lesson_learned||'';$('#a3').value=item.obstacles||'';
-        sync();updateCounters();toast('Catatan harian disalin ke form!');
-        const el=document.getElementById('set');if(el)el.scrollIntoView({behavior:'smooth'});
-      });
-    });
-    /* reject attendance */
-    bx.querySelectorAll('button[data-reject-date]').forEach(b=>{
-      b.addEventListener('click',async e=>{
-        e.stopPropagation();
-        const d=b.dataset.rejectDate, id=b.dataset.rejectId;
-        if(!await ask({
-          title:'Tolak/Batalkan Presensi?',
-          body:`Kirim permintaan ke API Kemnaker untuk mengubah status presensi tanggal ${d} menjadi REJECTED?`,
-          ok:'Tolak Sekarang',
-          icon:'alert'
-        }))return;
-        busy(b,true,'Memproses…');
-        api('reject_attendance',{
-          method:'POST',
-          body:JSON.stringify({date:d,attendance_id:id})
-        }).then(r=>{
-          toast(r&&r.message||'Status berhasil diubah menjadi REJECTED!');
-          loadKemLogs();
-        }).catch(err=>{
-          toast(err.message||'Gagal menolak absen.','err');
-        }).finally(()=>{
-          busy(b,false);
+      /* bind item events */
+      cardsContainer.querySelectorAll('.lb-item').forEach(card=>{
+        card.querySelector('.lb-header').addEventListener('click',e=>{
+          if(e.target.closest('button'))return;
+          const isOpen=card.classList.contains('open');
+          cardsContainer.querySelectorAll('.lb-item.open').forEach(c=>c.classList.remove('open'));
+          if(!isOpen)card.classList.add('open');
         });
       });
-    });
-    /* manual reject by date button on top */
-    const topRej=bx.querySelector('#btn-open-manual-reject');
-    if(topRej){
-      topRej.addEventListener('click',async()=>{
-        const targetDate=prompt('Masukkan tanggal presensi yang ingin ditolak / dibatalkan (format: YYYY-MM-DD):','2026-11-15');
-        if(!targetDate)return;
-        const cleanDate=targetDate.trim();
-        if(!/^\d{4}-\d{2}-\d{2}$/.test(cleanDate)){
-          return toast('Format tanggal harus YYYY-MM-DD (contoh: 2026-11-15)','err');
-        }
-        if(!await ask({
-          title:'Batalkan Presensi?',
-          body:`Kirim sinyal penolakan untuk presensi tanggal ${cleanDate} ke Kemnaker?`,
-          ok:'Ya, Batalkan',
-          icon:'alert'
-        }))return;
-        busy(topRej,true,'Memproses…');
-        api('reject_attendance',{
-          method:'POST',
-          body:JSON.stringify({date:cleanDate})
-        }).then(r=>{
-          toast(r&&r.message||'Status berhasil diubah menjadi REJECTED!');
-          loadKemLogs();
-        }).catch(err=>{
-          toast(err.message||'Gagal menolak absen.','err');
-        }).finally(()=>{
-          busy(topRej,false);
+
+      cardsContainer.querySelectorAll('button[data-idx]').forEach(b=>{
+        b.addEventListener('click',e=>{
+          e.stopPropagation();
+          const item=kemLogs[+b.dataset.idx];if(!item)return;
+          const txt=`📋 Logbook ${item.date||''}\n\n✅ Aktivitas:\n${item.activity_log||'—'}\n\n📚 Yang Dipelajari:\n${item.lesson_learned||'—'}\n\n⚠️ Kendala:\n${item.obstacles||'—'}`;
+          navigator.clipboard.writeText(txt).then(()=>toast('Laporan disalin ke clipboard!')).catch(()=>toast('Gagal menyalin. Coba lagi.','err'));
+        });
+      });
+
+      cardsContainer.querySelectorAll('button[data-use]').forEach(b=>{
+        b.addEventListener('click',e=>{
+          e.stopPropagation();
+          const item=kemLogs[+b.dataset.use];if(!item)return;
+          $('#a1').value=item.activity_log||'';$('#a2').value=item.lesson_learned||'';$('#a3').value=item.obstacles||'';
+          sync();updateCounters();toast('Catatan harian disalin ke form!');
+          const el=document.getElementById('set');if(el)el.scrollIntoView({behavior:'smooth'});
+        });
+      });
+
+      cardsContainer.querySelectorAll('button[data-reject-date]').forEach(b=>{
+        b.addEventListener('click',async e=>{
+          e.stopPropagation();
+          const d=b.dataset.rejectDate, id=b.dataset.rejectId;
+          if(!await ask({
+            title:'Tolak / Batalkan Presensi?',
+            body:`Kirim sinyal ke API Kemnaker untuk membatalkan presensi tanggal ${d} menjadi REJECTED?`,
+            ok:'Tolak Sekarang',
+            icon:'alert'
+          }))return;
+          busy(b,true,'Memproses…');
+          api('reject_attendance',{
+            method:'POST',
+            body:JSON.stringify({date:d,attendance_id:id})
+          }).then(r=>{
+            toast(r&&r.message||'Status berhasil diubah menjadi REJECTED!');
+            loadKemLogs();
+          }).catch(err=>{
+            toast(err.message||'Gagal menolak absen.','err');
+          }).finally(()=>{
+            busy(b,false);
+          });
         });
       });
     }
-    /* auto-open first item */
-    const first=bx.querySelector('.lb-item');if(first)first.classList.add('open');
-  }catch(e){bx.innerHTML=`<div class="empty"><div>Gagal memuat logbook: ${esc(e.message)}</div></div>`}
+
+    renderCards('all');
+
+    /* filter buttons */
+    bx.querySelectorAll('.lb-filter-btn').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        bx.querySelectorAll('.lb-filter-btn').forEach(b=>b.classList.remove('on'));
+        btn.classList.add('on');
+        renderCards(btn.dataset.filter);
+      });
+    });
+
+    /* interactive modal reject picker */
+    const topRej=bx.querySelector('#btn-open-manual-reject');
+    const dgRej=$('#dg-reject-picker');
+    if(topRej&&dgRej){
+      topRej.addEventListener('click',()=>{
+        // populate quick weekend chips
+        const chipBox=$('#quick-weekend-chips');
+        const weekends=kemLogs.filter(l=>parseLogDateParts(l.date).isWeekend);
+        if(weekends.length){
+          chipBox.innerHTML=weekends.map(w=>{
+            const dp=parseLogDateParts(w.date);
+            const isRej=(w.state||w.approval_status||'').toUpperCase()==='REJECTED';
+            return `<button type="button" class="pill ${isRej?'':'on'}" data-fill-date="${esc(dp.raw)}" style="font-size:12px;padding:4px 10px;cursor:pointer">
+              ${dp.full} ${isRej?'(Ditolak)':'🚨'}
+            </button>`;
+          }).join('');
+        }else{
+          chipBox.innerHTML=`<button type="button" class="pill on" data-fill-date="2026-11-15">Minggu, 15 Nov 2026</button>
+          <button type="button" class="pill" data-fill-date="2026-11-14">Sabtu, 14 Nov 2026</button>`;
+        }
+
+        chipBox.querySelectorAll('button[data-fill-date]').forEach(cb=>{
+          cb.addEventListener('click',()=>{
+            $('#m-rej-date').value=cb.dataset.fillDate;
+            chipBox.querySelectorAll('button').forEach(c=>c.classList.remove('on'));
+            cb.classList.add('on');
+          });
+        });
+
+        // default date
+        if(weekends.length){
+          const targetWeekend=weekends.find(w=>(w.state||w.approval_status||'').toUpperCase()!=='REJECTED')||weekends[0];
+          $('#m-rej-date').value=parseLogDateParts(targetWeekend.date).raw;
+        }else{
+          $('#m-rej-date').value='2026-11-15';
+        }
+
+        dgRej.showModal();
+      });
+    }
+
+    const closeRejBtn=$('#btn-close-reject-dlg');
+    if(closeRejBtn&&dgRej){
+      closeRejBtn.onclick=()=>dgRej.close();
+    }
+    if(dgRej){
+      dgRej.addEventListener('click',e=>{if(e.target===dgRej)dgRej.close()});
+    }
+
+    const submitRejBtn=$('#btn-submit-reject-dlg');
+    if(submitRejBtn&&dgRej){
+      submitRejBtn.onclick=async()=>{
+        const targetDate=($('#m-rej-date').value||'').trim();
+        const reason=($('#m-rej-reason').value||'').trim();
+        if(!targetDate)return toast('Pilih tanggal presensi yang ingin ditolak.','err');
+
+        busy(submitRejBtn,true,'Memproses penolakan…');
+        api('reject_attendance',{
+          method:'POST',
+          body:JSON.stringify({date:targetDate,reason:reason||'Dibatalkan oleh peserta (salah jadwal weekend/libur)'})
+        }).then(r=>{
+          toast(r&&r.message||'Status berhasil diubah menjadi REJECTED!');
+          if(dgRej)dgRej.close();
+          loadKemLogs();
+        }).catch(err=>{
+          toast(err.message||'Gagal menolak absen.','err');
+        }).finally(()=>{
+          busy(submitRejBtn,false);
+        });
+      };
+    }
+
+  }catch(e){
+    bx.innerHTML=`<div class="empty"><div>Gagal memuat logbook: ${esc(e.message)}</div></div>`;
+  }
 }
 
 $('#rf').onclick=()=>{const b=$('#rf');b.disabled=true;b.classList.add('ld');status().finally(()=>{b.disabled=false;b.classList.remove('ld');toast('Status diperbarui')})};
