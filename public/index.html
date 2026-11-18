@@ -703,6 +703,10 @@ async function loadKemLogs(){
             <button type="button" class="btn gho" style="padding:7px 12px;font-size:12px;border-radius:10px" data-use="${i}">
               ${ic('note','')}<span>Gunakan Teks Ini</span>
             </button>
+            ${l.state!=='APPROVED'&&l.state!=='REJECTED'?`
+            <button type="button" class="btn gho lb-reject-btn" style="padding:7px 12px;font-size:12px;border-radius:10px;color:var(--e);border:1px solid var(--e)" data-reject-date="${esc(l.date)}" data-reject-id="${esc(l.id||'')}">
+              <svg class="ic" style="color:var(--e);width:14px;height:14px"><use href="#i-alert"/></svg><span style="color:var(--e);font-weight:600">Tolak Presensi</span>
+            </button>`:''}
           </div>
         </div>
       </div>`}).join('');
@@ -731,6 +735,31 @@ async function loadKemLogs(){
         $('#a1').value=item.activity_log||'';$('#a2').value=item.lesson_learned||'';$('#a3').value=item.obstacles||'';
         sync();updateCounters();toast('Catatan harian disalin ke form!');
         const el=document.getElementById('set');if(el)el.scrollIntoView({behavior:'smooth'});
+      });
+    });
+    /* reject attendance */
+    bx.querySelectorAll('button[data-reject-date]').forEach(b=>{
+      b.addEventListener('click',async e=>{
+        e.stopPropagation();
+        const d=b.dataset.rejectDate, id=b.dataset.rejectId;
+        if(!await ask({
+          title:'Tolak/Batalkan Presensi?',
+          body:`Kirim permintaan ke API Kemnaker untuk mengubah status presensi tanggal ${d} menjadi REJECTED?`,
+          ok:'Tolak Sekarang',
+          icon:'alert'
+        }))return;
+        busy(b,true,'Memproses…');
+        api('reject_attendance',{
+          method:'POST',
+          body:JSON.stringify({date:d,attendance_id:id})
+        }).then(r=>{
+          toast(r&&r.message||'Status berhasil diubah menjadi REJECTED!');
+          loadKemLogs();
+        }).catch(err=>{
+          toast(err.message||'Gagal menolak absen.','err');
+        }).finally(()=>{
+          busy(b,false);
+        });
       });
     });
     /* auto-open first item */

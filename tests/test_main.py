@@ -869,3 +869,71 @@ def test_api_daily_logs_endpoint(monkeypatch):
     assert data["status"] is True
     assert len(data["logs"]) == 1
     assert data["logs"][0]["activity_log"] == "Test"
+
+
+def test_attendance_service_reject_attendance():
+    class FakeClient:
+        def __init__(self):
+            self.calls = []
+
+        def get(self, path, params=None):
+            if path == "/attendances":
+                return {
+                    "data": [
+                        {"id": 15464566, "date": "2026-11-15", "status": "PRESENT", "approval_status": "SUBMITTED"}
+                    ]
+                }
+            raise AssertionError(f"Unexpected GET: {path}")
+
+        def put(self, path, data):
+            self.calls.append((path, data))
+            return {"status": "success", "message": "Attendance updated"}
+
+    svc = AttendanceService(username="u", password="p")
+    fake = FakeClient()
+    svc._client = fake
+
+    # Test with date lookup
+    res = svc.reject_attendance(date="2026-11-15", reason="Salah weekend")
+    assert res["status"] == "success"
+    assert len(fake.calls) == 1
+    assert fake.calls[0][0] == "/attendances/15464566"
+    assert fake.calls[0][1]["approval_status"] == "REJECTED"
+    assert fake.calls[0][1]["reviewer_notes"] == "Salah weekend"
+
+    # Test with direct ID
+    res2 = svc.reject_attendance(attendance_id=999)
+    assert res2["status"] == "success"
+    assert len(fake.calls) == 2
+    assert fake.calls[1][0] == "/attendances/999"
+
+
+def test_api_reject_attendance_endpoint(monkeypatch):
+    import json
+    import io
+    from main import app
+
+    monkeypatch.setattr(
+        AttendanceService,
+        "reject_attendance",
+        lambda self, attendance_id=None, date=None, reason=None: {"id": 15464566, "approval_status": "REJECTED"},
+    )
+
+    body_bytes = json.dumps({"date": "2026-11-15", "reason": "Batal absen"}).encode("utf-8")
+    environ = {
+        "PATH_INFO": "/api/reject_attendance",
+        "REQUEST_METHOD": "POST",
+        "CONTENT_LENGTH": str(len(body_bytes)),
+        "wsgi.input": io.BytesIO(body_bytes),
+        "HTTP_X_AUTH_USERNAME": "testuser",
+        "HTTP_X_AUTH_PASSWORD": "secretpassword",
+    }
+    status_code = []
+
+    def start_response(status, h):
+        status_code.append(status)
+
+    res = app(environ, start_response)
+    data = json.loads(res[0].decode("utf-8"))
+    assert data["status"] is True
+    assert "REJECTED" in data["message"]

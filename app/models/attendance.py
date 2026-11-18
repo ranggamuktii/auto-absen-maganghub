@@ -308,6 +308,45 @@ class AttendanceService:
             )
         return self._client.post("/attendances/with-daily-log", payload)
 
+    def reject_attendance(
+        self,
+        attendance_id: int | str | None = None,
+        date: str | None = None,
+        reason: str = "Dibatalkan oleh peserta (salah jadwal/weekend)",
+    ) -> dict:
+        """Reject/cancel an attendance submission via PUT /attendances/{id}.
+
+        Args:
+            attendance_id: ID of the attendance record in MagangHub.
+            date: Optional date string (YYYY-MM-DD) to look up attendance_id if not provided.
+            reason: Reason/reviewer_notes for rejection.
+
+        Returns:
+            API response dictionary.
+        """
+        self._ensure_client()
+        target_id = attendance_id
+        if not target_id and date:
+            attendances = self.get_attendances()
+            for att in attendances:
+                if str(att.get("date", "")).startswith(date):
+                    target_id = att.get("id")
+                    break
+
+        if not target_id:
+            raise ValueError(f"Data absensi untuk tanggal {date or 'terpilih'} tidak ditemukan.")
+
+        payload = {
+            "approval_status": "REJECTED",
+            "reviewer_notes": reason,
+        }
+        try:
+            return self._client.put(f"/attendances/{target_id}", payload)
+        except Exception:
+            # Fallback to with-daily-log combo if direct endpoint is rejected
+            payload["daily_log_state"] = "REJECTED"
+            return self._client.put(f"/attendances/{target_id}/with-daily-log", payload)
+
 
     def get_log(self, date: str) -> DailyLog | None:
         """Fetch the attendance log for a given date.

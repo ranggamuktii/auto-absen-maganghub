@@ -20,9 +20,12 @@ from app.utils.time import today_str, now_wib
 def main():
     """CLI entry point."""
     parser = argparse.ArgumentParser(description="Auto Absen MagangHub")
-    parser.add_argument("action", choices=["absen", "status", "remind", "doctor"], help="Tindakan")
+    parser.add_argument("action", choices=["absen", "status", "remind", "doctor", "reject"], help="Tindakan")
     parser.add_argument("--dry-run", action="store_true", help="Tampilkan payload absen tanpa mengirim")
     parser.add_argument("--days", type=int, default=1, help="Jumlah hari ke belakang untuk status")
+    parser.add_argument("--date", type=str, default="", help="Tanggal absensi (YYYY-MM-DD)")
+    parser.add_argument("--id", type=int, default=0, help="ID absensi")
+    parser.add_argument("--reason", type=str, default="Dibatalkan oleh peserta (salah jadwal weekend/libur)", help="Alasan penolakan")
     args = parser.parse_args()
 
     if args.action == "doctor":
@@ -51,6 +54,15 @@ def main():
         sys.exit(cmd_absen(svc))
     elif args.action == "remind":
         sys.exit(cmd_remind(svc))
+    elif args.action == "reject":
+        try:
+            target_date = args.date or today_str()
+            res = svc.reject_attendance(attendance_id=args.id or None, date=target_date, reason=args.reason)
+            log(f"[OK] Absen {target_date} berhasil diubah menjadi REJECTED: {res}")
+            sys.exit(0)
+        except Exception as e:
+            log(f"[FAIL] Gagal menolak absen: {e}")
+            sys.exit(1)
     else:
         sys.exit(cmd_status(svc, days=args.days))
 
@@ -686,6 +698,32 @@ def app(environ, start_response):
         except Exception as e:
             start_response("200 OK", [("Content-Type", "application/json; charset=utf-8")])
             return [json.dumps({"status": False, "message": str(e)}).encode("utf-8")]
+
+    # 13. Kemnaker Reject Attendance Endpoint (/api/reject_attendance)
+    if path in ("/api/reject_attendance", "/api/reject-attendance", "/api/cancel_attendance"):
+        body_data = _read_body_json(environ)
+        user, pwd = _get_credentials(environ, body_data=body_data)
+        if not user or not pwd:
+            start_response("200 OK", [("Content-Type", "application/json; charset=utf-8")])
+            return [json.dumps({"status": False, "message": "Belum terautentikasi."}).encode("utf-8")]
+
+        att_id = body_data.get("attendance_id") or body_data.get("id")
+        date_str_val = body_data.get("date")
+        reason = body_data.get("reason") or "Dibatalkan oleh peserta (salah jadwal weekend/libur)"
+
+        if not att_id and not date_str_val:
+            start_response("200 OK", [("Content-Type", "application/json; charset=utf-8")])
+            return [json.dumps({"status": False, "message": "attendance_id atau date wajib disertakan."}).encode("utf-8")]
+
+        try:
+            from app.models.attendance import AttendanceService
+            svc = AttendanceService(username=user, password=pwd)
+            resp = svc.reject_attendance(attendance_id=att_id, date=date_str_val, reason=reason)
+            start_response("200 OK", [("Content-Type", "application/json; charset=utf-8")])
+            return [json.dumps({"status": True, "message": "Status absensi berhasil diubah menjadi REJECTED.", "data": resp}, ensure_ascii=False, indent=2).encode("utf-8")]
+        except Exception as e:
+            start_response("200 OK", [("Content-Type", "application/json; charset=utf-8")])
+            return [json.dumps({"status": False, "message": f"Gagal menolak absensi: {str(e)}"}).encode("utf-8")]
 
     # 9. Serve static HTML for root
     html_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "public", "index.html")

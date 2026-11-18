@@ -161,6 +161,19 @@ if (isset($_GET['api'])) {
         exit;
     }
 
+    if ($action === 'reject_attendance') {
+        $targetDate = escapeshellarg(trim($_POST['date'] ?? date('Y-m-d')));
+        $reason = escapeshellarg(trim($_POST['reason'] ?? 'Dibatalkan oleh peserta (salah jadwal weekend/libur)'));
+        $output = shell_exec("\"{$pyBinary}\" \"{$mainScript}\" reject --date {$targetDate} --reason {$reason} 2>&1");
+        $success = (strpos($output, '[OK]') !== false);
+        echo json_encode([
+            'status'  => $success,
+            'message' => $success ? 'Status absensi berhasil diubah menjadi REJECTED.' : 'Gagal menolak absensi.',
+            'output'  => trim($output ?? ''),
+        ]);
+        exit;
+    }
+
     if ($action === 'get_logs') {
         $lines = [];
         if (file_exists($logFile)) {
@@ -1158,6 +1171,7 @@ $locNow = $env['location'] . ($env['latitude'] !== '' && $env['longitude'] !== '
                     saveBtn = $('#btn-save-log');
                 const snapshot = () => new URLSearchParams(new FormData(form)).toString();
                 let saved = snapshot();
+
                 function updatePhpCounters() {
                     const l1 = ($('#activity_log').value || '').trim().length;
                     const c1 = $('#php-c-a1');
@@ -1271,7 +1285,8 @@ $locNow = $env['location'] . ($env['latitude'] !== '' && $env['longitude'] !== '
                 }));
 
                 // ---------- Notifikasi WhatsApp UI ----------
-                const chkWa = $('#php-check-wa'), panelWa = $('#php-wa-panel');
+                const chkWa = $('#php-check-wa'),
+                    panelWa = $('#php-wa-panel');
                 if (chkWa && panelWa) {
                     chkWa.addEventListener('change', () => {
                         panelWa.style.opacity = chkWa.checked ? '1' : '0.5';
@@ -1281,7 +1296,8 @@ $locNow = $env['location'] . ($env['latitude'] !== '' && $env['longitude'] !== '
                     $('#btn-php-wa-verify').addEventListener('click', () => {
                         const num = ($('#php-wa-number').value || '').trim();
                         if (!num) return toast('Masukkan nomor WhatsApp terlebih dahulu.', 'err');
-                        const prev = $('#php-otp-phone-preview'), otpIn = $('#php-otp-input');
+                        const prev = $('#php-otp-phone-preview'),
+                            otpIn = $('#php-otp-input');
                         if (prev) prev.textContent = num;
                         if (otpIn) {
                             otpIn.value = '';
@@ -1301,7 +1317,8 @@ $locNow = $env['location'] . ($env['latitude'] !== '' && $env['longitude'] !== '
                 }
                 if ($('#btn-sim-verify')) {
                     $('#btn-sim-verify').addEventListener('click', () => {
-                        const otpIn = $('#php-otp-input'), num = ($('#php-wa-number').value || '').trim();
+                        const otpIn = $('#php-otp-input'),
+                            num = ($('#php-wa-number').value || '').trim();
                         const val = otpIn ? otpIn.value.trim() : '';
                         if (val && val.length < 6) {
                             toast('Masukkan 6 digit kode OTP verifikasi.', 'err');

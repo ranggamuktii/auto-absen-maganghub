@@ -72,6 +72,19 @@ class ApiClient:
         r = self.session.post(f"{self.base_url}{path}", json=data, timeout=TIMEOUT)
         return self._handle(r)
 
+    def put(self, path: str, data: dict) -> dict:
+        """Send a PUT request.
+
+        Args:
+            path: Endpoint path.
+            data: JSON payload.
+
+        Returns:
+            JSON response body.
+        """
+        r = self.session.put(f"{self.base_url}{path}", json=data, timeout=TIMEOUT)
+        return self._handle(r)
+
     def _handle(self, r: requests.Response) -> dict:
         """Process an HTTP response.
 
