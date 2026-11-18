@@ -1404,39 +1404,39 @@ $locNow = $env['location'] . ($env['latitude'] !== '' && $env['longitude'] !== '
                         fd.append('reason', reason || 'Dibatalkan oleh peserta (salah jadwal weekend/libur)');
 
                         fetch('index.php?api=reject_attendance', {
-                            method: 'POST',
-                            body: fd
-                        })
-                        .then(r => r.json())
-                        .then(res => {
-                            if (res.status) {
-                                toast(res.message || 'Presensi berhasil ditolak!', '');
-                                if (st) {
-                                    st.style.color = 'var(--ok, #059669)';
-                                    st.textContent = '✓ ' + (res.message || 'Berhasil diubah menjadi REJECTED');
+                                method: 'POST',
+                                body: fd
+                            })
+                            .then(r => r.json())
+                            .then(res => {
+                                if (res.status) {
+                                    toast(res.message || 'Presensi berhasil ditolak!', '');
+                                    if (st) {
+                                        st.style.color = 'var(--ok, #059669)';
+                                        st.textContent = '✓ ' + (res.message || 'Berhasil diubah menjadi REJECTED');
+                                    }
+                                } else {
+                                    toast(res.message || 'Gagal menolak presensi.', 'err');
+                                    if (st) {
+                                        st.style.color = 'var(--err, #ef4444)';
+                                        st.textContent = '✕ ' + (res.message || 'Gagal');
+                                    }
                                 }
-                            } else {
-                                toast(res.message || 'Gagal menolak presensi.', 'err');
+                                if (con && res.output) {
+                                    con.style.display = 'block';
+                                    con.textContent = res.output;
+                                }
+                            })
+                            .catch(err => {
+                                toast('Terjadi kesalahan koneksi.', 'err');
                                 if (st) {
                                     st.style.color = 'var(--err, #ef4444)';
-                                    st.textContent = '✕ ' + (res.message || 'Gagal');
+                                    st.textContent = '✕ Error: ' + err.message;
                                 }
-                            }
-                            if (con && res.output) {
-                                con.style.display = 'block';
-                                con.textContent = res.output;
-                            }
-                        })
-                        .catch(err => {
-                            toast('Terjadi kesalahan koneksi.', 'err');
-                            if (st) {
-                                st.style.color = 'var(--err, #ef4444)';
-                                st.textContent = '✕ Error: ' + err.message;
-                            }
-                        })
-                        .finally(() => {
-                            busy(btnReject, false);
-                        });
+                            })
+                            .finally(() => {
+                                busy(btnReject, false);
+                            });
                     });
                 }
             })();

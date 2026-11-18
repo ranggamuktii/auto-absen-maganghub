@@ -893,19 +893,19 @@ def test_attendance_service_reject_attendance():
     fake = FakeClient()
     svc._client = fake
 
-    # Test with date lookup
+    # Test with date lookup (for PRESENT attendance, with-daily-log is called)
     res = svc.reject_attendance(date="2026-11-15", reason="Salah weekend")
     assert res["status"] == "success"
     assert len(fake.calls) == 1
-    assert fake.calls[0][0] == "/attendances/15464566"
-    assert fake.calls[0][1]["approval_status"] == "REJECTED"
+    assert fake.calls[0][0] == "/attendances/15464566/with-daily-log"
+    assert fake.calls[0][1]["daily_log_state"] == "NEEDS_REVISION"
     assert fake.calls[0][1]["reviewer_notes"] == "Salah weekend"
 
     # Test with direct ID
     res2 = svc.reject_attendance(attendance_id=999)
     assert res2["status"] == "success"
     assert len(fake.calls) == 2
-    assert fake.calls[1][0] == "/attendances/999"
+    assert fake.calls[1][0] == "/attendances/999/with-daily-log"
 
 
 def test_api_reject_attendance_endpoint(monkeypatch):

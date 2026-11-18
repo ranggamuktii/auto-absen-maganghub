@@ -314,7 +314,12 @@ class AttendanceService:
         date: str | None = None,
         reason: str = "Dibatalkan oleh peserta (salah jadwal/weekend)",
     ) -> dict:
-        """Reject/cancel an attendance submission via PUT /attendances/{id}.
+        """Reject/cancel an attendance or daily log submission via Kemnaker API.
+
+        For attendances with daily logs (PRESENT status), Kemnaker API enforces:
+        approval_status='APPROVED' and daily_log_state='NEEDS_REVISION'
+        (which rejects the logbook and flags it with reviewer_notes).
+        For permission/absence requests (ON_LEAVE, ABSENT), approval_status can be 'REJECTED'.
 
         Args:
             attendance_id: ID of the attendance record in MagangHub.
@@ -325,27 +330,68 @@ class AttendanceService:
             API response dictionary.
         """
         self._ensure_client()
-        target_id = attendance_id
-        if not target_id and date:
-            attendances = self.get_attendances()
-            for att in attendances:
-                if str(att.get("date", "")).startswith(date):
-                    target_id = att.get("id")
-                    break
+        target_id = None
+        target_status = "PRESENT"
+
+        # Look up real attendance record by date first
+        if date:
+            clean_date = date.strip()[:10]
+            try:
+                attendances = self.get_attendances(start_date=clean_date, end_date=clean_date)
+                if not attendances:
+                    attendances = self.get_attendances()
+                for att in attendances:
+                    att_date = str(att.get("date", "")).strip()[:10]
+                    if att_date == clean_date:
+                        target_id = att.get("id")
+                        target_status = (att.get("status") or "PRESENT").upper()
+                        break
+            except Exception as e:
+                print(f"[API] Error resolving attendance by date {clean_date}: {e}")
+
+        if not target_id and attendance_id:
+            target_id = attendance_id
 
         if not target_id:
             raise ValueError(f"Data absensi untuk tanggal {date or 'terpilih'} tidak ditemukan.")
 
-        payload = {
-            "approval_status": "REJECTED",
-            "reviewer_notes": reason,
-        }
-        try:
-            return self._client.put(f"/attendances/{target_id}", payload)
-        except Exception:
-            # Fallback to with-daily-log combo if direct endpoint is rejected
-            payload["daily_log_state"] = "REJECTED"
-            return self._client.put(f"/attendances/{target_id}/with-daily-log", payload)
+        # If attendance has a daily log (PRESENT), Kemnaker validator requires:
+        # approval_status='APPROVED', daily_log_state='NEEDS_REVISION'
+        # This rejects the activity report with the given reviewer_notes.
+        if target_status == "PRESENT":
+            payload_with_log = {
+                "approval_status": "APPROVED",
+                "daily_log_state": "NEEDS_REVISION",
+                "reviewer_notes": reason,
+            }
+            try:
+                return self._client.put(f"/attendances/{target_id}/with-daily-log", payload_with_log)
+            except Exception as e:
+                payload_direct = {
+                    "approval_status": "REJECTED",
+                    "reviewer_notes": reason,
+                }
+                try:
+                    return self._client.put(f"/attendances/{target_id}", payload_direct)
+                except Exception:
+                    raise e
+        else:
+            payload_direct = {
+                "approval_status": "REJECTED",
+                "reviewer_notes": reason,
+            }
+            try:
+                return self._client.put(f"/attendances/{target_id}", payload_direct)
+            except Exception as e:
+                payload_with_log = {
+                    "approval_status": "APPROVED",
+                    "daily_log_state": "NEEDS_REVISION",
+                    "reviewer_notes": reason,
+                }
+                try:
+                    return self._client.put(f"/attendances/{target_id}/with-daily-log", payload_with_log)
+                except Exception:
+                    raise e
 
 
     def get_log(self, date: str) -> DailyLog | None:
