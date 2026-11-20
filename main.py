@@ -20,13 +20,29 @@ from app.utils.time import today_str, now_wib
 def main():
     """CLI entry point."""
     parser = argparse.ArgumentParser(description="Auto Absen MagangHub")
-    parser.add_argument("action", choices=["absen", "status", "remind", "doctor", "reject"], help="Tindakan")
+    parser.add_argument("action", choices=["absen", "status", "remind", "doctor", "reject", "serve", "dev"], help="Tindakan")
     parser.add_argument("--dry-run", action="store_true", help="Tampilkan payload absen tanpa mengirim")
     parser.add_argument("--days", type=int, default=1, help="Jumlah hari ke belakang untuk status")
     parser.add_argument("--date", type=str, default="", help="Tanggal absensi (YYYY-MM-DD)")
     parser.add_argument("--id", type=int, default=0, help="ID absensi")
     parser.add_argument("--reason", type=str, default="Dibatalkan oleh peserta (salah jadwal weekend/libur)", help="Alasan penolakan")
+    parser.add_argument("--port", type=int, default=3000, help="Port untuk server lokal (dev/serve)")
     args = parser.parse_args()
+
+    if args.action in ("serve", "dev"):
+        from wsgiref.simple_server import make_server
+        port = args.port or 3000
+        print(f"\n=======================================================")
+        print(f"🚀 Auto Absen MagangHub Local Server")
+        print(f"📡 URL: http://localhost:{port}")
+        print(f"💡 Tekan Ctrl+C untuk menghentikan server")
+        print(f"=======================================================\n")
+        server = make_server("127.0.0.1", port, app)
+        try:
+            server.serve_forever()
+        except KeyboardInterrupt:
+            print("\nServer dihentikan.")
+            sys.exit(0)
 
     if args.action == "doctor":
         sys.exit(cmd_doctor())
@@ -468,6 +484,7 @@ def app(environ, start_response):
     if path == "/api/status":
         from app.config import settings
 
+        user_pref = None
         user, pwd = _get_credentials(environ)
         if not user or not pwd:
             start_response("200 OK", [("Content-Type", "application/json; charset=utf-8")])
@@ -477,7 +494,7 @@ def app(environ, start_response):
                 "message": "Silakan login menggunakan akun Kemnaker untuk melihat status presensi.",
                 "env": {
                     "location": settings.location,
-                    "clock_in_time": (user_pref.get("user_clock_in_time") if user_pref else None) or "13:30",
+                    "clock_in_time": "13:30",
                     "activity_log": settings.activity_log,
                     "lesson_learned": settings.lesson_learned,
                     "obstacles": settings.obstacles
@@ -485,7 +502,6 @@ def app(environ, start_response):
             }, ensure_ascii=False, indent=2).encode("utf-8")]
 
         # Query user preferences from DB if available
-        user_pref = None
         db_connected = False
         db_message = ""
         try:

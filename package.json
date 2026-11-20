@@ -1,0 +1,16 @@
+{
+  "name": "auto-absen-maganghub",
+  "version": "1.0.0",
+  "description": "Auto Absen MagangHub Local and Cloud Engine",
+  "scripts": {
+    "dev": ".venv\\Scripts\\python.exe main.py dev",
+    "serve": ".venv\\Scripts\\python.exe main.py dev",
+    "start": ".venv\\Scripts\\python.exe main.py dev",
+    "status": ".venv\\Scripts\\python.exe main.py status",
+    "absen": ".venv\\Scripts\\python.exe main.py absen",
+    "doctor": ".venv\\Scripts\\python.exe main.py doctor"
+  },
+  "keywords": ["maganghub", "monev", "kemnaker", "attendance"],
+  "author": "",
+  "license": "MIT"
+}
